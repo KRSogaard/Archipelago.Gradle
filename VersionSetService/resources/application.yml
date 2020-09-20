@@ -1,0 +1,30 @@
+server:
+  port: 8081
+  error:
+    include-stacktrace: never
+
+spring:
+  jackson:
+    mapper:
+      accept_case_insensitive_properties: true
+
+s3:
+  packages:
+    name: "alpha-archipelago-packages"
+
+
+dynamodb:
+  versionsets:
+    name: "versionsets.alpha"
+    revisions:
+      name: "versionsets.revisions.alpha"
+
+
+aws:
+  region: "us-west-2"
+  access:
+    id: ${AWS_ID}
+    key: ${AWS_KEY}
+
+endpoints:
+  package-service: "http://localhost:8080"
