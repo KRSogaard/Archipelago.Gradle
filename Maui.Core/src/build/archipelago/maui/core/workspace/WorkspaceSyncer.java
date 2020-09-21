@@ -2,21 +2,19 @@ package build.archipelago.maui.core.workspace;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.concurrent.ExecutorServiceFactory;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.common.concurrent.Wrap;
+import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.core.workspace.cache.PackageCacheList;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
-import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
 import lombok.extern.slf4j.Slf4j;
-
-import java.nio.file.Path;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -36,8 +34,8 @@ public class WorkspaceSyncer {
         this.packageCacher = packageCacher;
     }
 
-    public void syncVersionSet(String versionSet) throws VersionSetDoseNotExistsException {
-        syncVersionSet(versionSet, null);
+    public boolean syncVersionSet(String versionSet) throws VersionSetDoseNotExistsException {
+        return syncVersionSet(versionSet, null);
     }
     public boolean syncVersionSet(String versionSet, String revision) throws VersionSetDoseNotExistsException {
         Instant startTime = Instant.now();
@@ -50,39 +48,54 @@ public class WorkspaceSyncer {
         log.trace("Getting packages from version set: {}:{}", vs.getName(), rev);
         VersionSetRevision vsRevision = vsClient.getVersionSetPackages(vs.getName(), rev);
 
-        log.info("Syncing version set {}, with {} packages.", vs.getName(), vsRevision.getPackages().size());
+        log.info("Syncing version set {}, with {} packages in the revision.", vs.getName(), vsRevision.getPackages().size());
 
+        final Wrap<Boolean> failures = new Wrap<>(false);
         PackageCacheList cache = packageCacher.getCurrentCachedPackages();
         Set<ArchipelagoBuiltPackage> packagesToSync = vsRevision.getPackages().stream()
-                .filter(p -> !cache.hasPackage(p))
+                .filter(p -> {
+                    try {
+                        return !cache.hasPackage(p);
+                    } catch (Exception e) {
+                        failures.setValue(true);
+                        log.error(e.getMessage(), e);
+                        return false;
+                    }
+                })
                 .collect(Collectors.toSet());
-
         log.info("Syncing {} packages", packagesToSync.size());
 
-        boolean failures = false;
         List<Future> pkgFutures = new ArrayList<>();
         for(ArchipelagoBuiltPackage pkg : packagesToSync) {
             log.trace("Syncing {} to cache", pkg.toString());
             pkgFutures.add(executor.submit(() -> {
-                packageCacher.cache(pkg);
+                try {
+                    packageCacher.cache(pkg);
+                } catch (PackageNotFoundException e) {
+                    log.error(e.getMessage(), e);
+                    failures.setValue(false);
+                } catch (IOException e) {
+                    log.error(e.getMessage(), e);
+                    failures.setValue(false);
+                }
             }));
         }
         for (Future future : pkgFutures) {
             try {
                 future.get();
             } catch (Exception e) {
-                failures = true;
+                failures.setValue(true);
                 log.error(e.getMessage(), e);
             }
         }
         Instant endTime = Instant.now();
         Long runTimeMilli = endTime.toEpochMilli() - startTime.toEpochMilli();
 
-        if (failures) {
+        if (failures.getValue()) {
             log.warn("Syncing version set {} finished with errors in {} ms.", vs.getName(), runTimeMilli);
         } else {
             log.warn("Syncing version set {} finished  in {} ms.", vs.getName(), runTimeMilli);
         }
-        return !failures;
+        return !failures.getValue();
     }
 }

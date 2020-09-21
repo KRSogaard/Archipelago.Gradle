@@ -32,9 +32,9 @@ public class CreateVersionSetRevisionDelegateTest {
     private VersionSetService versionSetService;
     private PackageServiceClient packageServiceClient;
 
-    private static ArchipelagoBuiltPackage pbA = ArchipelagoBuiltPackage.parse("TestPackageA-1.0:abc");
-    private static ArchipelagoBuiltPackage pbB = ArchipelagoBuiltPackage.parse("TestPackageB-1.0:fgh");
-    private static ArchipelagoBuiltPackage pbC = ArchipelagoBuiltPackage.parse("TestPackageC-1.0:gt3");
+    private static ArchipelagoBuiltPackage pbA = ArchipelagoBuiltPackage.parse("TestPackageA-1.0#abc");
+    private static ArchipelagoBuiltPackage pbB = ArchipelagoBuiltPackage.parse("TestPackageB-1.0#fgh");
+    private static ArchipelagoBuiltPackage pbC = ArchipelagoBuiltPackage.parse("TestPackageC-1.0#gt3");
     private static ArchipelagoPackage pA = ArchipelagoPackage.parse("TestPackageA-1.0");
     private static ArchipelagoPackage pB = ArchipelagoPackage.parse("TestPackageB-1.0");
     private static ArchipelagoPackage pC = ArchipelagoPackage.parse("TestPackageC-1.0");

@@ -14,7 +14,7 @@ public class ArchipelagoBuiltPackage extends ArchipelagoPackage {
     }
 
     public static ArchipelagoBuiltPackage parse(String value) throws NullPointerException {
-        String[] hashSplit = value.split(":", 2);
+        String[] hashSplit = value.split("#", 2);
         if (hashSplit.length != 2) {
             throw new IllegalArgumentException(String.format("The string \"%s\" was not a valid built package", value));
         }
@@ -45,6 +45,6 @@ public class ArchipelagoBuiltPackage extends ArchipelagoPackage {
     }
 
     public String getBuiltPackageName() {
-        return String.format("%s:%s", super.toString(), hash);
+        return String.format("%s#%s", super.toString(), hash);
     }
 }

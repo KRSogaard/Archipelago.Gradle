@@ -27,12 +27,29 @@ public class ArchipelagoPackageTest {
 
     @Test
     public void testParseNameVersionWithTestVersion() {
-        String version = "Awesome Build";
+        String version = "Awesome.Build";
         String testString = name + "-" + version;
 
         ArchipelagoPackage pkg = ArchipelagoPackage.parse(testString);
         assertEquals(name, pkg.getName());
         assertEquals(version, pkg.getVersion());
+    }
+
+    @Test
+    public void testParseNameVersionWithPlusVersion() {
+        String version = "1.+";
+        String testString = name + "-" + version;
+
+        ArchipelagoPackage pkg = ArchipelagoPackage.parse(testString);
+        assertEquals(name, pkg.getName());
+        assertEquals(version, pkg.getVersion());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseNameVersionWithBadVersion() {
+        String version = "Awesome#Build";
+        String testString = name + "-" + version;
+        ArchipelagoPackage.parse(testString);
     }
 
     @Test(expected = IllegalArgumentException.class)

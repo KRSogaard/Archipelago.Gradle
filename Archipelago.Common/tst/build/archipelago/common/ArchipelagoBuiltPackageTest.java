@@ -19,7 +19,7 @@ public class ArchipelagoBuiltPackageTest {
 
     @Test
     public void testParseNameVersionHash() {
-        String testString = name + "-" + version + ":" + hash;
+        String testString = name + "-" + version + "#" + hash;
         ArchipelagoBuiltPackage pkg = ArchipelagoBuiltPackage.parse(testString);
         assertEquals(name, pkg.getName());
         assertEquals(version, pkg.getVersion());
@@ -29,7 +29,7 @@ public class ArchipelagoBuiltPackageTest {
     @Test
     public void testConstructorWithNameAndVersionAndHash() {
         ArchipelagoPackage pkg = new ArchipelagoBuiltPackage(name, version, hash);
-        assertEquals(name + "-" + version + ":" + hash, pkg.toString());
+        assertEquals(name + "-" + version + "#" + hash, pkg.toString());
     }
 
     @Test(expected = IllegalArgumentException.class)

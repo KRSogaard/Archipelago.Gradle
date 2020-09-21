@@ -105,6 +105,7 @@ project(':Maui.Core') {
 
         implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+        implementation 'net.lingala.zip4j:zip4j:2.6.2'
     }
 }
 

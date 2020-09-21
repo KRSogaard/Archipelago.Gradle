@@ -40,7 +40,6 @@ public class GetBuildArtifactDelegate {
             }
         }
         ArchipelagoBuiltPackage pkg = new ArchipelagoBuiltPackage(nameVersion, latestHash);
-        BuiltPackageDetails pkgDetails = packageData.getBuildPackage(pkg);
 
         return GetBuildArtifactResponse.builder()
                 .byteArray(packageStorage.get(pkg))

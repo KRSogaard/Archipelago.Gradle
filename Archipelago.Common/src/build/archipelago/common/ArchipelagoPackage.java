@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 public class ArchipelagoPackage {
 
-    private final static Pattern VERSION_PATTERN = Pattern.compile("^[^:]+$");
+    private final static Pattern VERSION_PATTERN = Pattern.compile("^[A-Za-z0-9_.+]+$");
     private final static Pattern NAME_PATTERN = Pattern.compile("^[A-Za-z0-9-_]+$");
 
     private String name;
