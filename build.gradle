@@ -82,6 +82,9 @@ project(':Maui') {
         implementation project(':Maui.Core')
         implementation project(':Maui.Common')
         implementation project(':Maui.Serializer')
+        implementation project(':VersionSetService.Client')
+        implementation project(':PackageService.Client')
+        implementation project(':Archipelago.Common')
 
         implementation 'org.springframework.boot:spring-boot-starter'
         compile 'info.picocli:picocli:4.1.4'
@@ -101,8 +104,8 @@ project(':Maui.Core') {
         implementation project(':Archipelago.Common.Concurrent')
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
-        implementation project(':PackageService.Client')
 
+        implementation "info.picocli:picocli-spring-boot-starter:4.5.1"
         implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
         implementation 'net.lingala.zip4j:zip4j:2.6.2'

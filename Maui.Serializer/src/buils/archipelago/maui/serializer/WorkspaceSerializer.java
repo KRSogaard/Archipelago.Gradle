@@ -60,7 +60,7 @@ class WorkspaceSerializer {
             throw new IOException(String.format("Workspace root \"%s\" was not found", workspaceRoot));
         }
 
-        Path workspaceFilePath = Paths.get(workspaceRoot.toString(), WorkspaceConstants.WORKSPACE_FILE_NAME);
+        Path workspaceFilePath = workspaceRoot.resolve(WorkspaceConstants.WORKSPACE_FILE_NAME);
         if (Files.exists(workspaceFilePath)) {
             log.warn("Workspace file \"{}\" already exists, we will override it", workspaceFilePath.toString());
         }
@@ -70,7 +70,7 @@ class WorkspaceSerializer {
     }
 
     public static Workspace load(Path workspaceRoot) throws IOException {
-        Path workspaceFilePath = Paths.get(workspaceRoot.toString(), WorkspaceConstants.WORKSPACE_FILE_NAME);
+        Path workspaceFilePath = workspaceRoot.resolve(WorkspaceConstants.WORKSPACE_FILE_NAME);
         if (Files.notExists(workspaceFilePath)) {
             throw new IOException(String.format("Could not find the workspace file \"%s\" in \"%s\"",
                     WorkspaceConstants.WORKSPACE_FILE_NAME, workspaceRoot));

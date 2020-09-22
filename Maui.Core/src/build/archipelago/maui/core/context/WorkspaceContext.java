@@ -1,15 +1,13 @@
 package build.archipelago.maui.core.context;
 
-import build.archipelago.common.constants.ArchipelagoFiles;
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.maui.common.workspace.Workspace;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
-import buils.archipelago.maui.serializer.WorkspaceSerializer;
+import buils.archipelago.maui.serializer.*;
+
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 
 public class WorkspaceContext extends Workspace {
 
@@ -34,20 +32,15 @@ public class WorkspaceContext extends Workspace {
     }
 
     public void create() throws VersionSetDoseNotExistsException, IOException {
-        if (Files.exists(root)) {
-            throw new RuntimeException("Workspace folder \"" + root + "\" already exists");
-        }
-
         if (versionSet != null) {
+            // Verifying that the version-set exists and that we have the correct capitalisation of the version-set
              VersionSet vs = vsClient.getVersionSet(versionSet);
              versionSet = vs.getName();
         }
-
-        Files.createDirectory(root);
-        WorkspaceSerializer.save(this, getWorkspaceFile(root));
+        WorkspaceSerializer.save(this, root);
     }
 
     public static Path getWorkspaceFile(Path path) {
-        return Paths.get(path.toString(), ArchipelagoFiles.WORKSPACE);
+        return Paths.get(path.toString(), WorkspaceConstants.WORKSPACE_FILE_NAME);
     }
 }
