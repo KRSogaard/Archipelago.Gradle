@@ -15,16 +15,4 @@ public class WorkspaceCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         return 1;
     }
-
-    public Path getWorkspaceDir() {
-        Path currentFolder = SystemUtil.getWorkingPath();
-
-        while (currentFolder != null) {
-            if (Files.exists(currentFolder.resolve(WorkspaceConstants.WORKSPACE_FILE_NAME))) {
-                return currentFolder;
-            }
-            currentFolder = currentFolder.getParent();
-        }
-        return null;
-    }
 }

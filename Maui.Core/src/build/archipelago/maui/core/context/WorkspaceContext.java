@@ -6,7 +6,7 @@ import build.archipelago.maui.common.workspace.Workspace;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
 import buils.archipelago.maui.serializer.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.*;
 
 public class WorkspaceContext extends Workspace {
@@ -18,15 +18,15 @@ public class WorkspaceContext extends Workspace {
         super();
         this.root = root;
         this.vsClient = vsClient;
-
-        Path workspaceFile = getWorkspaceFile(root);
-        if (Files.exists(workspaceFile)) {
-            load(workspaceFile);
-        }
     }
 
-    private void load(Path path) throws IOException {
-        Workspace ws = WorkspaceSerializer.load(path);
+    public void load() throws FileNotFoundException, IOException {
+        Path workspaceFile = getWorkspaceFile(root);
+        if (!Files.exists(workspaceFile)) {
+            throw new FileNotFoundException(workspaceFile.toString());
+        }
+
+        Workspace ws = WorkspaceSerializer.load(root);
         this.setVersionSet(ws.getVersionSet());
         this.setLocalPackages(ws.getLocalPackages());
     }

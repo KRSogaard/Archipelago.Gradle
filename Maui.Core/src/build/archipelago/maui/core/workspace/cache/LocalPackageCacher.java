@@ -73,7 +73,7 @@ public class LocalPackageCacher implements PackageCacher {
     @Override
     public void cache(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException, IOException {
         log.trace("Request to cache package {}", pkg.toString());
-        Path file = packageClient.getBuildArtifact(pkg, tempFolder);
+
         Path dest = cachePath.resolve(pkg.getBuiltPackageName());
         if (Files.exists(dest)) {
             log.trace("The package {} was already cached", pkg);
@@ -89,7 +89,13 @@ public class LocalPackageCacher implements PackageCacher {
             Files.createDirectory(buildDest);
         }
 
-        new ZipFile(file.toRealPath().toString()).extractAll(buildDest.toRealPath().toString());
+        Path file = packageClient.getBuildArtifact(pkg, tempFolder);
+        try {
+            new ZipFile(file.toRealPath().toString()).extractAll(buildDest.toRealPath().toString());
+        } finally {
+            Files.delete(file);
+        }
+
         GetPackageBuildResponse pkgDetails = packageClient.getPackageBuild(pkg);
         Files.writeString(dest.resolve(WorkspaceConstants.BUILD_FILE_NAME), pkgDetails.getConfig());
         Files.setLastModifiedTime(cachePath, FileTime.from(Instant.now()));

@@ -85,6 +85,7 @@ project(':Maui') {
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
         implementation project(':Archipelago.Common')
+        implementation project(':Archipelago.Common.Concurrent')
 
         implementation 'org.springframework.boot:spring-boot-starter'
         compile 'info.picocli:picocli:4.1.4'
@@ -115,6 +116,14 @@ project(':Maui.Core') {
 project(':Maui.Common') {
     dependencies {
         implementation project(':Archipelago.Common')
+    }
+}
+
+project(':Maui.Path') {
+    dependencies {
+        implementation project(':Maui.Common')
+        implementation project(':Archipelago.Common')
+        implementation 'org.jgrapht:jgrapht-core:1.5.0'
     }
 }
 

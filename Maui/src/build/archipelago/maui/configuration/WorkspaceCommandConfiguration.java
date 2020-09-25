@@ -1,6 +1,7 @@
 package build.archipelago.maui.configuration;
 
 import build.archipelago.maui.commands.workspace.*;
+import build.archipelago.maui.core.workspace.WorkspaceSyncer;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
 import org.springframework.context.annotation.*;
 
@@ -12,8 +13,9 @@ public class WorkspaceCommandConfiguration {
     }
 
     @Bean
-    public WorkspaceSyncCommand workspaceSyncCommand() {
-        return new WorkspaceSyncCommand();
+    public WorkspaceSyncCommand workspaceSyncCommand(VersionServiceClient versionServiceClient,
+                                                     WorkspaceSyncer workspaceSyncer) {
+        return new WorkspaceSyncCommand(versionServiceClient, workspaceSyncer);
     }
 
     @Bean

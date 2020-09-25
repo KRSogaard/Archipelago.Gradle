@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8090
   error:
     include-stacktrace: never
 
@@ -23,8 +23,8 @@ dynamodb:
 aws:
   region: "us-west-2"
   access:
-    id: ${AWS_ID}
-    key: ${AWS_KEY}
+    id: "AKIARDAF5R4ODZ2LMPNZ"
+    key: "MS7flruyxp3QPlEVEd41NZVDG7WTkkZYBfZjfWEM"
 
 endpoints:
   package-service: "http://localhost:8080"

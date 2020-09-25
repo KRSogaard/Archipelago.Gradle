@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-@Builder
 @Data
 public
 class WorkspaceSerializer {
@@ -24,16 +23,18 @@ class WorkspaceSerializer {
     private String versionSet;
     private List<String> localPackages;
 
+    public WorkspaceSerializer() {}
+
     private static WorkspaceSerializer convert(Workspace ws) {
         List<String> localPackages = new ArrayList<String>();
         for (ArchipelagoPackage nameVersion : ws.getLocalPackages()) {
             localPackages.add(String.format("%s-%s", nameVersion.getName(), nameVersion.getVersion()));
         }
 
-        return WorkspaceSerializer.builder()
-                .versionSet(ws.getVersionSet())
-                .localPackages(localPackages)
-                .build();
+        WorkspaceSerializer wss = new WorkspaceSerializer();
+        wss.setVersionSet(ws.getVersionSet());
+        wss.setLocalPackages(localPackages);
+        return wss;
     }
 
     private static Workspace convert(WorkspaceSerializer wss) {
