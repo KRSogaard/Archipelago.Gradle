@@ -16,4 +16,7 @@ public class Dependency {
     public ArchipelagoPackage getPackage() {
         return pkg;
     }
+    public void setPackage(ArchipelagoPackage pkg) {
+        this.pkg = pkg;
+    }
 }

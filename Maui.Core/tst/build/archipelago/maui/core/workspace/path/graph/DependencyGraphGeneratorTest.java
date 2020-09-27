@@ -30,6 +30,9 @@ public class DependencyGraphGeneratorTest {
     @Before
     public void setUp() throws Exception {
         configProvider = mock(ConfigProvider.class);
+        if (DependencyGraphGenerator.graphCache != null) {
+            DependencyGraphGenerator.graphCache.clear();
+        }
     }
 
     @Test
@@ -162,12 +165,11 @@ public class DependencyGraphGeneratorTest {
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.TEST);
 
         assertNotNull(graph);
-        assertEquals(5, graph.vertexSet().size());
+        assertEquals(4, graph.vertexSet().size());
         assertEquals(3, graph.outgoingEdgesOf(TestData.PKG_1).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_2).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_3).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_4).size());
-        assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_5).size());
     }
 
     @Test
@@ -191,11 +193,10 @@ public class DependencyGraphGeneratorTest {
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILDTOOLS);
 
         assertNotNull(graph);
-        assertEquals(5, graph.vertexSet().size());
+        assertEquals(4, graph.vertexSet().size());
         assertEquals(3, graph.outgoingEdgesOf(TestData.PKG_1).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_2).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_3).size());
-        assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_4).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_5).size());
     }
 
@@ -220,12 +221,10 @@ public class DependencyGraphGeneratorTest {
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
 
         assertNotNull(graph);
-        assertEquals(5, graph.vertexSet().size());
+        assertEquals(3, graph.vertexSet().size());
         assertEquals(2, graph.outgoingEdgesOf(TestData.PKG_1).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_2).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_3).size());
-        assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_4).size());
-        assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_5).size());
     }
 
     @Test
@@ -249,11 +248,10 @@ public class DependencyGraphGeneratorTest {
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
 
         assertNotNull(graph);
-        assertEquals(5, graph.vertexSet().size());
+        assertEquals(4, graph.vertexSet().size());
         assertEquals(3, graph.outgoingEdgesOf(TestData.PKG_1).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_2).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_3).size());
-        assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_4).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_5).size());
     }
 
@@ -285,14 +283,13 @@ public class DependencyGraphGeneratorTest {
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILDTOOLS);
 
         assertNotNull(graph);
-        assertEquals(5, graph.vertexSet().size());
+        assertEquals(4, graph.vertexSet().size());
         assertEquals(2, graph.outgoingEdgesOf(TestData.PKG_1).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_2).size());
         assertEquals(1, graph.outgoingEdgesOf(TestData.PKG_3).size());
         // We should not see the build tool of the dependency package
         assertEquals(TestData.PKG_5,
                 graph.outgoingEdgesOf(TestData.PKG_3).stream().collect(Collectors.toList()).get(0).getDependency().getPackage());
-        assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_4).size());
         assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_5).size());
     }
 
@@ -448,5 +445,83 @@ public class DependencyGraphGeneratorTest {
 
         DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
         generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILDTOOLS);
+    }
+
+    @Test
+    public void testConflictResolveResolvesConflict() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException, PackageNotInVersionSetException {
+        ArchipelagoBuiltPackage VCPKG_1 = ArchipelagoBuiltPackage.parse("vcPKG1-1.0#123");
+        ArchipelagoBuiltPackage VCPKG_2 = ArchipelagoBuiltPackage.parse("vcPKG1-2.0#123");
+
+        VersionSetRevision versionSetRevision = VersionSetRevision.builder()
+                .created(Instant.now())
+                .packages(List.of(TestData.PKG_1, TestData.PKG_2, VCPKG_1, VCPKG_2))
+                .build();
+
+        BuildConfig buildConfig = BuildConfig.builder()
+                .buildSystem("Copy")
+                .libraries(List.of(TestData.PKG_2, VCPKG_1))
+                .resolveConflicts(List.of(VCPKG_1))
+                .build();
+
+        BuildConfig buildConfig2 = BuildConfig.builder()
+                .buildSystem("Copy")
+                .libraries(List.of(VCPKG_2))
+                .build();
+
+        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(configProvider.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
+
+        assertNotNull(graph);
+        assertEquals(3, graph.vertexSet().size());
+        assertEquals(2, graph.outgoingEdgesOf(TestData.PKG_1).size());
+        assertEquals(1, graph.outgoingEdgesOf(TestData.PKG_2).size());
+        assertTrue(graph.outgoingEdgesOf(TestData.PKG_2).stream().anyMatch(d -> d.getDependency().getPackage().equals(VCPKG_1)));
+        assertEquals(0, graph.outgoingEdgesOf(VCPKG_1).size());
+    }
+
+    @Test
+    public void testConflictResolveWithARemoveOnTheBeforeResolved() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException, PackageNotInVersionSetException {
+        ArchipelagoBuiltPackage VCPKG_1 = ArchipelagoBuiltPackage.parse("vcPKG1-1.0#123");
+        ArchipelagoBuiltPackage VCPKG_2 = ArchipelagoBuiltPackage.parse("vcPKG1-2.0#123");
+
+        VersionSetRevision versionSetRevision = VersionSetRevision.builder()
+                .created(Instant.now())
+                .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, VCPKG_1, VCPKG_2))
+                .build();
+
+        BuildConfig buildConfig = BuildConfig.builder()
+                .buildSystem("Copy")
+                .libraries(List.of(TestData.PKG_2, VCPKG_1))
+                .resolveConflicts(List.of(VCPKG_1))
+                .removeDependencies(List.of(TestData.PKG_3))
+                .build();
+
+        BuildConfig buildConfig2 = BuildConfig.builder()
+                .buildSystem("Copy")
+                .libraries(List.of(TestData.PKG_3))
+                .build();
+
+        BuildConfig buildConfig3 = BuildConfig.builder()
+                .buildSystem("Copy")
+                .libraries(List.of(VCPKG_2))
+                .build();
+
+        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(configProvider.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(configProvider.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig3);
+
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
+
+        assertNotNull(graph);
+        assertEquals(3, graph.vertexSet().size());
+        assertEquals(2, graph.outgoingEdgesOf(TestData.PKG_1).size());
+        assertEquals(0, graph.outgoingEdgesOf(TestData.PKG_2).size());
+        assertEquals(0, graph.outgoingEdgesOf(VCPKG_1).size());
     }
 }

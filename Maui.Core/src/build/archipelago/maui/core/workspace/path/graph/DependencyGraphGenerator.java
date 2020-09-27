@@ -7,6 +7,7 @@ import build.archipelago.maui.core.exceptions.*;
 import build.archipelago.maui.core.workspace.ConfigProvider;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.core.workspace.path.*;
+import lombok.*;
 import org.jgrapht.alg.cycle.CycleDetector;
 
 import java.io.IOException;
@@ -16,102 +17,72 @@ import java.util.stream.Collectors;
 
 public class DependencyGraphGenerator {
 
-    private Map<String, ArchipelagoDependencyGraph> graphCache;
+    protected static Map<String, ArchipelagoDependencyGraph> graphCache;
     private Map<String, ArchipelagoBuiltPackage> buildHashMap;
-    private VersionSetRevision versionSetRevision;
-    private ConfigProvider configProvide;
+    private final VersionSetRevision versionSetRevision;
+    private final ConfigProvider configProvide;
 
     public DependencyGraphGenerator(ConfigProvider configProvider,
                                     VersionSetRevision versionSetRevision) {
         this.versionSetRevision = versionSetRevision;
         this.configProvide = configProvider;
-        graphCache = new HashMap<>();
+    }
+
+    private static ArchipelagoDependencyGraph getCachedGraph(ArchipelagoPackage rootPkg,
+                                                             DependencyTransversalType transversalType) {
+        if (graphCache == null) {
+            graphCache = new HashMap<>();
+        }
+        String key = getGraphHashKey(rootPkg, transversalType);
+        if (graphCache.containsKey(key)) {
+            return graphCache.get(key);
+        }
+        return null;
     }
 
     public ArchipelagoDependencyGraph generateGraph(ArchipelagoPackage rootPkg,
-                                                                 DependencyTransversalType transversalType)
+                                                    DependencyTransversalType transversalType)
             throws PackageNotInVersionSetException, PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException {
-        String graphKey = getGraphHashKey(rootPkg, transversalType);
-        if (graphCache.containsKey(graphKey)) {
-            return graphCache.get(graphKey);
+        ArchipelagoDependencyGraph cacheGraph = getCachedGraph(rootPkg, transversalType);
+        if (cacheGraph != null) {
+            return cacheGraph;
         }
 
-        // The build map reused for follow up requests
         createBuildHashMap();
+        GraphGenerationContext context = new GraphGenerationContext(configProvide.getConfig(getBuildPackage(rootPkg)));
 
-        BuildConfig rootBuildConfig = configProvide.getConfig(getBuildPackage(rootPkg));
-
-        Map<String, Map<String, ArchipelagoBuiltPackage>> pkgMap = new HashMap<>();
-        for (ArchipelagoBuiltPackage pkg : versionSetRevision.getPackages()) {
-            String name = pkg.getName().toLowerCase();
-            String version = pkg.getVersion().toLowerCase();
-            if (!pkgMap.containsKey(name)) {
-                pkgMap.put(name, new HashMap<>());
-            }
-            pkgMap.get(name).put(version, pkg);
-        }
-
-        if (rootBuildConfig.getResolveConflicts() != null) {
-            for (ArchipelagoPackage resolve : rootBuildConfig.getResolveConflicts()) {
-                String resolveName = resolve.getName().toLowerCase();
-                String resolveVersion = resolve.getVersion().toLowerCase();
-                if (!pkgMap.containsKey(resolveName) ||
-                        !pkgMap.get(resolveName).containsKey(resolveVersion)) {
+        if (context.getRootBuildConfig().getResolveConflicts() != null) {
+            for (ArchipelagoPackage resolve : context.getRootBuildConfig().getResolveConflicts()) {
+                if (!isPackageInVersionSet(resolve)) {
                     throw new PackageNotInVersionSetException(resolve);
                 }
-                List<String> keysToRemove = new ArrayList<>();
-                for (String key : pkgMap.get(resolveName).keySet()) {
-                    if (!key.equalsIgnoreCase(resolveVersion)) {
-                        keysToRemove.add(key);
-                    }
-                }
-                for (String key : keysToRemove) {
-                    pkgMap.get(resolveName).remove(key);
-                }
             }
         }
 
-        Map<String, Boolean> removed = new HashMap<>();
-        if (rootBuildConfig.getRemoveDependencies() != null) {
-            for (ArchipelagoPackage removePkg : rootBuildConfig.getRemoveDependencies()) {
-                String removeName = removePkg.getName().toLowerCase();
-                String removeVersion = removePkg.getVersion().toLowerCase();
-                if (!pkgMap.containsKey(removeName) &&
-                    !pkgMap.get(removeName).containsKey(removeVersion)) {
-                    continue;
-                }
+        // The dependency vertexes will be added when we see a dependency link to them
+        context.getGraph().addVertex(rootPkg);
+        addPackageToGraph(context, rootPkg, context.getRootBuildConfig(), transversalType.getDirectDependencyTypes());
 
-                pkgMap.get(removeName).remove(removeVersion);
-                removed.put(removePkg.getNameVersion().toLowerCase(), true);
-                if (pkgMap.get(removeName).size() == 0) {
-                    pkgMap.remove(removeName);
-                }
+        while(!context.getPackageQueue().isEmpty()) {
+            ArchipelagoPackage pkg = context.getPackageQueue().poll();
+            if (context.isPackageRemoved(pkg)) {
+                continue;
             }
-        }
-
-        ArchipelagoDependencyGraph graph = new ArchipelagoDependencyGraph(ArchipelagoPackageEdge.class);
-        for (String name : pkgMap.keySet()) {
-            for (String version : pkgMap.get(name).keySet()) {
-                graph.addVertex(pkgMap.get(name).get(version));
+            if (pkg == null) {
+                break;
             }
-        }
-
-        Map<String, Boolean> seenPackages = new HashMap<>();
-        Queue<ArchipelagoPackage> packageQueue = new ConcurrentLinkedQueue<>();
-        addPackageToGraph(pkgMap, seenPackages, graph, packageQueue, removed,
-                rootPkg, rootBuildConfig, transversalType.getDirectDependencyTypes());
-
-        while(!packageQueue.isEmpty()) {
-            ArchipelagoPackage pkg = packageQueue.poll();
             BuildConfig buildConfig = configProvide.getConfig(getBuildPackage(pkg));
-            addPackageToGraph(pkgMap, seenPackages, graph, packageQueue, removed,
-                    pkg, buildConfig, transversalType.getTransitiveDependencyTypes());
+            addPackageToGraph(context, pkg, buildConfig, transversalType.getTransitiveDependencyTypes());
         }
 
-        graphCache.put(graphKey, graph);
+        graphCache.put(getGraphHashKey(rootPkg, transversalType), context.getGraph());
 
-        verifyGraph(graph);
-        return graph;
+        verifyGraph(context.getGraph());
+        return context.getGraph();
+    }
+
+    private boolean isPackageInVersionSet(ArchipelagoPackage pkg) {
+        return buildHashMap.containsKey(pkg.getNameVersion().toLowerCase());
     }
 
     private void verifyGraph(ArchipelagoDependencyGraph graph) throws PackageDependencyLoopDetectedException,
@@ -139,43 +110,50 @@ public class DependencyGraphGenerator {
         }
     }
 
-    private void addPackageToGraph(Map<String, Map<String, ArchipelagoBuiltPackage>> pkgMap,
-                                   Map<String, Boolean> seenPackages, ArchipelagoDependencyGraph graph,
-                                   Queue<ArchipelagoPackage> packageQueue, Map<String, Boolean> removed,
-                                   ArchipelagoPackage pkg, BuildConfig buildConfig, List<DependencyType> dependencyTypes)
+    private void addPackageToGraph(GraphGenerationContext context, ArchipelagoPackage pkg, BuildConfig buildConfig, List<DependencyType> dependencyTypes)
             throws PackageNotInVersionSetException, PackageDependencyLoopDetectedException {
-        if (seenPackages.containsKey(pkg.getNameVersion().toLowerCase())) {
+        if (context.hasSeenPackage(pkg)) {
             return;
         }
 
         List<ArchipelagoPackageEdge> dependencies = getDependencies(buildConfig, dependencyTypes);
-        addGraphEdges(pkgMap, graph, removed, pkg, dependencies);
-        seenPackages.put(pkg.getNameVersion().toLowerCase(), true);
-        packageQueue.addAll(dependencies.stream().map(d -> d.getDependency().getPackage()).collect(Collectors.toList()));
+        addGraphEdges(context, pkg, dependencies);
+        context.seePackage(pkg);
+        context.addDependenciesToBeAdded(dependencies);
     }
 
-    private void addGraphEdges(Map<String, Map<String, ArchipelagoBuiltPackage>> pkgMap,
-                               ArchipelagoDependencyGraph graph, Map<String, Boolean> removed, ArchipelagoPackage pkg,
+    private void addGraphEdges(GraphGenerationContext context, ArchipelagoPackage pkg,
                                List<ArchipelagoPackageEdge> dependencies)
             throws PackageNotInVersionSetException, PackageDependencyLoopDetectedException {
         for (ArchipelagoPackageEdge d : dependencies) {
             ArchipelagoPackage pkgDependency = d.getDependency().getPackage();
-            // checks if the package hsa been removed, if so do not add the dependency graph
-            if (removed.containsKey(d.getDependency().getPackage().getNameVersion().toLowerCase())) {
-                return;
+
+            // We have to do conflict resolves first, so the removes can be applied to the resolved package
+            ArchipelagoPackage conflictResolve = context.getConflictResolveForPackage(pkgDependency);
+            if (conflictResolve != null) {
+                pkgDependency = conflictResolve;
+                d.getDependency().setPackage(conflictResolve);
             }
-            // Detect dependencies to packages that is not in the version-set
-            if (!pkgMap.containsKey(pkgDependency.getName().toLowerCase())) {
-                throw new PackageNotInVersionSetException(pkgDependency);
+
+            if (context.isPackageRemoved(pkgDependency)) {
+                continue;
             }
-            if (!pkgMap.get(pkgDependency.getName().toLowerCase()).containsKey(pkgDependency.getVersion().toLowerCase())) {
+
+            if (!isPackageInVersionSet(pkgDependency)) {
                 throw new PackageNotInVersionSetException(pkgDependency);
             }
 
             try {
-                graph.addEdge(pkg, d.getDependency().getPackage(), d);
+                // This package or dependency may have been added before, that is ok. The graph methods will detect this
+                // and ignore the add call
+                context.getGraph().addVertex(pkgDependency);
+                context.getGraph().addEdge(pkg, d.getDependency().getPackage(), d);
             } catch (IllegalArgumentException exp) {
-                throw new PackageDependencyLoopDetectedException(pkg);
+                if (exp.getMessage().contains("loop")) {
+                    throw new PackageDependencyLoopDetectedException(pkg);
+                } else {
+                    throw exp;
+                }
             }
         }
     }
@@ -232,7 +210,7 @@ public class DependencyGraphGenerator {
         return buildHashMap.get(key);
     }
 
-    private String getGraphHashKey(ArchipelagoPackage rootPkg,
+    private static String getGraphHashKey(ArchipelagoPackage rootPkg,
                                    DependencyTransversalType transversalType) {
         StringBuilder builder = new StringBuilder();
         builder.append(rootPkg.getNameVersion().toLowerCase())
@@ -247,5 +225,59 @@ public class DependencyGraphGenerator {
                     .append(",");
         }
         return builder.toString();
+    }
+
+    private static class GraphGenerationContext {
+        @Getter
+        private final BuildConfig rootBuildConfig;
+        @Getter
+        private final Map<String, Boolean> seenPackages;
+        @Getter
+        private final Queue<ArchipelagoPackage> packageQueue;
+        @Getter
+        private final ArchipelagoDependencyGraph graph;
+
+        public GraphGenerationContext(BuildConfig rootBuildConfig) {
+            this.rootBuildConfig = rootBuildConfig;
+            seenPackages = new HashMap<>();
+            packageQueue = new ConcurrentLinkedQueue<>();
+            graph = new ArchipelagoDependencyGraph(ArchipelagoPackageEdge.class);
+        }
+
+        public boolean hasSeenPackage(ArchipelagoPackage pkg) {
+            return seenPackages.containsKey(pkg.getNameVersion().toLowerCase());
+        }
+        private void seePackage(ArchipelagoPackage pkg) {
+            seenPackages.put(pkg.getNameVersion().toLowerCase(), true);
+        }
+        private void addDependenciesToBeAdded(List<ArchipelagoPackageEdge> packages) {
+            packageQueue.addAll(packages.stream()
+                    .map(d -> d.getDependency().getPackage())
+                    .filter(d -> !hasSeenPackage(d))
+                    .collect(Collectors.toList()));
+        }
+
+        private boolean isPackageRemoved(ArchipelagoPackage pkg) {
+            if (rootBuildConfig.getRemoveDependencies() == null) {
+                return false;
+            }
+            return rootBuildConfig.getRemoveDependencies().stream().anyMatch(r -> r.equals(pkg));
+        }
+
+        public ArchipelagoPackage getConflictResolveForPackage(ArchipelagoPackage pkgDependency) {
+            if (rootBuildConfig.getResolveConflicts() == null) {
+                return null;
+            }
+            Optional<ArchipelagoPackage> conflictResolve = rootBuildConfig.getResolveConflicts().stream()
+                    .filter(r -> r.getName().equalsIgnoreCase(pkgDependency.getName()))
+                    .findFirst();
+            if (conflictResolve.isPresent()) {
+                if (conflictResolve.equals(pkgDependency)) {
+                    return null;
+                }
+                return conflictResolve.get();
+            }
+            return null;
+        }
     }
 }
