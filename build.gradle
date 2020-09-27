@@ -80,8 +80,6 @@ project(':Maui') {
 
     dependencies {
         implementation project(':Maui.Core')
-        implementation project(':Maui.Common')
-        implementation project(':Maui.Serializer')
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
         implementation project(':Archipelago.Common')
@@ -99,8 +97,6 @@ project(':Maui') {
 
 project(':Maui.Core') {
     dependencies {
-        implementation project(':Maui.Serializer')
-        implementation project(':Maui.Common')
         implementation project(':Archipelago.Common')
         implementation project(':Archipelago.Common.Concurrent')
         implementation project(':VersionSetService.Client')
@@ -110,30 +106,7 @@ project(':Maui.Core') {
         implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
         implementation 'net.lingala.zip4j:zip4j:2.6.2'
-    }
-}
-
-project(':Maui.Common') {
-    dependencies {
-        implementation project(':Archipelago.Common')
-    }
-}
-
-project(':Maui.Path') {
-    dependencies {
-        implementation project(':Maui.Common')
-        implementation project(':Archipelago.Common')
         implementation 'org.jgrapht:jgrapht-core:1.5.0'
-    }
-}
-
-project(':Maui.Serializer') {
-    dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Maui.Common')
-        
-        implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
-        implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 }
 

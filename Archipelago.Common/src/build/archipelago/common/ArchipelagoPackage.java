@@ -3,6 +3,7 @@ package build.archipelago.common;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class ArchipelagoPackage {
@@ -63,5 +64,19 @@ public class ArchipelagoPackage {
     }
     public static boolean validateVersion(String version) {
         return VERSION_PATTERN.matcher(version).find();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ArchipelagoPackage that = (ArchipelagoPackage) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(version, that.version);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, version);
     }
 }

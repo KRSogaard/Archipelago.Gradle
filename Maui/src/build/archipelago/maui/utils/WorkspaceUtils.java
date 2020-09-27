@@ -1,6 +1,6 @@
 package build.archipelago.maui.utils;
 
-import buils.archipelago.maui.serializer.WorkspaceConstants;
+import build.archipelago.maui.core.workspace.WorkspaceConstants;
 
 import java.nio.file.*;
 
