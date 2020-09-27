@@ -4,7 +4,7 @@ import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.GetPackageBuildResponse;
-import buils.archipelago.maui.serializer.WorkspaceConstants;
+import build.archipelago.maui.core.workspace.WorkspaceConstants;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
 
@@ -99,5 +99,14 @@ public class LocalPackageCacher implements PackageCacher {
         GetPackageBuildResponse pkgDetails = packageClient.getPackageBuild(pkg);
         Files.writeString(dest.resolve(WorkspaceConstants.BUILD_FILE_NAME), pkgDetails.getConfig());
         Files.setLastModifiedTime(cachePath, FileTime.from(Instant.now()));
+    }
+
+    @Override
+    public Path getCachePath(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
+        Path pkgRoot = cachePath.resolve(pkg.getBuiltPackageName());
+        if (!Files.exists(pkgRoot)) {
+            throw new PackageNotFoundException(pkg);
+        }
+        return pkgRoot;
     }
 }

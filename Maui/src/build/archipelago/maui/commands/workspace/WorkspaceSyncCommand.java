@@ -1,7 +1,7 @@
 package build.archipelago.maui.commands.workspace;
 
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.maui.core.context.WorkspaceContext;
+import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
 import build.archipelago.maui.core.workspace.WorkspaceSyncer;
 import build.archipelago.maui.utils.WorkspaceUtils;
 import build.archipelago.versionsetservice.client.VersionServiceClient;

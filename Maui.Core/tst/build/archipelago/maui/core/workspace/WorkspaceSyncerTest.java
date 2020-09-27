@@ -7,6 +7,7 @@ import build.archipelago.common.concurrent.ExecutorServiceFactory;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.common.versionset.VersionSetRevision;
+import build.archipelago.maui.core.TestData;
 import build.archipelago.maui.core.workspace.cache.PackageCacheList;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.packageservice.client.PackageServiceClient;
@@ -33,11 +34,6 @@ public class WorkspaceSyncerTest {
             .latestRevisionCreated(Instant.now())
             .created(Instant.now())
             .build();
-    private static final ArchipelagoBuiltPackage PKG_1 = ArchipelagoBuiltPackage.parse("pkg1-1.0#abc");
-    private static final ArchipelagoBuiltPackage PKG_2 = ArchipelagoBuiltPackage.parse("pkg2-1.2#ffe");
-    private static final ArchipelagoBuiltPackage PKG_3 = ArchipelagoBuiltPackage.parse("pkg3-1.0#tgf");
-    private static final ArchipelagoBuiltPackage PKG_4 = ArchipelagoBuiltPackage.parse("pkg4-3.0#ujk");
-    private static final ArchipelagoBuiltPackage PKG_5 = ArchipelagoBuiltPackage.parse("pkg5-2.0#jhy");
 
     private WorkspaceSyncer syncer;
     private VersionServiceClient vsClient;
@@ -67,16 +63,16 @@ public class WorkspaceSyncerTest {
         when(vsClient.getVersionSet(any())).thenReturn(VERSION_SET);
         when(vsClient.getVersionSetPackages(any(), any())).thenReturn(VersionSetRevision.builder()
                 .created(Instant.now())
-                .packages(List.of(PKG_1,PKG_2,PKG_3,PKG_4,PKG_5))
+                .packages(List.of(TestData.PKG_1,TestData.PKG_2,TestData.PKG_3,TestData.PKG_4,TestData.PKG_5))
                 .build());
         when(packageCacheList.hasPackage(any())).thenReturn(false);
 
         assertTrue(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
-        verify(packageCacher, times(1)).cache(eq(PKG_1));
-        verify(packageCacher, times(1)).cache(eq(PKG_2));
-        verify(packageCacher, times(1)).cache(eq(PKG_3));
-        verify(packageCacher, times(1)).cache(eq(PKG_4));
-        verify(packageCacher, times(1)).cache(eq(PKG_5));
+        verify(packageCacher, times(1)).cache(eq(TestData.PKG_1));
+        verify(packageCacher, times(1)).cache(eq(TestData.PKG_2));
+        verify(packageCacher, times(1)).cache(eq(TestData.PKG_3));
+        verify(packageCacher, times(1)).cache(eq(TestData.PKG_4));
+        verify(packageCacher, times(1)).cache(eq(TestData.PKG_5));
     }
 
     @Test
@@ -84,20 +80,20 @@ public class WorkspaceSyncerTest {
         when(vsClient.getVersionSet(any())).thenReturn(VERSION_SET);
         when(vsClient.getVersionSetPackages(any(), any())).thenReturn(VersionSetRevision.builder()
                 .created(Instant.now())
-                .packages(List.of(PKG_1,PKG_2,PKG_3,PKG_4,PKG_5))
+                .packages(List.of(TestData.PKG_1,TestData.PKG_2,TestData.PKG_3,TestData.PKG_4,TestData.PKG_5))
                 .build());
-        when(packageCacheList.hasPackage(eq(PKG_1))).thenReturn(true);
-        when(packageCacheList.hasPackage(eq(PKG_2))).thenReturn(true);
-        when(packageCacheList.hasPackage(eq(PKG_3))).thenReturn(false);
-        when(packageCacheList.hasPackage(eq(PKG_4))).thenReturn(false);
-        when(packageCacheList.hasPackage(eq(PKG_5))).thenReturn(false);
+        when(packageCacheList.hasPackage(eq(TestData.PKG_1))).thenReturn(true);
+        when(packageCacheList.hasPackage(eq(TestData.PKG_2))).thenReturn(true);
+        when(packageCacheList.hasPackage(eq(TestData.PKG_3))).thenReturn(false);
+        when(packageCacheList.hasPackage(eq(TestData.PKG_4))).thenReturn(false);
+        when(packageCacheList.hasPackage(eq(TestData.PKG_5))).thenReturn(false);
 
         assertTrue(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
-        verify(packageCacher, never()).cache(eq(PKG_1));
-        verify(packageCacher, never()).cache(eq(PKG_2));
-        verify(packageCacher, times(1)).cache(eq(PKG_3));
-        verify(packageCacher, times(1)).cache(eq(PKG_4));
-        verify(packageCacher, times(1)).cache(eq(PKG_5));
+        verify(packageCacher, never()).cache(eq(TestData.PKG_1));
+        verify(packageCacher, never()).cache(eq(TestData.PKG_2));
+        verify(packageCacher, times(1)).cache(eq(TestData.PKG_3));
+        verify(packageCacher, times(1)).cache(eq(TestData.PKG_4));
+        verify(packageCacher, times(1)).cache(eq(TestData.PKG_5));
     }
 
     @Test
@@ -105,14 +101,14 @@ public class WorkspaceSyncerTest {
         when(vsClient.getVersionSet(any())).thenReturn(VERSION_SET);
         when(vsClient.getVersionSetPackages(any(), any())).thenReturn(VersionSetRevision.builder()
                 .created(Instant.now())
-                .packages(List.of(PKG_1,PKG_2))
+                .packages(List.of(TestData.PKG_1,TestData.PKG_2))
                 .build());
-        when(packageCacheList.hasPackage(eq(PKG_1))).thenReturn(true);
-        when(packageCacheList.hasPackage(eq(PKG_2))).thenReturn(true);
+        when(packageCacheList.hasPackage(eq(TestData.PKG_1))).thenReturn(true);
+        when(packageCacheList.hasPackage(eq(TestData.PKG_2))).thenReturn(true);
 
         assertTrue(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
-        verify(packageCacher, never()).cache(eq(PKG_1));
-        verify(packageCacher, never()).cache(eq(PKG_2));
+        verify(packageCacher, never()).cache(eq(TestData.PKG_1));
+        verify(packageCacher, never()).cache(eq(TestData.PKG_2));
     }
 
 
@@ -121,9 +117,9 @@ public class WorkspaceSyncerTest {
         when(vsClient.getVersionSet(any())).thenReturn(VERSION_SET);
         when(vsClient.getVersionSetPackages(any(), any())).thenReturn(VersionSetRevision.builder()
                 .created(Instant.now())
-                .packages(List.of(PKG_1,PKG_2))
+                .packages(List.of(TestData.PKG_1,TestData.PKG_2))
                 .build());
-        when(packageCacheList.hasPackage(eq(PKG_1))).thenThrow(new RuntimeException("Test"));
+        when(packageCacheList.hasPackage(eq(TestData.PKG_1))).thenThrow(new RuntimeException("Test"));
         assertFalse(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
     }
 

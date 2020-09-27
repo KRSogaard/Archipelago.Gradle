@@ -1,4 +1,4 @@
-package build.archipelago.maui.common.workspace;
+package build.archipelago.maui.core.workspace.models;
 
 import build.archipelago.common.ArchipelagoPackage;
 import lombok.Data;
@@ -12,7 +12,7 @@ import java.util.List;
 @Slf4j
 public class Workspace {
     protected String versionSet;
-    protected List<ArchipelagoPackage> localPackages;
+    protected List<String> localPackages;
 
     protected Workspace() {
         versionSet = null;

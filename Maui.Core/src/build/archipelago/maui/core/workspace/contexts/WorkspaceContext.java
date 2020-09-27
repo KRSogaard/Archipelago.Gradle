@@ -1,14 +1,19 @@
-package build.archipelago.maui.core.context;
+package build.archipelago.maui.core.workspace.contexts;
 
+import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.maui.common.workspace.Workspace;
+import build.archipelago.maui.core.exceptions.PackageNotLocalException;
+import build.archipelago.maui.core.workspace.WorkspaceConstants;
+import build.archipelago.maui.core.workspace.models.Workspace;
+import build.archipelago.maui.core.workspace.serializer.*;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
-import buils.archipelago.maui.serializer.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.nio.file.*;
 
+@Slf4j
 public class WorkspaceContext extends Workspace {
 
     private Path root;
@@ -41,6 +46,16 @@ public class WorkspaceContext extends Workspace {
     }
 
     public static Path getWorkspaceFile(Path path) {
-        return Paths.get(path.toString(), WorkspaceConstants.WORKSPACE_FILE_NAME);
+        return path.resolve(WorkspaceConstants.WORKSPACE_FILE_NAME);
+    }
+
+    public Path getPackageRoot(ArchipelagoPackage pkg) throws PackageNotLocalException {
+        Path packagePath = root.resolve(pkg.getName());
+        if (!Files.exists(packagePath)) {
+            log.warn("The requested package \"{}\" is not in the workspaces root \"{}\"",
+                    pkg.getNameVersion(), root);
+            throw new PackageNotLocalException(pkg);
+        }
+        return packagePath;
     }
 }

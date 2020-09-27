@@ -1,18 +1,18 @@
-package buils.archipelago.maui.serializer;
+package build.archipelago.maui.core.workspace.serializer;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.maui.common.workspace.Workspace;
+import build.archipelago.maui.core.workspace.*;
+import build.archipelago.maui.core.workspace.models.Workspace;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Data
@@ -27,8 +27,8 @@ class WorkspaceSerializer {
 
     private static WorkspaceSerializer convert(Workspace ws) {
         List<String> localPackages = new ArrayList<String>();
-        for (ArchipelagoPackage nameVersion : ws.getLocalPackages()) {
-            localPackages.add(String.format("%s-%s", nameVersion.getName(), nameVersion.getVersion()));
+        for (String name : ws.getLocalPackages()) {
+            localPackages.add(name);
         }
 
         WorkspaceSerializer wss = new WorkspaceSerializer();
@@ -38,21 +38,9 @@ class WorkspaceSerializer {
     }
 
     private static Workspace convert(WorkspaceSerializer wss) {
-        List<ArchipelagoPackage> localPackages = new ArrayList<ArchipelagoPackage>();
-        for (String packageString : wss.getLocalPackages()) {
-            int p = packageString.lastIndexOf("-");
-            if (p == -1) {
-                log.warn("Was unable to parse the package and version from string \"{}\"", packageString);
-                continue;
-            }
-            String packageName = packageString.substring(0, p - 1);
-            String packageVersion = packageString.substring(p + 1);
-            localPackages.add(new ArchipelagoPackage(packageName, packageVersion));
-        }
-
         return Workspace.builder()
                 .versionSet(wss.getVersionSet())
-                .localPackages(localPackages)
+                .localPackages(wss.getLocalPackages())
                 .build();
     }
 

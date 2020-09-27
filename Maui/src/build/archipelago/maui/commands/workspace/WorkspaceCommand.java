@@ -1,10 +1,7 @@
 package build.archipelago.maui.commands.workspace;
 
-import build.archipelago.maui.utils.SystemUtil;
-import buils.archipelago.maui.serializer.WorkspaceConstants;
 import picocli.CommandLine;
 
-import java.nio.file.*;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "workspace", aliases = {"ws"}, mixinStandardHelpOptions = true, description = "Manipulation of the workspace",

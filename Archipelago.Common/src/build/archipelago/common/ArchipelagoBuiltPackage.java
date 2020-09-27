@@ -3,6 +3,8 @@ package build.archipelago.common;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import java.util.Objects;
+
 public class ArchipelagoBuiltPackage extends ArchipelagoPackage {
     private String hash;
 
@@ -46,5 +48,24 @@ public class ArchipelagoBuiltPackage extends ArchipelagoPackage {
 
     public String getBuiltPackageName() {
         return String.format("%s#%s", super.toString(), hash);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ArchipelagoBuiltPackage)) {
+            if (o instanceof ArchipelagoPackage) {
+                return super.equals(o);
+            }
+            return false;
+        }
+        if (!super.equals(o)) return false;
+        ArchipelagoBuiltPackage that = (ArchipelagoBuiltPackage) o;
+        return Objects.equals(getHash(), that.getHash());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getHash());
     }
 }
