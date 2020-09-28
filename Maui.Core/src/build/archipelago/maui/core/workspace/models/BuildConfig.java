@@ -13,6 +13,7 @@ import java.util.List;
 public class BuildConfig {
 
     private String buildSystem;
+    private String version;
     private List<ArchipelagoPackage> libraries;
     private List<ArchipelagoPackage> buildTools;
     private List<ArchipelagoPackage> test;

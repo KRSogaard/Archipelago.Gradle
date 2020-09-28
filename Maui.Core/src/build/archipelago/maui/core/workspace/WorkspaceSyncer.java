@@ -34,10 +34,10 @@ public class WorkspaceSyncer {
         this.packageCacher = packageCacher;
     }
 
-    public boolean syncVersionSet(String versionSet) throws VersionSetDoseNotExistsException {
+    public VersionSetRevision syncVersionSet(String versionSet) throws VersionSetDoseNotExistsException {
         return syncVersionSet(versionSet, null);
     }
-    public boolean syncVersionSet(String versionSet, String revision) throws VersionSetDoseNotExistsException {
+    public VersionSetRevision syncVersionSet(String versionSet, String revision) throws VersionSetDoseNotExistsException {
         Instant startTime = Instant.now();
         log.trace("Got request to sync version set: {}", versionSet);
         VersionSet vs = vsClient.getVersionSet(versionSet);
@@ -96,6 +96,9 @@ public class WorkspaceSyncer {
         } else {
             log.warn("Syncing version set {} finished  in {} ms.", vs.getName(), runTimeMilli);
         }
-        return !failures.getValue();
+        if (failures.getValue()) {
+            return null;
+        }
+        return vsRevision;
     }
 }

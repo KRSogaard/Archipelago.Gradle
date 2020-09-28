@@ -19,6 +19,7 @@ public class BuildConfigSerializer {
     private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     private String buildSystem;
+    private String version;
     private List<String> libraries;
     private List<String> buildTools;
     private List<String> test;
@@ -27,9 +28,9 @@ public class BuildConfigSerializer {
     private List<String> resolveConflicts;
 
     private static BuildConfigSerializer convert(BuildConfig bc) {
-        List<String> localPackages = new ArrayList<String>();
         BuildConfigSerializer serializer = new BuildConfigSerializer();
         serializer.setBuildSystem(bc.getBuildSystem());
+        serializer.setVersion(bc.getVersion());
         serializer.setLibraries(bc.getLibraries().stream().map(ArchipelagoPackage::getNameVersion)
                 .collect(Collectors.toList()));
         serializer.setBuildTools(bc.getBuildTools().stream().map(ArchipelagoPackage::getNameVersion)
@@ -49,6 +50,7 @@ public class BuildConfigSerializer {
     private static BuildConfig convert(BuildConfigSerializer bcs) {
         return BuildConfig.builder()
                 .buildSystem(bcs.getBuildSystem())
+                .version(bcs.getVersion())
                 .libraries(bcs.getLibraries().stream().map(ArchipelagoPackage::parse)
                         .collect(Collectors.toList()))
                 .buildTools(bcs.getBuildTools().stream().map(ArchipelagoPackage::parse)

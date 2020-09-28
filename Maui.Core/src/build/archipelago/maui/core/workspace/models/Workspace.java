@@ -12,10 +12,12 @@ import java.util.List;
 @Slf4j
 public class Workspace {
     protected String versionSet;
+    protected List<ArchipelagoPackage> targets;
     protected List<String> localPackages;
 
     protected Workspace() {
         versionSet = null;
+        targets = new ArrayList<>();
         localPackages = new ArrayList<>();
     }
 }

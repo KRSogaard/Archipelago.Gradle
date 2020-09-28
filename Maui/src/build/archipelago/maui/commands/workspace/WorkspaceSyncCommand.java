@@ -1,6 +1,7 @@
 package build.archipelago.maui.commands.workspace;
 
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
 import build.archipelago.maui.core.workspace.WorkspaceSyncer;
 import build.archipelago.maui.utils.WorkspaceUtils;
@@ -52,7 +53,9 @@ public class WorkspaceSyncCommand implements Callable<Integer> {
             revision = revision.trim();
         }
         try {
-            workspaceSyncer.syncVersionSet(ws.getVersionSet(), revision);
+            VersionSetRevision vsRevision = workspaceSyncer.syncVersionSet(ws.getVersionSet(), revision);
+            ws.saveRevisionCache(vsRevision);
+
         } catch (VersionSetDoseNotExistsException e) {
             log.error(String.format("Was unable to sync workspace \"%s\" as the version set \"%s#%s\" dose not exists",
                     wsDir.toString(), ws.getVersionSet(), revision), e);
