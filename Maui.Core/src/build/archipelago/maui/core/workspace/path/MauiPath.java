@@ -1,45 +1,132 @@
 package build.archipelago.maui.core.workspace.path;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.maui.core.exceptions.VersionSetNotSyncedException;
-import build.archipelago.maui.core.workspace.ConfigProvider;
+import build.archipelago.common.exceptions.*;
+import build.archipelago.maui.core.exceptions.*;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
-import build.archipelago.maui.core.workspace.path.graph.DependencyGraphGenerator;
+import build.archipelago.maui.core.workspace.path.graph.*;
+import build.archipelago.maui.core.workspace.path.recipies.*;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.*;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.jgrapht.traverse.DepthFirstIterator;
 
+import java.awt.desktop.PrintFilesEvent;
 import java.io.IOException;
-import java.util.regex.Pattern;
+import java.util.*;
+import java.util.regex.*;
 
 @Slf4j
 public class MauiPath {
 
-    private static final Pattern re = Pattern.compile("^(\\[([^\\]]+)\\])?([^.]+)\\.(.+)");
+    private List<Recipe> recipes;
 
-    private PackageCacher packageCacher;
-    private VersionServiceClient versionServiceClient;
-
-    public MauiPath(PackageCacher packageCacher, VersionServiceClient versionServiceClient) {
-        this.packageCacher = packageCacher;
-        this.versionServiceClient = versionServiceClient;
+    public MauiPath(List<Recipe> recipes) {
+        this.recipes = recipes;
     }
 
-    // It returns string instead of Path to allow recipes to be creative wit the usage
-    public ImmutableSet<String> getPaths(WorkspaceContext workspaceContext, ArchipelagoPackage targetPackage, String pathLine)
-            throws IOException, VersionSetNotSyncedException {
+    public ImmutableList<String> getPaths(WorkspaceContext workspaceContext, ArchipelagoPackage targetpackage,
+                                          DependencyTransversalType dependencyTransversalType, Class recipe)
+            throws Exception {
+        StringBuilder pathLine = new StringBuilder();
+        pathLine.append(dependencyTransversalType.getName());
+        pathLine.append(".");
 
-        ConfigProvider configProvider = new ConfigProvider(workspaceContext, packageCacher);
-        DependencyGraphGenerator graphGenerator = new DependencyGraphGenerator(configProvider, workspaceContext.getVersionSetRevision());
-
-        var pathBuilder = ImmutableSet.<String>builder();
-        for (String request : pathLine.split(";")) {
-            log.info("Generating graph for: {}", request);
-            // TODO parese incoming pathline
+        boolean found = false;
+        for (Recipe r : recipes) {
+            if (recipe.equals(r.getClass())) {
+                pathLine.append(r.getName());
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            throw new RecipeNotFoundException(recipe.getName());
         }
 
-        return pathBuilder.build();
+
+        return getPaths(workspaceContext, targetpackage, pathLine.toString());
+    }
+    // It returns string instead of Path to allow recipes to be creative wit the usage
+    public ImmutableList<String> getPaths(WorkspaceContext workspaceContext, ArchipelagoPackage rootPackage, String pathLine)
+            throws Exception {
+
+        DependencyGraphGenerator graphGenerator = new DependencyGraphGenerator(workspaceContext);
+        ImmutableList.Builder<String> list = ImmutableList.<String>builder();
+
+        for (String request : pathLine.split(";")) {
+            log.info("Generating graph for: {}", request);
+            PathProperties pathProperties = PathProperties.parse(request);
+            ArchipelagoPackage targetPackage = rootPackage;
+
+            if (pathProperties.targetPackage != null) {
+                targetPackage = ArchipelagoPackage.parse(pathProperties.targetPackage);
+            }
+
+            if (!workspaceContext.isPackageInVersionSet(targetPackage)) {
+                throw new PackageNotInVersionSetException(targetPackage);
+            }
+
+            Optional<Recipe> optionalRecipe = recipes.stream()
+                    .filter(r -> r.getName().equalsIgnoreCase(pathProperties.getRecipe()))
+                    .findFirst();
+            if (optionalRecipe.isEmpty()) {
+                throw new RecipeNotFoundException(pathProperties.getRecipe());
+            }
+            Recipe recipe = optionalRecipe.get();
+
+            DependencyTransversalType transversalType = getTransversalType(pathProperties.transversalType);
+            ArchipelagoDependencyGraph graph = graphGenerator.generateGraph(targetPackage, transversalType);
+
+            Iterator<ArchipelagoPackage> iterator = new DepthFirstIterator<>(graph, targetPackage);
+            while (iterator.hasNext()) {
+                ArchipelagoPackage pkg = iterator.next();
+                if (!transversalType.includeRoot() && targetPackage.equals(pkg)) {
+                    continue;
+                }
+                list.addAll(recipe.execute(pkg, workspaceContext));
+            }
+        }
+
+        return list.build();
+    }
+
+    private DependencyTransversalType getTransversalType(String name) throws DependencyTransversalTypeNotFoundException {
+        Optional<DependencyTransversalType> optional = Arrays.stream(DependencyTransversalType.values())
+                .filter(d -> d.getName().equalsIgnoreCase(name)).findFirst();
+        if (optional.isEmpty()) {
+            throw new DependencyTransversalTypeNotFoundException(name);
+        }
+        return optional.get();
+    }
+
+    protected static class PathProperties {
+        private static final Pattern re = Pattern.compile("^(\\[([^\\]]+)\\])?([^.\\[\\]]+)\\.(.+)");
+
+        @Getter
+        private String targetPackage;
+        @Getter
+        private String transversalType;
+        @Getter
+        private String recipe;
+
+        public PathProperties(String targetPackage, String transversalType, String recipe) {
+            this.targetPackage = targetPackage;
+            this.transversalType = transversalType;
+            this.recipe = recipe;
+        }
+
+        protected static PathProperties parse(String input) throws PathStringInvalidException {
+            Matcher matcher = re.matcher(input);
+            while (matcher.find()){
+                if (matcher.groupCount() == 4) {
+                    return new PathProperties(matcher.group(2), matcher.group(3), matcher.group(4));
+                }
+            }
+
+            throw new PathStringInvalidException(input);
+        }
     }
 }

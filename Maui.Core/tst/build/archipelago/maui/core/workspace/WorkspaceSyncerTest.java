@@ -16,7 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -67,7 +67,7 @@ public class WorkspaceSyncerTest {
                 .build());
         when(packageCacheList.hasPackage(any())).thenReturn(false);
 
-        assertTrue(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
+        assertNotNull(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
         verify(packageCacher, times(1)).cache(eq(TestData.PKG_1));
         verify(packageCacher, times(1)).cache(eq(TestData.PKG_2));
         verify(packageCacher, times(1)).cache(eq(TestData.PKG_3));
@@ -88,7 +88,7 @@ public class WorkspaceSyncerTest {
         when(packageCacheList.hasPackage(eq(TestData.PKG_4))).thenReturn(false);
         when(packageCacheList.hasPackage(eq(TestData.PKG_5))).thenReturn(false);
 
-        assertTrue(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
+        assertNotNull(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
         verify(packageCacher, never()).cache(eq(TestData.PKG_1));
         verify(packageCacher, never()).cache(eq(TestData.PKG_2));
         verify(packageCacher, times(1)).cache(eq(TestData.PKG_3));
@@ -106,7 +106,7 @@ public class WorkspaceSyncerTest {
         when(packageCacheList.hasPackage(eq(TestData.PKG_1))).thenReturn(true);
         when(packageCacheList.hasPackage(eq(TestData.PKG_2))).thenReturn(true);
 
-        assertTrue(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
+        assertNotNull(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
         verify(packageCacher, never()).cache(eq(TestData.PKG_1));
         verify(packageCacher, never()).cache(eq(TestData.PKG_2));
     }
@@ -120,7 +120,7 @@ public class WorkspaceSyncerTest {
                 .packages(List.of(TestData.PKG_1,TestData.PKG_2))
                 .build());
         when(packageCacheList.hasPackage(eq(TestData.PKG_1))).thenThrow(new RuntimeException("Test"));
-        assertFalse(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
+        assertNull(syncer.syncVersionSet(VERSION_SET.getName().toLowerCase()));
     }
 
 }

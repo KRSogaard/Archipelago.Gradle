@@ -7,7 +7,11 @@ public class ConfigUtil {
     public static void writeDefaultConfig(Path file) throws IOException {
         String defaultConfig = "" +
                 "services.versionset.url: \"http://localhost:8081\"\n" +
-                "services.packages.url: \"http://localhost:8080\"\n";
+                "services.packages.url: \"http://localhost:8080\"\n" +
+                "sourceprovider: \"git\"\n" +
+                "sourceprovider.git.base: \"https://github.com\"\n" +
+                "sourceprovider.git.group: \"KRSogaard\"\n" +
+                "";
 
         Files.writeString(file, defaultConfig);
     }

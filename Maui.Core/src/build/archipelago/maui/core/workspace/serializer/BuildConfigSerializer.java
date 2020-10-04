@@ -5,6 +5,7 @@ import build.archipelago.maui.core.workspace.*;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.common.base.Strings;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,39 +32,63 @@ public class BuildConfigSerializer {
         BuildConfigSerializer serializer = new BuildConfigSerializer();
         serializer.setBuildSystem(bc.getBuildSystem());
         serializer.setVersion(bc.getVersion());
-        serializer.setLibraries(bc.getLibraries().stream().map(ArchipelagoPackage::getNameVersion)
-                .collect(Collectors.toList()));
+        if (bc.getLibraries() != null) {
+            serializer.setLibraries(bc.getLibraries().stream().map(ArchipelagoPackage::getNameVersion)
+                    .collect(Collectors.toList()));
+        }
+        if (bc.getBuildTools() != null) {
         serializer.setBuildTools(bc.getBuildTools().stream().map(ArchipelagoPackage::getNameVersion)
                 .collect(Collectors.toList()));
+        }
+        if (bc.getTest() != null) {
         serializer.setTest(bc.getTest().stream().map(ArchipelagoPackage::getNameVersion)
                 .collect(Collectors.toList()));
+        }
+        if (bc.getRuntime() != null) {
         serializer.setRuntime(bc.getRuntime().stream().map(ArchipelagoPackage::getNameVersion)
                 .collect(Collectors.toList()));
+        }
+        if (bc.getRemoveDependencies() != null) {
         serializer.setRemoveDependencies(bc.getRemoveDependencies().stream().map(ArchipelagoPackage::getNameVersion)
                 .collect(Collectors.toList()));
-        serializer.setResolveConflicts(bc.getResolveConflicts().stream().map(ArchipelagoPackage::getNameVersion)
-                .collect(Collectors.toList()));
+        }
+        if (bc.getResolveConflicts() != null) {
+            serializer.setResolveConflicts(bc.getResolveConflicts().stream().map(ArchipelagoPackage::getNameVersion)
+                    .collect(Collectors.toList()));
+        }
 
         return serializer;
     }
 
     private static BuildConfig convert(BuildConfigSerializer bcs) {
-        return BuildConfig.builder()
-                .buildSystem(bcs.getBuildSystem())
-                .version(bcs.getVersion())
-                .libraries(bcs.getLibraries().stream().map(ArchipelagoPackage::parse)
-                        .collect(Collectors.toList()))
-                .buildTools(bcs.getBuildTools().stream().map(ArchipelagoPackage::parse)
-                        .collect(Collectors.toList()))
-                .test(bcs.getTest().stream().map(ArchipelagoPackage::parse)
-                        .collect(Collectors.toList()))
-                .runtime(bcs.getRuntime().stream().map(ArchipelagoPackage::parse)
-                        .collect(Collectors.toList()))
-                .removeDependencies(bcs.getRemoveDependencies().stream().map(ArchipelagoPackage::parse)
-                        .collect(Collectors.toList()))
-                .resolveConflicts(bcs.getResolveConflicts().stream().map(ArchipelagoPackage::parse)
-                        .collect(Collectors.toList()))
-                .build();
+        BuildConfig.BuildConfigBuilder builder = BuildConfig.builder();
+        if (!Strings.isNullOrEmpty(bcs.getBuildSystem())) {
+            builder.buildSystem(bcs.getBuildSystem());
+        }
+        if (!Strings.isNullOrEmpty(bcs.getVersion())) {
+            builder.version(bcs.getVersion());
+        }
+        if (bcs.getLibraries() != null) {
+            builder.libraries(bcs.getLibraries().stream().map(ArchipelagoPackage::parse)
+                    .collect(Collectors.toList()));
+        }
+        if (bcs.getBuildTools() != null) {
+            builder.buildTools(bcs.getBuildTools().stream().map(ArchipelagoPackage::parse)
+                    .collect(Collectors.toList()));
+        }
+        if (bcs.getTest() != null) {
+            builder.test(bcs.getTest().stream().map(ArchipelagoPackage::parse)
+                    .collect(Collectors.toList()));
+        }
+        if (bcs.getRemoveDependencies() != null) {
+            builder.removeDependencies(bcs.getRemoveDependencies().stream().map(ArchipelagoPackage::parse)
+                    .collect(Collectors.toList()));
+        }
+        if (bcs.getResolveConflicts() != null) {
+            builder.resolveConflicts(bcs.getResolveConflicts().stream().map(ArchipelagoPackage::parse)
+                    .collect(Collectors.toList()));
+        }
+        return builder.build();
     }
 
     public static void save(BuildConfig buildConfig, Path packageRoot) throws IOException {

@@ -36,7 +36,7 @@ subprojects {
         testImplementation group: 'junit', name: 'junit', version: '4.12'
         testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.+'
 
-        implementation 'org.slf4j:slf4j-api:1.7.25'
+        implementation 'org.slf4j:slf4j-api:1.7.30'
 
         // Google Guava
         implementation 'com.google.guava:guava:28.0-jre'
@@ -85,8 +85,12 @@ project(':Maui') {
         implementation project(':Archipelago.Common')
         implementation project(':Archipelago.Common.Concurrent')
 
-        implementation 'org.springframework.boot:spring-boot-starter'
-        compile 'info.picocli:picocli:4.1.4'
+        implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
+        implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
+        implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
+
+        implementation 'com.google.inject:guice:4.2.3'
+        implementation 'info.picocli:picocli:4.1.4'
         annotationProcessor 'info.picocli:picocli-codegen:4.1.4'
     }
 
@@ -102,7 +106,7 @@ project(':Maui.Core') {
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
 
-        implementation "info.picocli:picocli-spring-boot-starter:4.5.1"
+        implementation 'org.slf4j:slf4j-api:1.7.30'
         implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
         implementation 'net.lingala.zip4j:zip4j:2.6.2'
@@ -175,8 +179,7 @@ project(':PackageService.Client') {
     dependencies {
         implementation project(':Archipelago.Common')
 
-        implementation 'org.springframework.boot:spring-boot-starter-webflux:2.2.5.RELEASE'
-        implementation 'org.projectreactor:reactor-spring:1.0.1.RELEASE'
+        implementation 'org.springframework:spring-web:5.2.9.RELEASE'
     }
 }
 
@@ -246,13 +249,9 @@ project(':VersionSetService.Core') {
 }
 
 project(':VersionSetService.Client') {
-    apply plugin: 'io.spring.dependency-management'
-    apply plugin: 'maven-publish'
-
     dependencies {
         implementation project(':Archipelago.Common')
 
-        implementation 'org.springframework.boot:spring-boot-starter-webflux:2.2.5.RELEASE'
-        implementation 'org.projectreactor:reactor-spring:1.0.1.RELEASE'
+        implementation 'org.springframework:spring-web:5.2.9.RELEASE'
     }
 }

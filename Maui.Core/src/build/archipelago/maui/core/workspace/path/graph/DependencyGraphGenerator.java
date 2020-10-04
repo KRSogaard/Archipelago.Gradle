@@ -2,9 +2,8 @@ package build.archipelago.maui.core.workspace.path.graph;
 
 import build.archipelago.common.*;
 import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.versionset.*;
 import build.archipelago.maui.core.exceptions.*;
-import build.archipelago.maui.core.workspace.ConfigProvider;
+import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.core.workspace.path.*;
 import lombok.*;
@@ -18,14 +17,17 @@ import java.util.stream.Collectors;
 public class DependencyGraphGenerator {
 
     protected static Map<String, ArchipelagoDependencyGraph> graphCache;
-    private Map<String, ArchipelagoBuiltPackage> buildHashMap;
-    private final VersionSetRevision versionSetRevision;
-    private final ConfigProvider configProvide;
 
-    public DependencyGraphGenerator(ConfigProvider configProvider,
-                                    VersionSetRevision versionSetRevision) {
-        this.versionSetRevision = versionSetRevision;
-        this.configProvide = configProvider;
+    public static void clearCache() {
+        if (graphCache != null) {
+            graphCache.clear();
+        }
+    }
+
+    private final WorkspaceContext workspaceContext;
+
+    public DependencyGraphGenerator(WorkspaceContext workspaceContext) {
+        this.workspaceContext = workspaceContext;
     }
 
     private static ArchipelagoDependencyGraph getCachedGraph(ArchipelagoPackage rootPkg,
@@ -42,18 +44,18 @@ public class DependencyGraphGenerator {
 
     public ArchipelagoDependencyGraph generateGraph(ArchipelagoPackage rootPkg,
                                                     DependencyTransversalType transversalType)
-            throws PackageNotInVersionSetException, PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException {
+            throws PackageNotInVersionSetException, PackageNotLocalException, IOException, PackageNotFoundException,
+            PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
         ArchipelagoDependencyGraph cacheGraph = getCachedGraph(rootPkg, transversalType);
         if (cacheGraph != null) {
             return cacheGraph;
         }
 
-        createBuildHashMap();
-        GraphGenerationContext context = new GraphGenerationContext(configProvide.getConfig(getBuildPackage(rootPkg)));
+        GraphGenerationContext context = new GraphGenerationContext(rootPkg, workspaceContext);
 
         if (context.getRootBuildConfig().getResolveConflicts() != null) {
             for (ArchipelagoPackage resolve : context.getRootBuildConfig().getResolveConflicts()) {
-                if (!isPackageInVersionSet(resolve)) {
+                if (!context.isPackageInVersionSet(resolve)) {
                     throw new PackageNotInVersionSetException(resolve);
                 }
             }
@@ -71,7 +73,7 @@ public class DependencyGraphGenerator {
             if (pkg == null) {
                 break;
             }
-            BuildConfig buildConfig = configProvide.getConfig(getBuildPackage(pkg));
+            BuildConfig buildConfig = workspaceContext.getConfig(context.getBuildPackage(pkg));
             addPackageToGraph(context, pkg, buildConfig, transversalType.getTransitiveDependencyTypes());
         }
 
@@ -79,10 +81,6 @@ public class DependencyGraphGenerator {
 
         verifyGraph(context.getGraph());
         return context.getGraph();
-    }
-
-    private boolean isPackageInVersionSet(ArchipelagoPackage pkg) {
-        return buildHashMap.containsKey(pkg.getNameVersion().toLowerCase());
     }
 
     private void verifyGraph(ArchipelagoDependencyGraph graph) throws PackageDependencyLoopDetectedException,
@@ -110,7 +108,8 @@ public class DependencyGraphGenerator {
         }
     }
 
-    private void addPackageToGraph(GraphGenerationContext context, ArchipelagoPackage pkg, BuildConfig buildConfig, List<DependencyType> dependencyTypes)
+    private void addPackageToGraph(GraphGenerationContext context, ArchipelagoPackage pkg, BuildConfig buildConfig,
+                                   List<DependencyType> dependencyTypes)
             throws PackageNotInVersionSetException, PackageDependencyLoopDetectedException {
         if (context.hasSeenPackage(pkg)) {
             return;
@@ -139,7 +138,7 @@ public class DependencyGraphGenerator {
                 continue;
             }
 
-            if (!isPackageInVersionSet(pkgDependency)) {
+            if (!context.isPackageInVersionSet(pkgDependency)) {
                 throw new PackageNotInVersionSetException(pkgDependency);
             }
 
@@ -193,23 +192,6 @@ public class DependencyGraphGenerator {
         return packages;
     }
 
-    private void createBuildHashMap() {
-        if (buildHashMap != null) {
-            return;
-        }
-
-        buildHashMap = new HashMap<>();
-        versionSetRevision.getPackages().forEach(pkg -> buildHashMap.put(pkg.getNameVersion().toLowerCase(), pkg));
-    }
-
-    private ArchipelagoBuiltPackage getBuildPackage(ArchipelagoPackage pkg) throws PackageNotInVersionSetException {
-        String key = pkg.getNameVersion().toLowerCase();
-        if (!buildHashMap.containsKey(pkg.getNameVersion().toLowerCase())){
-            throw new PackageNotInVersionSetException(pkg);
-        }
-        return buildHashMap.get(key);
-    }
-
     private static String getGraphHashKey(ArchipelagoPackage rootPkg,
                                    DependencyTransversalType transversalType) {
         StringBuilder builder = new StringBuilder();
@@ -236,9 +218,15 @@ public class DependencyGraphGenerator {
         private final Queue<ArchipelagoPackage> packageQueue;
         @Getter
         private final ArchipelagoDependencyGraph graph;
+        private final WorkspaceContext workspaceContext;
+        private final Map<String, ArchipelagoBuiltPackage> buildMap;
 
-        public GraphGenerationContext(BuildConfig rootBuildConfig) {
-            this.rootBuildConfig = rootBuildConfig;
+        public GraphGenerationContext(ArchipelagoPackage pkg, WorkspaceContext workspaceContext)
+                throws IOException, VersionSetNotSyncedException, PackageNotInVersionSetException,
+                PackageNotFoundException, PackageNotLocalException {
+            this.workspaceContext = workspaceContext;
+            buildMap = createBuildHashMap();
+            this.rootBuildConfig = workspaceContext.getConfig(pkg);
             seenPackages = new HashMap<>();
             packageQueue = new ConcurrentLinkedQueue<>();
             graph = new ArchipelagoDependencyGraph(ArchipelagoPackageEdge.class);
@@ -278,6 +266,30 @@ public class DependencyGraphGenerator {
                 return conflictResolve.get();
             }
             return null;
+        }
+
+        public boolean isPackageInVersionSet(ArchipelagoPackage pkg) {
+            return buildMap.containsKey(pkg.getNameVersion().toLowerCase());
+        }
+
+        public ArchipelagoBuiltPackage getBuildPackage(ArchipelagoPackage pkg) throws PackageNotInVersionSetException {
+            String key = pkg.getNameVersion().toLowerCase();
+            if (!buildMap.containsKey(pkg.getNameVersion().toLowerCase())){
+                throw new PackageNotInVersionSetException(pkg);
+            }
+            return buildMap.get(key);
+        }
+
+        private Map<String, ArchipelagoBuiltPackage> createBuildHashMap()
+                throws IOException, VersionSetNotSyncedException {
+            Map<String, ArchipelagoBuiltPackage> buildHashMap = new HashMap<>();
+            workspaceContext.getVersionSetRevision().getPackages().forEach(pkg -> buildHashMap.put(pkg.getNameVersion().toLowerCase(), pkg));
+            for (ArchipelagoPackage pkg : workspaceContext.getLocalArchipelagoPackages()) {
+                if (!buildHashMap.containsKey(pkg.getNameVersion().toLowerCase())) {
+                    buildHashMap.put(pkg.getNameVersion().toLowerCase(), new ArchipelagoBuiltPackage(pkg, "local"));
+                }
+            }
+            return buildHashMap;
         }
     }
 }

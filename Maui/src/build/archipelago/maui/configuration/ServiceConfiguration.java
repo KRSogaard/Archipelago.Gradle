@@ -6,33 +6,33 @@ import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.*;
 import build.archipelago.maui.core.workspace.*;
 import build.archipelago.maui.core.workspace.cache.*;
+import build.archipelago.maui.core.workspace.path.MauiPath;
+import build.archipelago.maui.core.workspace.path.recipies.BinRecipe;
 import build.archipelago.maui.utils.SystemUtil;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
-import build.archipelago.versionsetservice.client.model.CreateVersionSetRequest;
 import build.archipelago.versionsetservice.client.rest.RestVersionSetServiceClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
+import com.google.inject.*;
+import com.google.inject.name.Named;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
 
-@Configuration
-public class ServiceConfiguration {
+public class ServiceConfiguration extends AbstractModule {
 
-    @Bean
-    public VersionServiceClient versionServiceClient(@Value("${services.versionset.url}") String vsEndpoint) {
+    @Provides
+    public VersionServiceClient versionServiceClient(@Named("services.versionset.url") String vsEndpoint) {
         return new RestVersionSetServiceClient(vsEndpoint);
     }
 
-    @Bean
-    public PackageServiceClient packageServiceClient(@Value("${services.packages.url}") String pkgEndpoint) {
+    @Provides
+    public PackageServiceClient packageServiceClient(@Named("services.packages.url") String pkgEndpoint) {
         return new RestPackageServiceClient(pkgEndpoint);
     }
 
-    @Bean
+    @Provides
     public PackageCacher packageCacher(PackageServiceClient packageServiceClient) throws IOException {
         Path cachePath = SystemUtil.getCachePath();
         if (!Files.exists(cachePath)) {
@@ -45,11 +45,26 @@ public class ServiceConfiguration {
         return new LocalPackageCacher(cachePath, tempPath, packageServiceClient);
     }
 
-    @Bean
+    @Provides
     public WorkspaceSyncer workspaceSyncer(PackageCacher packageCacher,
                                            VersionServiceClient versionServiceClient) {
         BlockingExecutorServiceFactory executorServiceFactory = new BlockingExecutorServiceFactory();
         executorServiceFactory.setMaximumPoolSize(4);
         return new WorkspaceSyncer(packageCacher, versionServiceClient, executorServiceFactory);
+    }
+
+    @Provides
+    public MauiPath mauiPath() {
+        return new MauiPath(List.of(
+                new BinRecipe()
+        ));
+    }
+
+    @Provides
+    public PackageSourceProvider packageSourceProvider(VersionServiceClient versionServiceClient,
+                                                       @Named("sourceprovider") String serviceProvider,
+                                                       @Named("sourceprovider.git.base") String gitBase,
+                                                       @Named("sourceprovider.git.group") String gitGroup) {
+        return new GitPackageSourceProvider(versionServiceClient, gitBase, gitGroup);
     }
 }

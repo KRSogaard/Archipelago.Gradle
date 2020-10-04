@@ -5,12 +5,10 @@ import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.core.TestData;
 import build.archipelago.maui.core.exceptions.*;
-import build.archipelago.maui.core.workspace.ConfigProvider;
+import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.core.workspace.path.DependencyTransversalType;
-import org.jgrapht.graph.*;
 import org.junit.*;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
@@ -25,26 +23,26 @@ public class DependencyGraphGeneratorTest {
             .buildSystem("Copy")
             .build();
 
-    private ConfigProvider configProvider;
+    private WorkspaceContext workspaceContext;
 
     @Before
     public void setUp() throws Exception {
-        configProvider = mock(ConfigProvider.class);
-        if (DependencyGraphGenerator.graphCache != null) {
-            DependencyGraphGenerator.graphCache.clear();
-        }
+        workspaceContext = mock(WorkspaceContext.class);
+        DependencyGraphGenerator.clearCache();
     }
 
     @Test
     public void testRootPackageWithNoDependencies() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
+
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
 
         assertNotNull(graph);
@@ -54,7 +52,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test
     public void testRootPackageWith2DependenciesNoTransitive() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3))
@@ -65,10 +63,11 @@ public class DependencyGraphGeneratorTest {
                 .libraries(List.of(TestData.PKG_2, TestData.PKG_3))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
 
         assertNotNull(graph);
@@ -80,7 +79,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test
     public void testRootPackageWith2DependenciesDependencyHaveShareDependencyWithRoot() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3))
@@ -96,11 +95,12 @@ public class DependencyGraphGeneratorTest {
                 .libraries(List.of(TestData.PKG_3))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
-        when(configProvider.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
 
         assertNotNull(graph);
@@ -112,7 +112,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test
     public void testRootDependenciesSharingSameDependency() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4))
@@ -128,12 +128,13 @@ public class DependencyGraphGeneratorTest {
                 .libraries(List.of(TestData.PKG_4))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
-        when(configProvider.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
-        when(configProvider.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig2);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(workspaceContext.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig2);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
 
         assertNotNull(graph);
@@ -145,7 +146,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testGetTestDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException {
+    public void testGetTestDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -158,10 +159,11 @@ public class DependencyGraphGeneratorTest {
                 .buildTools(List.of(TestData.PKG_5))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.TEST);
 
         assertNotNull(graph);
@@ -173,7 +175,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testGetBuildDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException {
+    public void testGetBuildDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -186,11 +188,12 @@ public class DependencyGraphGeneratorTest {
                 .buildTools(List.of(TestData.PKG_5))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILDTOOLS);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
+        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
 
         assertNotNull(graph);
         assertEquals(4, graph.vertexSet().size());
@@ -201,7 +204,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testGetRuntimeDependenciesWithNoDirectRuntimeDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException {
+    public void testGetRuntimeDependenciesWithNoDirectRuntimeDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -214,10 +217,11 @@ public class DependencyGraphGeneratorTest {
                 .buildTools(List.of(TestData.PKG_5))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
 
         assertNotNull(graph);
@@ -228,7 +232,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testGetRuntimeDependenciesWithDirectRuntimeDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException {
+    public void testGetRuntimeDependenciesWithDirectRuntimeDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -241,10 +245,11 @@ public class DependencyGraphGeneratorTest {
                 .runtime(List.of(TestData.PKG_5))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
 
         assertNotNull(graph);
@@ -257,7 +262,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test
     public void testGetTestDependenciesShouldGetDependenciesRuntimeDependencies() throws PackageNotLocalException,
-            PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException {
+            PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -275,12 +280,13 @@ public class DependencyGraphGeneratorTest {
                 .buildTools(List.of(TestData.PKG_4))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
-        when(configProvider.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig2);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig2);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILDTOOLS);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
+        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
 
         assertNotNull(graph);
         assertEquals(4, graph.vertexSet().size());
@@ -295,7 +301,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test(expected = PackageDependencyLoopDetectedException.class)
     public void testPackageLoopDetection() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4))
@@ -311,18 +317,19 @@ public class DependencyGraphGeneratorTest {
                 .libraries(List.of(TestData.PKG_1, TestData.PKG_4))
                 .build();
 
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
-        when(configProvider.getConfig(eq(TestData.PKG_2))).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig2);
-        when(configProvider.getConfig(eq(TestData.PKG_4))).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig2);
+        when(workspaceContext.getConfig(eq(TestData.PKG_4))).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
     }
 
     @Test(expected = PackageDependencyLoopDetectedException.class)
     public void testDeepPackageLoopDetection() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -353,18 +360,19 @@ public class DependencyGraphGeneratorTest {
                 .libraries(List.of(TestData.PKG_2))
                 .build();
 
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
-        when(configProvider.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
-        when(configProvider.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig3);
-        when(configProvider.getConfig(eq(TestData.PKG_4))).thenReturn(buildConfig4);
-        when(configProvider.getConfig(eq(TestData.PKG_5))).thenReturn(buildConfig5);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(workspaceContext.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig3);
+        when(workspaceContext.getConfig(eq(TestData.PKG_4))).thenReturn(buildConfig4);
+        when(workspaceContext.getConfig(eq(TestData.PKG_5))).thenReturn(buildConfig5);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
     }
 
     @Test(expected = PackageNotInVersionSetException.class)
-    public void testDependencyMissingFromVersionSet() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException {
+    public void testDependencyMissingFromVersionSet() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1))
@@ -375,15 +383,16 @@ public class DependencyGraphGeneratorTest {
                 .libraries(List.of(TestData.PKG_2))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
     }
 
     @Test
-    public void testRemovePackage() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException {
+    public void testRemovePackage() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException, VersionSetNotSyncedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4))
@@ -405,13 +414,14 @@ public class DependencyGraphGeneratorTest {
                 .libraries(List.of(TestData.PKG_4))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
-        when(configProvider.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
-        when(configProvider.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig3);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(workspaceContext.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig3);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILDTOOLS);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
+        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
 
         assertNotNull(graph);
         assertEquals(3, graph.vertexSet().size());
@@ -419,7 +429,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test(expected = PackageVersionConflictException.class)
-    public void testVersionConflictDetectionInDependencies() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException {
+    public void testVersionConflictDetectionInDependencies() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException, VersionSetNotSyncedException {
 
         ArchipelagoBuiltPackage VCPKG_1 = ArchipelagoBuiltPackage.parse("vcPKG1-1.0#123");
         ArchipelagoBuiltPackage VCPKG_2 = ArchipelagoBuiltPackage.parse("vcPKG1-2.0#123");
@@ -439,16 +449,17 @@ public class DependencyGraphGeneratorTest {
                 .libraries(List.of(VCPKG_2))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
-        when(configProvider.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
-        generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILDTOOLS);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
+        generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
     }
 
     @Test
-    public void testConflictResolveResolvesConflict() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException, PackageNotInVersionSetException {
+    public void testConflictResolveResolvesConflict() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException, PackageNotInVersionSetException, VersionSetNotSyncedException {
         ArchipelagoBuiltPackage VCPKG_1 = ArchipelagoBuiltPackage.parse("vcPKG1-1.0#123");
         ArchipelagoBuiltPackage VCPKG_2 = ArchipelagoBuiltPackage.parse("vcPKG1-2.0#123");
 
@@ -468,11 +479,12 @@ public class DependencyGraphGeneratorTest {
                 .libraries(List.of(VCPKG_2))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
-        when(configProvider.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
 
         assertNotNull(graph);
@@ -484,7 +496,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testConflictResolveWithARemoveOnTheBeforeResolved() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException, PackageNotInVersionSetException {
+    public void testConflictResolveWithARemoveOnTheBeforeResolved() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException, PackageNotInVersionSetException, VersionSetNotSyncedException {
         ArchipelagoBuiltPackage VCPKG_1 = ArchipelagoBuiltPackage.parse("vcPKG1-1.0#123");
         ArchipelagoBuiltPackage VCPKG_2 = ArchipelagoBuiltPackage.parse("vcPKG1-2.0#123");
 
@@ -510,12 +522,13 @@ public class DependencyGraphGeneratorTest {
                 .libraries(List.of(VCPKG_2))
                 .build();
 
-        when(configProvider.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
-        when(configProvider.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
-        when(configProvider.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
-        when(configProvider.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig3);
+        when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
+        when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
+        when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
+        when(workspaceContext.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig3);
+        when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(configProvider, versionSetRevision);
+        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
         ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
 
         assertNotNull(graph);
