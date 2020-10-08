@@ -42,8 +42,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(any())).thenReturn(EMPTY_BUILD_CONFIG);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.ALL);
 
         assertNotNull(graph);
         assertEquals(1, graph.vertexSet().size());
@@ -67,8 +66,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.ALL);
 
         assertNotNull(graph);
         assertEquals(3, graph.vertexSet().size());
@@ -100,8 +98,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.ALL);
 
         assertNotNull(graph);
         assertEquals(3, graph.vertexSet().size());
@@ -134,8 +131,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig2);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.ALL);
 
         assertNotNull(graph);
         assertEquals(4, graph.vertexSet().size());
@@ -163,8 +159,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.TEST);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.TEST);
 
         assertNotNull(graph);
         assertEquals(4, graph.vertexSet().size());
@@ -192,8 +187,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
 
         assertNotNull(graph);
         assertEquals(4, graph.vertexSet().size());
@@ -221,8 +215,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.RUNTIME);
 
         assertNotNull(graph);
         assertEquals(3, graph.vertexSet().size());
@@ -249,8 +242,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.RUNTIME);
 
         assertNotNull(graph);
         assertEquals(4, graph.vertexSet().size());
@@ -285,8 +277,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig2);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
 
         assertNotNull(graph);
         assertEquals(4, graph.vertexSet().size());
@@ -323,8 +314,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_4))).thenReturn(EMPTY_BUILD_CONFIG);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
+        DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.ALL);
     }
 
     @Test(expected = PackageDependencyLoopDetectedException.class)
@@ -367,8 +357,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_5))).thenReturn(buildConfig5);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
+        DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.ALL);
     }
 
     @Test(expected = PackageNotInVersionSetException.class)
@@ -387,8 +376,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_1))).thenReturn(buildConfig);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        generator.generateGraph(TestData.PKG_1, DependencyTransversalType.ALL);
+        DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.ALL);
     }
 
     @Test
@@ -420,8 +408,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig3);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
 
         assertNotNull(graph);
         assertEquals(3, graph.vertexSet().size());
@@ -454,8 +441,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        generator.generateGraph(TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
+        DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.BUILD_TOOLS);
     }
 
     @Test
@@ -484,8 +470,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_2))).thenReturn(buildConfig2);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.RUNTIME);
 
         assertNotNull(graph);
         assertEquals(3, graph.vertexSet().size());
@@ -528,8 +513,7 @@ public class DependencyGraphGeneratorTest {
         when(workspaceContext.getConfig(eq(TestData.PKG_3))).thenReturn(buildConfig3);
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
 
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
-        ArchipelagoDependencyGraph graph = generator.generateGraph(TestData.PKG_1, DependencyTransversalType.RUNTIME);
+        ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, TestData.PKG_1, DependencyTransversalType.RUNTIME);
 
         assertNotNull(graph);
         assertEquals(3, graph.vertexSet().size());

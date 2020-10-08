@@ -3,8 +3,10 @@ package build.archipelago.maui.configuration;
 import build.archipelago.maui.commands.*;
 import build.archipelago.maui.commands.packages.*;
 import build.archipelago.maui.commands.workspace.*;
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.*;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
+import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.workspace.path.MauiPath;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
@@ -13,74 +15,86 @@ import com.google.inject.*;
 public class CommandConfiguration extends AbstractModule {
 
     @Provides
+    @Singleton
     public WorkspaceCommand workspaceCommand() {
         return new WorkspaceCommand();
     }
 
     @Provides
-    public WorkspaceSyncCommand workspaceSyncCommand(VersionServiceClient versionServiceClient,
-                                                     PackageCacher packageCacher,
+    @Singleton
+    public WorkspaceSyncCommand workspaceSyncCommand(WorkspaceContextFactory workspaceContextFactory,
+                                                     SystemPathProvider systemPathProvider,
                                                      WorkspaceSyncer workspaceSyncer) {
-        return new WorkspaceSyncCommand(versionServiceClient, workspaceSyncer, packageCacher);
+        return new WorkspaceSyncCommand(workspaceContextFactory, systemPathProvider, workspaceSyncer);
     }
 
     @Provides
-    public WorkspaceCreateCommand workspaceCreateCommand(VersionServiceClient versionServiceClient,
-                                                         PackageCacher packageCacher) {
-        return new WorkspaceCreateCommand(versionServiceClient, packageCacher);
+    @Singleton
+    public WorkspaceCreateCommand workspaceCreateCommand(WorkspaceContextFactory workspaceContextFactory,
+                                                         SystemPathProvider systemPathProvider) {
+        return new WorkspaceCreateCommand(workspaceContextFactory, systemPathProvider);
     }
 
     @Provides
-    public BuildCommand buildCommand(VersionServiceClient versionServiceClient,
-                                     PackageCacher packageCacher,
+    @Singleton
+    public BuildCommand buildCommand(WorkspaceContextFactory workspaceContextFactory,
+                                     SystemPathProvider systemPathProvider,
                                      MauiPath mauiPath) {
-        return new BuildCommand(versionServiceClient, packageCacher, mauiPath);
+        return new BuildCommand(mauiPath, workspaceContextFactory, systemPathProvider);
     }
 
     @Provides
-    public PathCommand pathCommand(VersionServiceClient versionServiceClient,
-                                   PackageCacher packageCacher,
+    @Singleton
+    public PathCommand pathCommand(WorkspaceContextFactory workspaceContextFactory,
+                                   SystemPathProvider systemPathProvider,
                                    MauiPath mauiPath) {
-        return new PathCommand(versionServiceClient, packageCacher, mauiPath);
+        return new PathCommand(mauiPath, workspaceContextFactory, systemPathProvider);
     }
 
     @Provides
+    @Singleton
     public PackageCommand packageCommand() {
         return new PackageCommand();
     }
 
     @Provides
-    public PackageCreateCommand packageCreateCommand(VersionServiceClient versionServiceClient,
-                                                     PackageCacher packageCacher,
+    @Singleton
+    public PackageCreateCommand packageCreateCommand(WorkspaceContextFactory workspaceContextFactory,
+                                                     SystemPathProvider systemPathProvider,
                                                      PackageServiceClient packageServiceClient) {
-        return new PackageCreateCommand(versionServiceClient, packageCacher, packageServiceClient);
+        return new PackageCreateCommand(packageServiceClient, workspaceContextFactory, systemPathProvider);
     }
 
     @Provides
-    public WorkspaceUseCommand workspaceUseCommand(VersionServiceClient versionServiceClient,
-                                                   PackageCacher packageCacher,
+    @Singleton
+    public WorkspaceUseCommand workspaceUseCommand(VersionServiceClient versionSetServiceClient,
+                                                   WorkspaceContextFactory workspaceContextFactory,
+                                                   SystemPathProvider systemPathProvider,
                                                    PackageServiceClient packageServiceClient,
                                                    PackageSourceProvider packageSourceProvider) {
-        return new WorkspaceUseCommand(versionServiceClient, packageCacher,
-                packageServiceClient, packageSourceProvider);
+        return new WorkspaceUseCommand(versionSetServiceClient, workspaceContextFactory, systemPathProvider, packageServiceClient,
+                packageSourceProvider);
     }
 
     @Provides
-    public WorkspaceRemoveCommand WorkspaceRemoveCommand(VersionServiceClient versionServiceClient,
-                                                         PackageCacher packageCacher) {
-        return new WorkspaceRemoveCommand(versionServiceClient, packageCacher);
+    @Singleton
+    public WorkspaceRemoveCommand WorkspaceRemoveCommand(WorkspaceContextFactory workspaceContextFactory,
+                                                         SystemPathProvider systemPathProvider) {
+        return new WorkspaceRemoveCommand(workspaceContextFactory, systemPathProvider);
     }
 
     @Provides
-    public RecursiveCommand RecursiveCommand(VersionServiceClient versionServiceClient,
-                                             PackageCacher packageCacher,
+    @Singleton
+    public RecursiveCommand RecursiveCommand(WorkspaceContextFactory workspaceContextFactory,
+                                             SystemPathProvider systemPathProvider,
                                              MauiPath mauiPath) {
-        return new RecursiveCommand(versionServiceClient, packageCacher, mauiPath);
+        return new RecursiveCommand(mauiPath, workspaceContextFactory, systemPathProvider);
     }
 
     @Provides
-    public CleanCommand cleanCommand(VersionServiceClient versionServiceClient,
-                                             PackageCacher packageCacher) {
-        return new CleanCommand(versionServiceClient, packageCacher);
+    @Singleton
+    public CleanCommand cleanCommand(WorkspaceContextFactory workspaceContextFactory,
+                                     SystemPathProvider systemPathProvider) {
+        return new CleanCommand(workspaceContextFactory, systemPathProvider);
     }
 }

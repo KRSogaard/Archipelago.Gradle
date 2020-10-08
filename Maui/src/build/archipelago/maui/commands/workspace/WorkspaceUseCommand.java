@@ -4,8 +4,10 @@ import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.maui.commands.BaseCommand;
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.PackageSourceProvider;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
+import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.GetPackageResponse;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
@@ -26,24 +28,25 @@ public class WorkspaceUseCommand extends BaseCommand {
     @CommandLine.Option(names = { "-vs", "--versionset"})
     private String versionSet;
 
-    private VersionServiceClient vsClient;
-    private PackageCacher packageCacher;
     private PackageServiceClient packageServiceClient;
     private PackageSourceProvider packageSourceProvider;
+    private VersionServiceClient vsClient;
 
-    public WorkspaceUseCommand(VersionServiceClient vsClient,
-                               PackageCacher packageCacher,
-                               PackageServiceClient packageServiceClient,
-                               PackageSourceProvider packageSourceProvider) {
+    public WorkspaceUseCommand(
+                VersionServiceClient vsClient,
+                WorkspaceContextFactory workspaceContextFactory,
+                SystemPathProvider systemPathProvider,
+                PackageServiceClient packageServiceClient,
+                PackageSourceProvider packageSourceProvider) {
+            super(workspaceContextFactory, systemPathProvider);
         this.vsClient = vsClient;
-        this.packageCacher = packageCacher;
         this.packageServiceClient = packageServiceClient;
         this.packageSourceProvider = packageSourceProvider;
     }
 
     @Override
     public Integer call() throws Exception {
-        if (!requireWorkspace(vsClient, packageCacher)) {
+        if (!requireWorkspace()) {
             System.err.println("Was unable to locate the workspace");
             return 1;
         }

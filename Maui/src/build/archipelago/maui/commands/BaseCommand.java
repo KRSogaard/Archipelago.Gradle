@@ -1,8 +1,9 @@
 package build.archipelago.maui.commands;
 
 import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
+import build.archipelago.maui.core.workspace.contexts.*;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.utils.WorkspaceUtils;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
@@ -20,12 +21,21 @@ public abstract class BaseCommand implements Callable<Integer> {
     protected Path pkgDir;
     protected Path wsDir;
 
-    protected boolean requireWorkspace(VersionServiceClient vsClient, PackageCacher packageCacher) {
-        wsDir = WorkspaceUtils.getWorkspaceDir();
+    protected WorkspaceContextFactory workspaceContextFactory;
+    protected SystemPathProvider systemPathProvider;
+
+    public BaseCommand(WorkspaceContextFactory workspaceContextFactory,
+                       SystemPathProvider systemPathProvider) {
+        this.workspaceContextFactory = workspaceContextFactory;
+        this.systemPathProvider = systemPathProvider;
+    }
+
+    protected boolean requireWorkspace() {
+        wsDir = systemPathProvider.getWorkspaceDir();
         if (wsDir == null) {
             return false;
         }
-        ws = new WorkspaceContext(wsDir, vsClient, packageCacher);
+        ws = workspaceContextFactory.create(wsDir);
         try {
             ws.load();
         } catch (IOException e) {
@@ -40,7 +50,7 @@ public abstract class BaseCommand implements Callable<Integer> {
             throw new RuntimeException("Workspace is not loaded");
         }
 
-        pkgDir = WorkspaceUtils.getPackageDir(ws.getRoot());
+        pkgDir = systemPathProvider.getPackageDir(ws.getRoot());
         if (pkgDir == null) {
             return false;
         }

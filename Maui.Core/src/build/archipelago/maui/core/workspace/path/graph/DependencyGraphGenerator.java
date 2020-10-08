@@ -24,16 +24,11 @@ public class DependencyGraphGenerator {
         }
     }
 
-    private final WorkspaceContext workspaceContext;
-
-    public DependencyGraphGenerator(WorkspaceContext workspaceContext) {
-        this.workspaceContext = workspaceContext;
-    }
-
     private static ArchipelagoDependencyGraph getCachedGraph(ArchipelagoPackage rootPkg,
                                                              DependencyTransversalType transversalType) {
         if (graphCache == null) {
             graphCache = new HashMap<>();
+            return null;
         }
         String key = getGraphHashKey(rootPkg, transversalType);
         if (graphCache.containsKey(key)) {
@@ -42,8 +37,9 @@ public class DependencyGraphGenerator {
         return null;
     }
 
-    public ArchipelagoDependencyGraph generateGraph(ArchipelagoPackage rootPkg,
-                                                    DependencyTransversalType transversalType)
+    public static ArchipelagoDependencyGraph generateGraph(WorkspaceContext workspaceContext,
+                                                           ArchipelagoPackage rootPkg,
+                                                           DependencyTransversalType transversalType)
             throws PackageNotInVersionSetException, PackageNotLocalException, IOException, PackageNotFoundException,
             PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         ArchipelagoDependencyGraph cacheGraph = getCachedGraph(rootPkg, transversalType);
@@ -83,13 +79,13 @@ public class DependencyGraphGenerator {
         return context.getGraph();
     }
 
-    private void verifyGraph(ArchipelagoDependencyGraph graph) throws PackageDependencyLoopDetectedException,
+    private static void verifyGraph(ArchipelagoDependencyGraph graph) throws PackageDependencyLoopDetectedException,
             PackageVersionConflictException {
         detectPackageDependencyLoop(graph);
         detectVersionConflict(graph);
     }
 
-    private void detectVersionConflict(ArchipelagoDependencyGraph graph) throws PackageVersionConflictException {
+    private static void detectVersionConflict(ArchipelagoDependencyGraph graph) throws PackageVersionConflictException {
         Map<String, ArchipelagoPackage> seenPackages = new HashMap<>();
         for (ArchipelagoPackage pkg : graph.vertexSet()) {
             String name = pkg.getName().toLowerCase();
@@ -100,7 +96,7 @@ public class DependencyGraphGenerator {
         }
     }
 
-    private void detectPackageDependencyLoop(ArchipelagoDependencyGraph graph) throws PackageDependencyLoopDetectedException {
+    private static void detectPackageDependencyLoop(ArchipelagoDependencyGraph graph) throws PackageDependencyLoopDetectedException {
         CycleDetector<ArchipelagoPackage, ArchipelagoPackageEdge> cycleDetector = new CycleDetector<>(graph);
         Set<ArchipelagoPackage> cycleSet = cycleDetector.findCycles();
         if (cycleSet.size() > 0) {
@@ -108,7 +104,7 @@ public class DependencyGraphGenerator {
         }
     }
 
-    private void addPackageToGraph(GraphGenerationContext context, ArchipelagoPackage pkg, BuildConfig buildConfig,
+    private static void addPackageToGraph(GraphGenerationContext context, ArchipelagoPackage pkg, BuildConfig buildConfig,
                                    List<DependencyType> dependencyTypes)
             throws PackageNotInVersionSetException, PackageDependencyLoopDetectedException {
         if (context.hasSeenPackage(pkg)) {
@@ -121,7 +117,7 @@ public class DependencyGraphGenerator {
         context.addDependenciesToBeAdded(dependencies);
     }
 
-    private void addGraphEdges(GraphGenerationContext context, ArchipelagoPackage pkg,
+    private static void addGraphEdges(GraphGenerationContext context, ArchipelagoPackage pkg,
                                List<ArchipelagoPackageEdge> dependencies)
             throws PackageNotInVersionSetException, PackageDependencyLoopDetectedException {
         for (ArchipelagoPackageEdge d : dependencies) {
@@ -157,7 +153,7 @@ public class DependencyGraphGenerator {
         }
     }
 
-    private List<ArchipelagoPackageEdge> getDependencies(BuildConfig bc, List<DependencyType> requestedTypes) {
+    private static List<ArchipelagoPackageEdge> getDependencies(BuildConfig bc, List<DependencyType> requestedTypes) {
         List<ArchipelagoPackageEdge> packages = new ArrayList<>();
         for (DependencyType type : requestedTypes) {
             switch (type) {

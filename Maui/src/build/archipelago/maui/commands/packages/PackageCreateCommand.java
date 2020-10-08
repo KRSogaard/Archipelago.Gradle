@@ -3,8 +3,10 @@ package build.archipelago.maui.commands.packages;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.maui.commands.BaseCommand;
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.WorkspaceConstants;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
+import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.core.workspace.serializer.BuildConfigSerializer;
 import build.archipelago.packageservice.client.PackageServiceClient;
@@ -22,8 +24,6 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(name = "create", mixinStandardHelpOptions = true, description = "create a new package")
 public class PackageCreateCommand extends BaseCommand {
 
-    private VersionServiceClient vsClient;
-    private PackageCacher packageCacher;
     private PackageServiceClient packageClient;
 
     @CommandLine.Option(names = { "-n", "--name"}, required = true)
@@ -31,17 +31,16 @@ public class PackageCreateCommand extends BaseCommand {
     @CommandLine.Option(names = { "-d", "--desc"})
     private String description;
 
-    public PackageCreateCommand(VersionServiceClient vsClient,
-                                PackageCacher packageCacher,
-                                PackageServiceClient packageClient) {
-        this.vsClient = vsClient;
-        this.packageCacher = packageCacher;
+    public PackageCreateCommand(PackageServiceClient packageClient,
+                                WorkspaceContextFactory workspaceContextFactory,
+                                SystemPathProvider systemPathProvider) {
+        super(workspaceContextFactory, systemPathProvider);
         this.packageClient = packageClient;
     }
 
     @Override
     public Integer call() throws Exception {
-        if (!requireWorkspace(vsClient, packageCacher)) {
+        if (!requireWorkspace()) {
             System.err.println("Was unable to locate the workspace");
             return 1;
         }

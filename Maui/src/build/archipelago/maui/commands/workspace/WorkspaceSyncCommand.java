@@ -3,8 +3,9 @@ package build.archipelago.maui.commands.workspace;
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.commands.BaseCommand;
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
+import build.archipelago.maui.core.workspace.contexts.*;
 import build.archipelago.maui.core.workspace.WorkspaceSyncer;
 import build.archipelago.maui.utils.WorkspaceUtils;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
@@ -25,19 +26,18 @@ public class WorkspaceSyncCommand extends BaseCommand {
     @CommandLine.Option(names = { "-rev", "--revision"})
     private String revision;
 
-    private VersionServiceClient vsClient;
     private WorkspaceSyncer workspaceSyncer;
-    private PackageCacher packageCacher;
 
-    public WorkspaceSyncCommand(VersionServiceClient vsClient, WorkspaceSyncer workspaceSyncer, PackageCacher packageCacher) {
-        this.vsClient = vsClient;
+    public WorkspaceSyncCommand(WorkspaceContextFactory workspaceContextFactory,
+                                SystemPathProvider systemPathProvider,
+                                WorkspaceSyncer workspaceSyncer) {
+        super(workspaceContextFactory, systemPathProvider);
         this.workspaceSyncer = workspaceSyncer;
-        this.packageCacher = packageCacher;
     }
 
     @Override
     public Integer call() throws Exception {
-        if (!requireWorkspace(vsClient, packageCacher)) {
+        if (!requireWorkspace()) {
             System.err.println("Was unable to locate the workspace");
             return 1;
         }

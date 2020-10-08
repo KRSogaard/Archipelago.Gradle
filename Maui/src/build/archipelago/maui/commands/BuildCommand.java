@@ -1,6 +1,8 @@
 package build.archipelago.maui.commands;
 
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
+import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.workspace.path.*;
 import build.archipelago.maui.core.workspace.path.recipies.BinRecipe;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
@@ -19,22 +21,21 @@ public class BuildCommand extends BaseCommand {
     private static final String BASH_BUILD_SYSTEM = "bash";
     private static final String BASH_BUILD_FILE = "BuildScript";
 
-    private VersionServiceClient vsClient;
-    private PackageCacher packageCacher;
     private MauiPath path;
 
     @CommandLine.Parameters(index = "0..*")
     private List<String> args;
 
-    public BuildCommand(VersionServiceClient vsClient, PackageCacher packageCacher, MauiPath path) {
-        this.vsClient = vsClient;
-        this.packageCacher = packageCacher;
+    public BuildCommand(MauiPath path,
+                        WorkspaceContextFactory workspaceContextFactory,
+                        SystemPathProvider systemPathProvider) {
+        super(workspaceContextFactory, systemPathProvider);
         this.path = path;
     }
 
     @Override
     public Integer call() throws Exception {
-        if (!requireWorkspace(vsClient, packageCacher)) {
+        if (!requireWorkspace()) {
             System.err.println("Was unable to locate the workspace");
             return 1;
         }

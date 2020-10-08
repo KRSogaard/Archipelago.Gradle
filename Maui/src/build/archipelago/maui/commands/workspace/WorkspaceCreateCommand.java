@@ -2,9 +2,9 @@ package build.archipelago.maui.commands.workspace;
 
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.maui.commands.BaseCommand;
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
-import build.archipelago.maui.utils.SystemUtil;
+import build.archipelago.maui.core.workspace.contexts.*;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,6 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.concurrent.Callable;
 
 @Slf4j
 @CommandLine.Command(name = "create", mixinStandardHelpOptions = true, description = "create a new workspace")
@@ -24,20 +23,17 @@ public class WorkspaceCreateCommand extends BaseCommand {
     @CommandLine.Option(names = { "-vs", "--versionset"})
     private String versionSet;
 
-    private VersionServiceClient vsClient;
-    private PackageCacher packageCacher;
-
-    public WorkspaceCreateCommand(VersionServiceClient vsClient, PackageCacher packageCacher) {
-        this.vsClient = vsClient;
-        this.packageCacher = packageCacher;
+    public WorkspaceCreateCommand(WorkspaceContextFactory workspaceContextFactory,
+                                  SystemPathProvider systemPathProvider) {
+        super(workspaceContextFactory, systemPathProvider);
     }
 
     @Override
     public Integer call() throws Exception {
-        Path dir = SystemUtil.getWorkingPath();
+        Path dir = systemPathProvider.getCurrentDir();
         System.out.println(String.format("Creating workspace %s", name));
         Path wsRoot = dir.resolve(name);
-        WorkspaceContext ws = new WorkspaceContext(wsRoot, vsClient, packageCacher);
+        WorkspaceContext ws = workspaceContextFactory.create(wsRoot);
 
         if (Files.exists(wsRoot)) {
             System.err.println(String.format("The workspace \"%s\" already exists in this folder", name));

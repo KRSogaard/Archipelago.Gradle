@@ -1,7 +1,9 @@
 package build.archipelago.maui.commands;
 
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.WorkspaceConstants;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
+import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.workspace.path.MauiPath;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
 import lombok.extern.slf4j.Slf4j;
@@ -16,17 +18,14 @@ import java.util.stream.Stream;
 @CommandLine.Command(name = "clean", mixinStandardHelpOptions = true, description = "Build a package")
 public class CleanCommand extends BaseCommand {
 
-    private VersionServiceClient vsClient;
-    private PackageCacher packageCacher;
-
-    public CleanCommand(VersionServiceClient vsClient, PackageCacher packageCacher) {
-        this.vsClient = vsClient;
-        this.packageCacher = packageCacher;
+    public CleanCommand(WorkspaceContextFactory workspaceContextFactory,
+                        SystemPathProvider systemPathProvider) {
+        super(workspaceContextFactory, systemPathProvider);
     }
 
     @Override
     public Integer call() throws Exception {
-        if (!requireWorkspace(vsClient, packageCacher)) {
+        if (!requireWorkspace()) {
             System.err.println("Was unable to locate the workspace");
             return 1;
         }

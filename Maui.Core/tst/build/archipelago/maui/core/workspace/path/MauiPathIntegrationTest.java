@@ -38,10 +38,7 @@ public class MauiPathIntegrationTest {
     }
 
     @Test
-    public void testPathGenerations() throws PackageNotLocalException, IOException, PackageNotFoundException,
-            VersionSetNotSyncedException, PackageNotInVersionSetException, PathStringInvalidException,
-            PackageDependencyLoopDetectedException, PackageVersionConflictException, DependencyTransversalTypeNotFoundException,
-            RecipeNotFoundException {
+    public void testPathGenerations() throws Exception {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4))
@@ -64,8 +61,6 @@ public class MauiPathIntegrationTest {
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
         when(workspaceContext.isPackageInVersionSet(any())).thenReturn(true);
         when(workspaceContext.getPackageRoot(any())).thenReturn(Paths.get("c:/test"));
-
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
 
         MauiPath mauiPath = new MauiPath(List.of(new TestRecipe()));
         ImmutableList<String> list = mauiPath.getPaths(workspaceContext, TestData.PKG_1, "all.test");
@@ -73,10 +68,7 @@ public class MauiPathIntegrationTest {
     }
 
     @Test
-    public void testPathGenerationsFromTargetPackage() throws PackageNotLocalException, IOException, PackageNotFoundException,
-            VersionSetNotSyncedException, PackageNotInVersionSetException, PathStringInvalidException,
-            PackageDependencyLoopDetectedException, PackageVersionConflictException, DependencyTransversalTypeNotFoundException,
-            RecipeNotFoundException {
+    public void testPathGenerationsFromTargetPackage() throws Exception {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4))
@@ -99,8 +91,6 @@ public class MauiPathIntegrationTest {
         when(workspaceContext.getVersionSetRevision()).thenReturn(versionSetRevision);
         when(workspaceContext.isPackageInVersionSet(any())).thenReturn(true);
         when(workspaceContext.getPackageRoot(any())).thenReturn(Paths.get("c:/test"));
-
-        DependencyGraphGenerator generator = new DependencyGraphGenerator(workspaceContext);
 
         MauiPath mauiPath = new MauiPath(List.of(new TestRecipe()));
         ImmutableList<String> list = mauiPath.getPaths(workspaceContext,

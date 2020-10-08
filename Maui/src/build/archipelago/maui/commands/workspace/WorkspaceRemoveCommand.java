@@ -3,8 +3,10 @@ package build.archipelago.maui.commands.workspace;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.maui.commands.BaseCommand;
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.PackageSourceProvider;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
+import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.GetPackageResponse;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
@@ -21,17 +23,14 @@ public class WorkspaceRemoveCommand extends BaseCommand {
     @CommandLine.Option(names = { "-p", "--package"})
     private List<String> packages;
 
-    private VersionServiceClient vsClient;
-    private PackageCacher packageCacher;
-
-    public WorkspaceRemoveCommand(VersionServiceClient vsClient, PackageCacher packageCacher) {
-        this.vsClient = vsClient;
-        this.packageCacher = packageCacher;
+    public WorkspaceRemoveCommand(WorkspaceContextFactory workspaceContextFactory,
+                                  SystemPathProvider systemPathProvider) {
+        super(workspaceContextFactory, systemPathProvider);
     }
 
     @Override
     public Integer call() throws Exception {
-        if (!requireWorkspace(vsClient, packageCacher)) {
+        if (!requireWorkspace()) {
             System.err.println("Was unable to locate the workspace");
             return 1;
         }

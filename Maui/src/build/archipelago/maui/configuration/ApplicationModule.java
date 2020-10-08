@@ -1,6 +1,7 @@
 package build.archipelago.maui.configuration;
 
 import build.archipelago.maui.commands.MauiCommand;
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.utils.*;
 import com.google.inject.*;
 import com.google.inject.name.Names;
@@ -14,11 +15,13 @@ public class ApplicationModule extends AbstractModule {
     @Override
     protected void configure() {
         try {
+            // This is ok as we don't use the current dir
+            SystemPathProvider systemPathProvider = new SystemPathProvider();
             // TODO: Make this better, have a setup command
-            if (!Files.exists(SystemUtil.getMauiPath())) {
-                    Files.createDirectory(SystemUtil.getMauiPath());
+            if (!Files.exists(systemPathProvider.getMauiPath())) {
+                    Files.createDirectory(systemPathProvider.getMauiPath());
             }
-            Path configPath = SystemUtil.getMauiPath().resolve("maui.config");
+            Path configPath = systemPathProvider.getMauiPath().resolve("maui.config");
             if (!Files.exists(configPath)) {
                 ConfigUtil.writeDefaultConfig(configPath);
             }

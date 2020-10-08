@@ -1,9 +1,6 @@
 package build.archipelago.maui.core.workspace;
 
-
-import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.concurrent.BlockingExecutorServiceFactory;
-import build.archipelago.common.concurrent.ExecutorServiceFactory;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.common.versionset.VersionSetRevision;
@@ -14,12 +11,9 @@ import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
 import org.junit.Before;
 import org.junit.Test;
-
-import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;

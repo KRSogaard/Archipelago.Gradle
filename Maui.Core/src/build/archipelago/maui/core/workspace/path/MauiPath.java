@@ -53,7 +53,6 @@ public class MauiPath {
     public ImmutableList<String> getPaths(WorkspaceContext workspaceContext, ArchipelagoPackage rootPackage, String pathLine)
             throws Exception {
 
-        DependencyGraphGenerator graphGenerator = new DependencyGraphGenerator(workspaceContext);
         ImmutableList.Builder<String> list = ImmutableList.<String>builder();
 
         for (String request : pathLine.split(";")) {
@@ -78,7 +77,7 @@ public class MauiPath {
             Recipe recipe = optionalRecipe.get();
 
             DependencyTransversalType transversalType = getTransversalType(pathProperties.transversalType);
-            ArchipelagoDependencyGraph graph = graphGenerator.generateGraph(targetPackage, transversalType);
+            ArchipelagoDependencyGraph graph = DependencyGraphGenerator.generateGraph(workspaceContext, targetPackage, transversalType);
 
             Iterator<ArchipelagoPackage> iterator = new DepthFirstIterator<>(graph, targetPackage);
             while (iterator.hasNext()) {
