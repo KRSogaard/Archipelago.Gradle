@@ -11,6 +11,7 @@ import build.archipelago.versionsetservice.client.VersionServiceClient;
 import com.google.inject.*;
 
 public class CommandConfiguration extends AbstractModule {
+
     @Provides
     public WorkspaceCommand workspaceCommand() {
         return new WorkspaceCommand();
@@ -62,5 +63,24 @@ public class CommandConfiguration extends AbstractModule {
                                                    PackageSourceProvider packageSourceProvider) {
         return new WorkspaceUseCommand(versionServiceClient, packageCacher,
                 packageServiceClient, packageSourceProvider);
+    }
+
+    @Provides
+    public WorkspaceRemoveCommand WorkspaceRemoveCommand(VersionServiceClient versionServiceClient,
+                                                         PackageCacher packageCacher) {
+        return new WorkspaceRemoveCommand(versionServiceClient, packageCacher);
+    }
+
+    @Provides
+    public RecursiveCommand RecursiveCommand(VersionServiceClient versionServiceClient,
+                                             PackageCacher packageCacher,
+                                             MauiPath mauiPath) {
+        return new RecursiveCommand(versionServiceClient, packageCacher, mauiPath);
+    }
+
+    @Provides
+    public CleanCommand cleanCommand(VersionServiceClient versionServiceClient,
+                                             PackageCacher packageCacher) {
+        return new CleanCommand(versionServiceClient, packageCacher);
     }
 }

@@ -33,7 +33,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test
     public void testRootPackageWithNoDependencies() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1))
@@ -52,7 +52,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test
     public void testRootPackageWith2DependenciesNoTransitive() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3))
@@ -79,7 +79,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test
     public void testRootPackageWith2DependenciesDependencyHaveShareDependencyWithRoot() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3))
@@ -112,7 +112,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test
     public void testRootDependenciesSharingSameDependency() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4))
@@ -146,7 +146,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testGetTestDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException {
+    public void testGetTestDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -175,7 +175,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testGetBuildDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException {
+    public void testGetBuildDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -204,7 +204,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testGetRuntimeDependenciesWithNoDirectRuntimeDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException {
+    public void testGetRuntimeDependenciesWithNoDirectRuntimeDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -232,7 +232,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testGetRuntimeDependenciesWithDirectRuntimeDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException {
+    public void testGetRuntimeDependenciesWithDirectRuntimeDependencies() throws PackageNotLocalException, PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -262,7 +262,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test
     public void testGetTestDependenciesShouldGetDependenciesRuntimeDependencies() throws PackageNotLocalException,
-            PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException {
+            PackageNotInVersionSetException, PackageNotFoundException, PackageDependencyLoopDetectedException, IOException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -301,7 +301,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test(expected = PackageDependencyLoopDetectedException.class)
     public void testPackageLoopDetection() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4))
@@ -329,7 +329,7 @@ public class DependencyGraphGeneratorTest {
 
     @Test(expected = PackageDependencyLoopDetectedException.class)
     public void testDeepPackageLoopDetection() throws PackageNotLocalException, IOException,
-            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
+            PackageNotFoundException, PackageNotInVersionSetException, PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4, TestData.PKG_5))
@@ -372,7 +372,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test(expected = PackageNotInVersionSetException.class)
-    public void testDependencyMissingFromVersionSet() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException, VersionSetNotSyncedException {
+    public void testDependencyMissingFromVersionSet() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1))
@@ -392,7 +392,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testRemovePackage() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException, VersionSetNotSyncedException {
+    public void testRemovePackage() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         VersionSetRevision versionSetRevision = VersionSetRevision.builder()
                 .created(Instant.now())
                 .packages(List.of(TestData.PKG_1, TestData.PKG_2, TestData.PKG_3, TestData.PKG_4))
@@ -429,7 +429,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test(expected = PackageVersionConflictException.class)
-    public void testVersionConflictDetectionInDependencies() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException, VersionSetNotSyncedException {
+    public void testVersionConflictDetectionInDependencies() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageNotInVersionSetException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
 
         ArchipelagoBuiltPackage VCPKG_1 = ArchipelagoBuiltPackage.parse("vcPKG1-1.0#123");
         ArchipelagoBuiltPackage VCPKG_2 = ArchipelagoBuiltPackage.parse("vcPKG1-2.0#123");
@@ -459,7 +459,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testConflictResolveResolvesConflict() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException, PackageNotInVersionSetException, VersionSetNotSyncedException {
+    public void testConflictResolveResolvesConflict() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException, PackageNotInVersionSetException, VersionSetNotSyncedException, LocalPackageMalformedException {
         ArchipelagoBuiltPackage VCPKG_1 = ArchipelagoBuiltPackage.parse("vcPKG1-1.0#123");
         ArchipelagoBuiltPackage VCPKG_2 = ArchipelagoBuiltPackage.parse("vcPKG1-2.0#123");
 
@@ -496,7 +496,7 @@ public class DependencyGraphGeneratorTest {
     }
 
     @Test
-    public void testConflictResolveWithARemoveOnTheBeforeResolved() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException, PackageNotInVersionSetException, VersionSetNotSyncedException {
+    public void testConflictResolveWithARemoveOnTheBeforeResolved() throws PackageNotLocalException, IOException, PackageNotFoundException, PackageDependencyLoopDetectedException, PackageVersionConflictException, PackageNotInVersionSetException, VersionSetNotSyncedException, LocalPackageMalformedException {
         ArchipelagoBuiltPackage VCPKG_1 = ArchipelagoBuiltPackage.parse("vcPKG1-1.0#123");
         ArchipelagoBuiltPackage VCPKG_2 = ArchipelagoBuiltPackage.parse("vcPKG1-2.0#123");
 

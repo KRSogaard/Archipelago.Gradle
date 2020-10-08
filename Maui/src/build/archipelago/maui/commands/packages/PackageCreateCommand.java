@@ -1,13 +1,14 @@
 package build.archipelago.maui.commands.packages;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.common.exceptions.*;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.workspace.WorkspaceConstants;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.core.workspace.serializer.BuildConfigSerializer;
 import build.archipelago.packageservice.client.PackageServiceClient;
+import build.archipelago.packageservice.client.models.CreatePackageRequest;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,8 @@ public class PackageCreateCommand extends BaseCommand {
 
     @CommandLine.Option(names = { "-n", "--name"}, required = true)
     private String name;
+    @CommandLine.Option(names = { "-d", "--desc"})
+    private String description;
 
     public PackageCreateCommand(VersionServiceClient vsClient,
                                 PackageCacher packageCacher,
@@ -64,6 +67,15 @@ public class PackageCreateCommand extends BaseCommand {
         if (packageNameExists(name)) {
             System.err.println(String.format("A package by the name \"%s\" is already exists, you can check it out.", name));
             return 1;
+        }
+
+        try {
+            packageClient.createPackage(CreatePackageRequest.builder()
+                    .name(name)
+                    .description(description)
+                    .build());
+        } catch (PackageExistsException exp) {
+            System.err.println(String.format("Failed to create the package"));
         }
 
         Files.createDirectory(pkgDir);

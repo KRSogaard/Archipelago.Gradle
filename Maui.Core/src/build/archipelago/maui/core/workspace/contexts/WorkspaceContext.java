@@ -11,6 +11,7 @@ import build.archipelago.maui.core.workspace.serializer.*;
 import build.archipelago.versionsetservice.client.VersionServiceClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.common.base.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -110,7 +111,7 @@ public class WorkspaceContext extends Workspace {
     }
 
     public BuildConfig getConfig(ArchipelagoPackage pkg) throws IOException, PackageNotLocalException,
-            PackageNotFoundException, VersionSetNotSyncedException, PackageNotInVersionSetException {
+            PackageNotFoundException, VersionSetNotSyncedException, PackageNotInVersionSetException, LocalPackageMalformedException {
         if (configCache.containsKey(pkg.getNameVersion())) {
             return configCache.get(pkg.getNameVersion());
         }
@@ -128,13 +129,13 @@ public class WorkspaceContext extends Workspace {
         return buildConfig;
     }
 
-    private BuildConfig provideLocalConfig(ArchipelagoPackage pkg) throws PackageNotLocalException, IOException {
+    private BuildConfig provideLocalConfig(ArchipelagoPackage pkg) throws PackageNotLocalException, IOException, LocalPackageMalformedException {
         Path root = getPackageRoot(pkg);
         Path configFile = root.resolve(WorkspaceConstants.BUILD_FILE_NAME);
         if (!Files.exists(configFile)) {
             log.error("Found the package root \"{}\" but it did not contain a config file \"{}\"",
                     root, WorkspaceConstants.BUILD_FILE_NAME);
-            throw new PackageNotLocalException(pkg);
+            throw new LocalPackageMalformedException(pkg);
         }
 
         return BuildConfig.from(root);
@@ -154,7 +155,7 @@ public class WorkspaceContext extends Workspace {
             throw new PackageNotLocalException(pkg);
         }
 
-        return BuildConfig.from(configFile);
+        return BuildConfig.from(root);
     }
 
     public List<ArchipelagoPackage> getLocalArchipelagoPackages() {
@@ -176,5 +177,23 @@ public class WorkspaceContext extends Workspace {
             }
         }
         return localArchipelagoPackages;
+    }
+
+    public void addLocalPackage(String packageName) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(packageName));
+
+        if (localPackages.stream().anyMatch(lp -> lp.equalsIgnoreCase(packageName))) {
+            return;
+        }
+        localPackages.add(packageName);
+    }
+
+    public void removeLocalPackage(String packageName) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(packageName));
+
+        if (localPackages.stream().noneMatch(lp -> lp.equalsIgnoreCase(packageName))) {
+            return;
+        }
+        localPackages.remove(packageName);
     }
 }

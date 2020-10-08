@@ -10,7 +10,9 @@ import picocli.CommandLine;
         WorkspaceCommand.class,
         PackageCommand.class,
         BuildCommand.class,
-        PathCommand.class})
+        PathCommand.class,
+        RecursiveCommand.class,
+        CleanCommand.class})
 public class MauiCommand  {
 
 }

@@ -92,6 +92,7 @@ project(':Maui') {
         implementation 'com.google.inject:guice:4.2.3'
         implementation 'info.picocli:picocli:4.1.4'
         annotationProcessor 'info.picocli:picocli-codegen:4.1.4'
+        implementation 'org.jgrapht:jgrapht-core:1.5.0'
     }
 
     compileJava {

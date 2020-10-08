@@ -7,7 +7,7 @@ import build.archipelago.common.versionset.*;
 import build.archipelago.maui.core.workspace.*;
 import build.archipelago.maui.core.workspace.cache.*;
 import build.archipelago.maui.core.workspace.path.MauiPath;
-import build.archipelago.maui.core.workspace.path.recipies.BinRecipe;
+import build.archipelago.maui.core.workspace.path.recipies.*;
 import build.archipelago.maui.utils.SystemUtil;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
@@ -56,7 +56,8 @@ public class ServiceConfiguration extends AbstractModule {
     @Provides
     public MauiPath mauiPath() {
         return new MauiPath(List.of(
-                new BinRecipe()
+                new BinRecipe(),
+                new PackageRecipe()
         ));
     }
 

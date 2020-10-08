@@ -45,7 +45,7 @@ public class DependencyGraphGenerator {
     public ArchipelagoDependencyGraph generateGraph(ArchipelagoPackage rootPkg,
                                                     DependencyTransversalType transversalType)
             throws PackageNotInVersionSetException, PackageNotLocalException, IOException, PackageNotFoundException,
-            PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException {
+            PackageDependencyLoopDetectedException, PackageVersionConflictException, VersionSetNotSyncedException, LocalPackageMalformedException {
         ArchipelagoDependencyGraph cacheGraph = getCachedGraph(rootPkg, transversalType);
         if (cacheGraph != null) {
             return cacheGraph;
@@ -223,7 +223,7 @@ public class DependencyGraphGenerator {
 
         public GraphGenerationContext(ArchipelagoPackage pkg, WorkspaceContext workspaceContext)
                 throws IOException, VersionSetNotSyncedException, PackageNotInVersionSetException,
-                PackageNotFoundException, PackageNotLocalException {
+                PackageNotFoundException, PackageNotLocalException, LocalPackageMalformedException {
             this.workspaceContext = workspaceContext;
             buildMap = createBuildHashMap();
             this.rootBuildConfig = workspaceContext.getConfig(pkg);
