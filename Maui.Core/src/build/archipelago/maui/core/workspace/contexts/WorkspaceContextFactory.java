@@ -1,16 +1,16 @@
 package build.archipelago.maui.core.workspace.contexts;
 
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
+import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 
 import java.nio.file.Path;
 
 public class WorkspaceContextFactory {
 
-    private VersionServiceClient vsClient;
+    private VersionSetServiceClient vsClient;
     private PackageCacher packageCacher;
 
-    public WorkspaceContextFactory(VersionServiceClient vsClient,
+    public WorkspaceContextFactory(VersionSetServiceClient vsClient,
                                    PackageCacher packageCacher) {
         this.vsClient = vsClient;
         this.packageCacher = packageCacher;

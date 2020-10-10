@@ -8,9 +8,7 @@ import build.archipelago.maui.core.workspace.WorkspaceConstants;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.models.*;
 import build.archipelago.maui.core.workspace.serializer.*;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import com.google.common.base.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +20,7 @@ import java.util.*;
 @Slf4j
 public class WorkspaceContext extends Workspace {
 
-    private VersionServiceClient vsClient;
+    private VersionSetServiceClient vsClient;
     private PackageCacher packageCacher;
 
     @Getter
@@ -31,7 +29,7 @@ public class WorkspaceContext extends Workspace {
     private VersionSetRevision versionSetRevision;
     private List<ArchipelagoPackage> localArchipelagoPackages;
 
-    public WorkspaceContext(Path root, VersionServiceClient vsClient,
+    public WorkspaceContext(Path root, VersionSetServiceClient vsClient,
                             PackageCacher packageCacher) {
         super();
         this.root = root;

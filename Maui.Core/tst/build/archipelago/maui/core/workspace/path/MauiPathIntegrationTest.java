@@ -1,7 +1,6 @@
 package build.archipelago.maui.core.workspace.path;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.core.TestData;
 import build.archipelago.maui.core.exceptions.*;
@@ -9,7 +8,6 @@ import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.core.workspace.path.graph.DependencyGraphGenerator;
 import build.archipelago.maui.core.workspace.path.recipies.Recipe;
-import build.archipelago.versionsetservice.client.rest.RestVersionSetServiceClient;
 import com.google.common.collect.ImmutableList;
 import org.junit.*;
 

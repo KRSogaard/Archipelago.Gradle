@@ -11,7 +11,7 @@ import build.archipelago.versionsetservice.client.model.CreateVersionSetRequest;
 
 import java.util.List;
 
-public interface VersionServiceClient {
+public interface VersionSetServiceClient {
     void createVersionSet(CreateVersionSetRequest request)
             throws VersionSetExistsException, VersionSetDoseNotExistsException, PackageNotFoundException;
     String createVersionRevision(String versionSetName, List<ArchipelagoBuiltPackage> packages)

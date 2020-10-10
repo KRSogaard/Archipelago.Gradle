@@ -4,21 +4,17 @@ import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.WorkspaceConstants;
-import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.core.workspace.serializer.BuildConfigSerializer;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.CreatePackageRequest;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.nio.file.*;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 @Slf4j
 @CommandLine.Command(name = "create", mixinStandardHelpOptions = true, description = "create a new package")
@@ -57,7 +53,7 @@ public class PackageCreateCommand extends BaseCommand {
 
         Path pkgDir = wsDir.resolve(name);
 
-        if (ws.getLocalPackages().stream().anyMatch(lp -> lp.equalsIgnoreCase(name)) ||
+        if (workspaceContext.getLocalPackages().stream().anyMatch(lp -> lp.equalsIgnoreCase(name)) ||
             Files.exists(pkgDir)) {
             System.err.println(String.format("A package by the name \"%s\" is already in the workspace", name));
             return 1;
@@ -86,8 +82,8 @@ public class PackageCreateCommand extends BaseCommand {
         BuildConfigSerializer.save(config, pkgDir);
         Files.writeString(pkgDir.resolve("emptyPackage.txt"), "This is an empty package");
 
-        ws.getLocalPackages().add(name);
-        ws.save();
+        workspaceContext.getLocalPackages().add(name);
+        workspaceContext.save();
         return 0;
     }
 

@@ -1,15 +1,9 @@
 package build.archipelago.maui.commands.workspace;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.PackageSourceProvider;
-import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
-import build.archipelago.packageservice.client.PackageServiceClient;
-import build.archipelago.packageservice.client.models.GetPackageResponse;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
 import picocli.CommandLine;
 
 import java.io.*;
@@ -45,7 +39,7 @@ public class WorkspaceRemoveCommand extends BaseCommand {
                 continue;
             }
             try {
-                Optional<String> pkgName = ws.getLocalPackages().stream()
+                Optional<String> pkgName = workspaceContext.getLocalPackages().stream()
                         .filter(lp -> lp.equalsIgnoreCase(pkg)).findFirst();
                 if (pkgName.isEmpty()) {
                     System.err.println(String.format("The package name \"%s\" is not checked out", pkg));
@@ -62,8 +56,8 @@ public class WorkspaceRemoveCommand extends BaseCommand {
                                 .forEach(File::delete);
                     }
                 }
-                ws.removeLocalPackage(cleanPKGName);
-                ws.save();
+                workspaceContext.removeLocalPackage(cleanPKGName);
+                workspaceContext.save();
 
                 System.out.println(String.format("Successfully added %s to the workspace", cleanPKGName));
             } catch (IOException e) {

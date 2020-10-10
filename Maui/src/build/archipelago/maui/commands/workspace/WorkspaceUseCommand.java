@@ -6,12 +6,10 @@ import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.PackageSourceProvider;
-import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.GetPackageResponse;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
-import com.google.inject.internal.util.SourceProvider;
+import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -30,10 +28,10 @@ public class WorkspaceUseCommand extends BaseCommand {
 
     private PackageServiceClient packageServiceClient;
     private PackageSourceProvider packageSourceProvider;
-    private VersionServiceClient vsClient;
+    private VersionSetServiceClient vsClient;
 
     public WorkspaceUseCommand(
-                VersionServiceClient vsClient,
+                VersionSetServiceClient vsClient,
                 WorkspaceContextFactory workspaceContextFactory,
                 SystemPathProvider systemPathProvider,
                 PackageServiceClient packageServiceClient,
@@ -52,17 +50,17 @@ public class WorkspaceUseCommand extends BaseCommand {
         }
 
         if (versionSet != null) {
-            if (versionSet.equalsIgnoreCase(ws.getVersionSet())) {
-                System.err.println(String.format("The version-set for the workspace is already \"%s\"", ws.getVersionSet()));
+            if (versionSet.equalsIgnoreCase(workspaceContext.getVersionSet())) {
+                System.err.println(String.format("The version-set for the workspace is already \"%s\"", workspaceContext.getVersionSet()));
             } else {
                 try {
                     VersionSet vs = vsClient.getVersionSet(versionSet);
                     System.out.println(String.format("Setting the version-set for the workspace to \"%s\"", vs.getName()));
                     // Ensure we have the right capitalization of the version-set
-                    ws.setVersionSet(vs.getName());
-                    ws.save();
+                    workspaceContext.setVersionSet(vs.getName());
+                    workspaceContext.save();
                     // We clear the cache as it would have been the old version-set
-                    ws.clearVersionSetRevisionCache();
+                    workspaceContext.clearVersionSetRevisionCache();
                 } catch (VersionSetDoseNotExistsException e) {
                     System.err.println(String.format("The version-set \"%s\" dose not exists", versionSet));
                 }
@@ -76,7 +74,7 @@ public class WorkspaceUseCommand extends BaseCommand {
                     continue;
                 }
                 try {
-                    if (ws.getLocalArchipelagoPackages().stream().anyMatch(lp -> lp.getName().equalsIgnoreCase(pkg))) {
+                    if (workspaceContext.getLocalArchipelagoPackages().stream().anyMatch(lp -> lp.getName().equalsIgnoreCase(pkg))) {
                         System.err.println(String.format("The package name \"%s\" already checked out", pkg));
                         continue;
                     }
@@ -94,8 +92,8 @@ public class WorkspaceUseCommand extends BaseCommand {
                         continue;
                     }
 
-                    ws.addLocalPackage(cleanPKGName);
-                    ws.save();
+                    workspaceContext.addLocalPackage(cleanPKGName);
+                    workspaceContext.save();
 
                     System.out.println(String.format("Successfully added %s to the workspace", cleanPKGName));
                 } catch (PackageNotFoundException exp) {

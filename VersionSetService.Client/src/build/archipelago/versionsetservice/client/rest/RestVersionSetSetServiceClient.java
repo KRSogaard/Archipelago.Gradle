@@ -9,7 +9,7 @@ import build.archipelago.common.exceptions.VersionSetExistsException;
 import build.archipelago.common.versionset.Revision;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.common.versionset.VersionSetRevision;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
+import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.client.model.CreateVersionSetRequest;
 import build.archipelago.versionsetservice.client.rest.models.RestCreateVersionSetRequest;
 import build.archipelago.versionsetservice.client.rest.models.RestCreateVersionSetRevisionRequest;
@@ -26,16 +26,15 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class RestVersionSetServiceClient implements VersionServiceClient {
+public class RestVersionSetSetServiceClient implements VersionSetServiceClient {
 
     private RestTemplate restTemplate;
     private String endpoint;
 
-    public RestVersionSetServiceClient(String endpoint) {
+    public RestVersionSetSetServiceClient(String endpoint) {
         restTemplate = new RestTemplate();
         if (endpoint.endsWith("/")) {
             this.endpoint = endpoint.substring(0, endpoint.length() - 2);

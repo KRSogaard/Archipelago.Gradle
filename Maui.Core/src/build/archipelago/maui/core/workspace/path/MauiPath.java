@@ -1,20 +1,15 @@
 package build.archipelago.maui.core.workspace.path;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.*;
 import build.archipelago.maui.core.exceptions.*;
-import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
 import build.archipelago.maui.core.workspace.path.graph.*;
 import build.archipelago.maui.core.workspace.path.recipies.*;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
 import com.google.common.collect.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.traverse.DepthFirstIterator;
 
-import java.awt.desktop.PrintFilesEvent;
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.*;
 

@@ -8,7 +8,7 @@ import build.archipelago.maui.core.TestData;
 import build.archipelago.maui.core.workspace.cache.PackageCacheList;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.packageservice.client.PackageServiceClient;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
+import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -30,7 +30,7 @@ public class WorkspaceSyncerTest {
             .build();
 
     private WorkspaceSyncer syncer;
-    private VersionServiceClient vsClient;
+    private VersionSetServiceClient vsClient;
     private PackageServiceClient packageClient;
     private ExecutorService executor;
     private PackageCacheList packageCacheList;
@@ -43,7 +43,7 @@ public class WorkspaceSyncerTest {
         executorServiceFactory.setQueueCapacity(2);
         executorServiceFactory.setMaximumPoolSize(1);
 
-        vsClient = mock(VersionServiceClient.class);
+        vsClient = mock(VersionSetServiceClient.class);
         packageCacher = mock(PackageCacher.class);
         packageCacheList = mock(PackageCacheList.class);
 

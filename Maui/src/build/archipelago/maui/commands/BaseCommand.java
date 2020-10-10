@@ -2,11 +2,8 @@ package build.archipelago.maui.commands;
 
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.contexts.*;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
-import build.archipelago.maui.utils.WorkspaceUtils;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -15,8 +12,8 @@ import java.util.concurrent.Callable;
 
 @Slf4j
 public abstract class BaseCommand implements Callable<Integer> {
-    protected WorkspaceContext ws;
-    protected ArchipelagoPackage pkg;
+    protected WorkspaceContext workspaceContext;
+    protected ArchipelagoPackage commandPKG;
     protected BuildConfig buildConfig;
     protected Path pkgDir;
     protected Path wsDir;
@@ -35,9 +32,9 @@ public abstract class BaseCommand implements Callable<Integer> {
         if (wsDir == null) {
             return false;
         }
-        ws = workspaceContextFactory.create(wsDir);
+        workspaceContext = workspaceContextFactory.create(wsDir);
         try {
-            ws.load();
+            workspaceContext.load();
         } catch (IOException e) {
             log.error("Failed to load workspace context", e);
             return false;
@@ -46,11 +43,11 @@ public abstract class BaseCommand implements Callable<Integer> {
     }
 
     protected boolean requirePackage() {
-        if (ws == null) {
+        if (workspaceContext == null) {
             throw new RuntimeException("Workspace is not loaded");
         }
 
-        pkgDir = systemPathProvider.getPackageDir(ws.getRoot());
+        pkgDir = systemPathProvider.getPackageDir(workspaceContext.getRoot());
         if (pkgDir == null) {
             return false;
         }
@@ -65,7 +62,7 @@ public abstract class BaseCommand implements Callable<Integer> {
 
         String version = buildConfig.getVersion();
         String packageName = pkgDir.getFileName().toString();
-        pkg = new ArchipelagoPackage(packageName, version);
+        commandPKG = new ArchipelagoPackage(packageName, version);
         return true;
     }
 }

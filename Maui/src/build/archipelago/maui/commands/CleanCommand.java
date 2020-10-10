@@ -2,10 +2,7 @@ package build.archipelago.maui.commands;
 
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.WorkspaceConstants;
-import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
-import build.archipelago.maui.core.workspace.path.MauiPath;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 

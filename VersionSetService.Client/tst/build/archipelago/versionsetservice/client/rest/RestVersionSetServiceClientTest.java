@@ -1,17 +1,17 @@
 package build.archipelago.versionsetservice.client.rest;
 
-import build.archipelago.versionsetservice.client.VersionServiceClient;
+import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class RestVersionSetServiceClientTest {
 
-    private VersionServiceClient client;
+    private VersionSetServiceClient client;
 
     @Before
     public void setUp() throws Exception {
-        client = new RestVersionSetServiceClient("http://localhost:8081");
+        client = new RestVersionSetSetServiceClient("http://localhost:8081");
     }
 
     @Test

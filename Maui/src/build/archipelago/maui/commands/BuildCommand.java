@@ -1,11 +1,9 @@
 package build.archipelago.maui.commands;
 
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.workspace.path.*;
 import build.archipelago.maui.core.workspace.path.recipies.BinRecipe;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
 import picocli.CommandLine;
@@ -44,7 +42,7 @@ public class BuildCommand extends BaseCommand {
             return 1;
         }
 
-        List<Path> paths = path.getPaths(ws, pkg, DependencyTransversalType.BUILD_TOOLS, BinRecipe.class).stream()
+        List<Path> paths = path.getPaths(workspaceContext, commandPKG, DependencyTransversalType.BUILD_TOOLS, BinRecipe.class).stream()
                 .map(sp -> Paths.get(sp))
                 .collect(Collectors.toList());
 
@@ -92,9 +90,9 @@ public class BuildCommand extends BaseCommand {
         builder.command(cmd);
 
         Map<String, String> env = builder.environment();
-        env.put("ARCHIPELAGO.PACKAGE", pkg.getNameVersion());
-        env.put("ARCHIPELAGO.PACKAGE_NAME", pkg.getName());
-        env.put("ARCHIPELAGO.PACKAGE_VERSION", pkg.getVersion());
+        env.put("ARCHIPELAGO.PACKAGE", commandPKG.getNameVersion());
+        env.put("ARCHIPELAGO.PACKAGE_NAME", commandPKG.getName());
+        env.put("ARCHIPELAGO.PACKAGE_VERSION", commandPKG.getVersion());
         env.put("ARCHIPELAGO.PACKAGE_ROOT", pkgDir.toRealPath().toString());
         env.put("ARCHIPELAGO.WORKSPACE", wsDir.toRealPath().toString());
 

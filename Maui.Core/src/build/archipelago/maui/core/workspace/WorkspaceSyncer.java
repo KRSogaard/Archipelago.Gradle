@@ -8,7 +8,7 @@ import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.core.workspace.cache.PackageCacheList;
 import build.archipelago.maui.core.workspace.cache.PackageCacher;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
+import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.time.Instant;
@@ -21,13 +21,13 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class WorkspaceSyncer {
-    private VersionServiceClient vsClient;
+    private VersionSetServiceClient vsClient;
     private ExecutorService executor;
     private PackageCacher packageCacher;
 
     public WorkspaceSyncer(
             PackageCacher packageCacher,
-            VersionServiceClient versionSetClient,
+            VersionSetServiceClient versionSetClient,
             ExecutorServiceFactory executorServiceFactory) {
         this.vsClient = versionSetClient;
         this.executor = executorServiceFactory.create();

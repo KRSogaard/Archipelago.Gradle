@@ -5,11 +5,10 @@ import build.archipelago.maui.commands.packages.*;
 import build.archipelago.maui.commands.workspace.*;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.*;
-import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.workspace.path.MauiPath;
 import build.archipelago.packageservice.client.PackageServiceClient;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
+import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import com.google.inject.*;
 
 public class CommandConfiguration extends AbstractModule {
@@ -67,7 +66,7 @@ public class CommandConfiguration extends AbstractModule {
 
     @Provides
     @Singleton
-    public WorkspaceUseCommand workspaceUseCommand(VersionServiceClient versionSetServiceClient,
+    public WorkspaceUseCommand workspaceUseCommand(VersionSetServiceClient versionSetServiceClient,
                                                    WorkspaceContextFactory workspaceContextFactory,
                                                    SystemPathProvider systemPathProvider,
                                                    PackageServiceClient packageServiceClient,
@@ -86,9 +85,8 @@ public class CommandConfiguration extends AbstractModule {
     @Provides
     @Singleton
     public RecursiveCommand RecursiveCommand(WorkspaceContextFactory workspaceContextFactory,
-                                             SystemPathProvider systemPathProvider,
-                                             MauiPath mauiPath) {
-        return new RecursiveCommand(mauiPath, workspaceContextFactory, systemPathProvider);
+                                             SystemPathProvider systemPathProvider) {
+        return new RecursiveCommand(workspaceContextFactory, systemPathProvider);
     }
 
     @Provides

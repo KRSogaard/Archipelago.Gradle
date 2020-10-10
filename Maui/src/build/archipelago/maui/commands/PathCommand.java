@@ -1,10 +1,8 @@
 package build.archipelago.maui.commands;
 
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.cache.PackageCacher;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.workspace.path.MauiPath;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -36,7 +34,7 @@ public class PathCommand extends BaseCommand {
             return 1;
         }
 
-        ImmutableList<String> paths = path.getPaths(ws, pkg, pathLine);
+        ImmutableList<String> paths = path.getPaths(workspaceContext, commandPKG, pathLine);
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (String p : paths) {

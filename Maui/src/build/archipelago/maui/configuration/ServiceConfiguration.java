@@ -9,8 +9,8 @@ import build.archipelago.maui.core.workspace.path.MauiPath;
 import build.archipelago.maui.core.workspace.path.recipies.*;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
-import build.archipelago.versionsetservice.client.VersionServiceClient;
-import build.archipelago.versionsetservice.client.rest.RestVersionSetServiceClient;
+import build.archipelago.versionsetservice.client.VersionSetServiceClient;
+import build.archipelago.versionsetservice.client.rest.RestVersionSetSetServiceClient;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 
@@ -28,8 +28,8 @@ public class ServiceConfiguration extends AbstractModule {
 
     @Provides
     @Singleton
-    public VersionServiceClient versionServiceClient(@Named("services.versionset.url") String vsEndpoint) {
-        return new RestVersionSetServiceClient(vsEndpoint);
+    public VersionSetServiceClient versionServiceClient(@Named("services.versionset.url") String vsEndpoint) {
+        return new RestVersionSetSetServiceClient(vsEndpoint);
     }
 
     @Provides
@@ -40,9 +40,9 @@ public class ServiceConfiguration extends AbstractModule {
 
     @Provides
     @Singleton
-    public WorkspaceContextFactory workspaceContextFactory(VersionServiceClient versionServiceClient,
+    public WorkspaceContextFactory workspaceContextFactory(VersionSetServiceClient versionSetServiceClient,
                                                            PackageCacher packageCacher) {
-        return new WorkspaceContextFactory(versionServiceClient, packageCacher);
+        return new WorkspaceContextFactory(versionSetServiceClient, packageCacher);
     }
 
     @Provides
@@ -63,10 +63,10 @@ public class ServiceConfiguration extends AbstractModule {
     @Provides
     @Singleton
     public WorkspaceSyncer workspaceSyncer(PackageCacher packageCacher,
-                                           VersionServiceClient versionServiceClient) {
+                                           VersionSetServiceClient versionSetServiceClient) {
         BlockingExecutorServiceFactory executorServiceFactory = new BlockingExecutorServiceFactory();
         executorServiceFactory.setMaximumPoolSize(4);
-        return new WorkspaceSyncer(packageCacher, versionServiceClient, executorServiceFactory);
+        return new WorkspaceSyncer(packageCacher, versionSetServiceClient, executorServiceFactory);
     }
 
     @Provides
@@ -80,10 +80,10 @@ public class ServiceConfiguration extends AbstractModule {
 
     @Provides
     @Singleton
-    public PackageSourceProvider packageSourceProvider(VersionServiceClient versionServiceClient,
+    public PackageSourceProvider packageSourceProvider(VersionSetServiceClient versionSetServiceClient,
                                                        @Named("sourceprovider") String serviceProvider,
                                                        @Named("sourceprovider.git.base") String gitBase,
                                                        @Named("sourceprovider.git.group") String gitGroup) {
-        return new GitPackageSourceProvider(versionServiceClient, gitBase, gitGroup);
+        return new GitPackageSourceProvider(versionSetServiceClient, gitBase, gitGroup);
     }
 }
