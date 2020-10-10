@@ -1,30 +1,19 @@
 package build.archipelago.versionsetservice.core.delegates;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.versionset.Revision;
-import build.archipelago.common.versionset.VersionSet;
+import build.archipelago.common.*;
+import build.archipelago.common.exceptions.*;
+import build.archipelago.common.versionset.*;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.MissingTargetPackageException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
 import com.google.common.collect.ImmutableList;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 public class CreateVersionSetRevisionDelegateTest {
 

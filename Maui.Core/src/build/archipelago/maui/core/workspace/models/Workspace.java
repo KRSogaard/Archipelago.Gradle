@@ -4,8 +4,8 @@ import build.archipelago.common.ArchipelagoPackage;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.*;
 
 @Data
 @SuperBuilder

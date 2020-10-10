@@ -1,18 +1,15 @@
 package build.archipelago.maui.core.workspace.serializer;
 
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.maui.core.workspace.*;
+import build.archipelago.maui.core.workspace.WorkspaceConstants;
 import build.archipelago.maui.core.workspace.models.Workspace;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.*;
+import java.util.*;
 
 @Slf4j
 @Data

@@ -1,7 +1,7 @@
 package build.archipelago.packageservice.core.data.models;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
+
 import java.time.Instant;
 
 @Data

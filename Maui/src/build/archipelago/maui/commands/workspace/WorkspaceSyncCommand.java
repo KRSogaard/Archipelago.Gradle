@@ -4,8 +4,8 @@ import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.contexts.*;
 import build.archipelago.maui.core.workspace.WorkspaceSyncer;
+import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 

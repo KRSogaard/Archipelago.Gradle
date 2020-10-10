@@ -1,7 +1,7 @@
 package build.archipelago.packageservice.models;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
+
 import java.util.List;
 
 @Data

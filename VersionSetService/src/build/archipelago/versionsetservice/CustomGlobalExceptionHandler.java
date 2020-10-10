@@ -1,12 +1,8 @@
 package build.archipelago.versionsetservice;
 
-import build.archipelago.common.exceptions.MissingTargetPackageException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
+import build.archipelago.common.exceptions.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;

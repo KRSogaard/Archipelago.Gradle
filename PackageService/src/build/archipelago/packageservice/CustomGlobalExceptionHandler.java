@@ -1,11 +1,8 @@
 package build.archipelago.packageservice;
 
-import build.archipelago.common.exceptions.PackageArtifactExistsException;
-import build.archipelago.common.exceptions.PackageExistsException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.common.exceptions.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;

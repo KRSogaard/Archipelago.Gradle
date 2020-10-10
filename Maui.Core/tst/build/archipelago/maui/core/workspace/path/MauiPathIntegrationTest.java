@@ -3,7 +3,7 @@ package build.archipelago.maui.core.workspace.path;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.core.TestData;
-import build.archipelago.maui.core.exceptions.*;
+import build.archipelago.maui.core.exceptions.PackageNotLocalException;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.core.workspace.path.graph.DependencyGraphGenerator;
@@ -12,13 +12,12 @@ import com.google.common.collect.ImmutableList;
 import org.junit.*;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class MauiPathIntegrationTest {

@@ -1,7 +1,6 @@
 package build.archipelago.versionsetservice.models;
 
-import lombok.Builder;
-import lombok.Value;
+import lombok.*;
 
 import java.util.List;
 

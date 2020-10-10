@@ -2,22 +2,21 @@ package build.archipelago.maui.core.workspace;
 
 import build.archipelago.common.concurrent.BlockingExecutorServiceFactory;
 import build.archipelago.common.exceptions.*;
-import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.common.versionset.VersionSetRevision;
+import build.archipelago.common.versionset.*;
 import build.archipelago.maui.core.TestData;
-import build.archipelago.maui.core.workspace.cache.PackageCacheList;
-import build.archipelago.maui.core.workspace.cache.PackageCacher;
+import build.archipelago.maui.core.workspace.cache.*;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.junit.*;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 public class WorkspaceSyncerTest {
 

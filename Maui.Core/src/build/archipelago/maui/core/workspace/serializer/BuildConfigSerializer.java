@@ -1,17 +1,17 @@
 package build.archipelago.maui.core.workspace.serializer;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.maui.core.workspace.*;
+import build.archipelago.maui.core.workspace.WorkspaceConstants;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.base.Strings;
-import lombok.*;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j

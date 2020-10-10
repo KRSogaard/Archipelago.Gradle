@@ -1,54 +1,33 @@
 package build.archipelago.versionsetservice.controllers;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.versionset.Revision;
-import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.common.versionset.VersionSetRevision;
-import build.archipelago.versionsetservice.core.delegates.CreateVersionSetDelegate;
-import build.archipelago.versionsetservice.core.delegates.CreateVersionSetRevisionDelegate;
-import build.archipelago.versionsetservice.core.delegates.GetVersionSetDelegate;
-import build.archipelago.versionsetservice.core.delegates.GetVersionSetPackagesDelegate;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
+import build.archipelago.common.*;
+import build.archipelago.common.exceptions.*;
+import build.archipelago.common.versionset.*;
+import build.archipelago.versionsetservice.core.delegates.*;
 import build.archipelago.versionsetservice.core.utils.RevisionUtil;
-import build.archipelago.versionsetservice.models.CreateVersionSetRevisionResponse;
-import build.archipelago.versionsetservice.models.VersionSetResponse;
-import build.archipelago.versionsetservice.models.VersionSetRevisionResponse;
+import build.archipelago.versionsetservice.models.*;
 import build.archipelago.versionsetservice.utils.TestConstants;
 import com.google.common.base.Strings;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
 import net.dongliu.gson.GsonJava8TypeAdapterFactory;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.*;
+
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(VersionSetController.class)

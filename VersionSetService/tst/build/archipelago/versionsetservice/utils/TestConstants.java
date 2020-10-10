@@ -1,7 +1,6 @@
 package build.archipelago.versionsetservice.utils;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.*;
 import build.archipelago.versionsetservice.core.utils.RevisionUtil;
 
 public class TestConstants {

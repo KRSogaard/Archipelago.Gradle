@@ -1,6 +1,6 @@
 package build.archipelago.maui.configuration;
 
-import build.archipelago.common.concurrent.*;
+import build.archipelago.common.concurrent.BlockingExecutorServiceFactory;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.*;
 import build.archipelago.maui.core.workspace.cache.*;

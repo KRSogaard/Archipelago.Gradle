@@ -2,8 +2,7 @@ package build.archipelago.packageservice.core.delegates.uploadBuildArtifact;
 
 import build.archipelago.common.ArchipelagoPackage;
 import com.google.common.base.Preconditions;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 @Builder
 @Data

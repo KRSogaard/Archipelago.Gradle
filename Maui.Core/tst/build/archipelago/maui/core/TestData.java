@@ -1,9 +1,6 @@
 package build.archipelago.maui.core;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.versionset.VersionSet;
-
-import java.time.Instant;
 
 public class TestData {
     public static final ArchipelagoBuiltPackage PKG_1 = ArchipelagoBuiltPackage.parse("pkg1-1.0#abc");

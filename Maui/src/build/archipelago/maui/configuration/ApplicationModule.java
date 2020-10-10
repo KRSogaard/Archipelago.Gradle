@@ -2,7 +2,7 @@ package build.archipelago.maui.configuration;
 
 import build.archipelago.maui.commands.MauiCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.utils.*;
+import build.archipelago.maui.utils.ConfigUtil;
 import com.google.inject.*;
 import com.google.inject.name.Names;
 

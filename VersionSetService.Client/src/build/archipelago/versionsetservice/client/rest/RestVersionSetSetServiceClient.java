@@ -1,28 +1,15 @@
 package build.archipelago.versionsetservice.client.rest;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.MissingTargetPackageException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
-import build.archipelago.common.versionset.Revision;
-import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.common.versionset.VersionSetRevision;
+import build.archipelago.common.*;
+import build.archipelago.common.exceptions.*;
+import build.archipelago.common.versionset.*;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.client.model.CreateVersionSetRequest;
-import build.archipelago.versionsetservice.client.rest.models.RestCreateVersionSetRequest;
-import build.archipelago.versionsetservice.client.rest.models.RestCreateVersionSetRevisionRequest;
-import build.archipelago.versionsetservice.client.rest.models.RestCreateVersionSetRevisionResponse;
-import build.archipelago.versionsetservice.client.rest.models.RestVersionSetResponse;
-import build.archipelago.versionsetservice.client.rest.models.RestVersionSetRevisionResponse;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import build.archipelago.versionsetservice.client.rest.models.*;
+import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.http.*;
+import org.springframework.web.client.*;
 
 import java.time.Instant;
 import java.util.List;

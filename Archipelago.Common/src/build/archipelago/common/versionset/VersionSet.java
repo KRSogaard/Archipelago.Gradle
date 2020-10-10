@@ -1,8 +1,7 @@
 package build.archipelago.common.versionset;
 
 import build.archipelago.common.ArchipelagoPackage;
-import lombok.Builder;
-import lombok.Value;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.List;

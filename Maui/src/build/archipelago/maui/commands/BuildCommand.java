@@ -7,10 +7,10 @@ import build.archipelago.maui.core.workspace.path.recipies.BinRecipe;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
 import picocli.CommandLine;
-import java.nio.file.Files;
+
 import java.nio.file.*;
 import java.util.*;
-import java.util.stream.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @CommandLine.Command(name = "build", mixinStandardHelpOptions = true, description = "Build a package")

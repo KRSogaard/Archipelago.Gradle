@@ -1,10 +1,9 @@
 package build.archipelago.maui.core.workspace.serializer;
 
-import build.archipelago.common.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.core.exceptions.VersionSetNotSyncedException;
 import build.archipelago.maui.core.workspace.WorkspaceConstants;
-import build.archipelago.maui.core.workspace.models.Workspace;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;

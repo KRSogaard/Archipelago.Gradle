@@ -1,7 +1,7 @@
 package build.archipelago.common.exceptions;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.*;
+
 import java.util.List;
 import java.util.stream.Collectors;
 

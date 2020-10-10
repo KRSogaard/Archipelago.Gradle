@@ -1,11 +1,8 @@
 package build.archipelago.versionsetservice.client.rest.models;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @Data
 @NoArgsConstructor

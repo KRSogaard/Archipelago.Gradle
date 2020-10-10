@@ -1,10 +1,9 @@
 package build.archipelago.maui.core.workspace.path;
 
 import build.archipelago.maui.core.exceptions.PathStringInvalidException;
-import org.junit.*;
+import org.junit.Test;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
 
 public class MauiPathTest {
 

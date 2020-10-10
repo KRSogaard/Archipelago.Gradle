@@ -1,8 +1,7 @@
 package build.archipelago.versionsetservice.models;
 
 import build.archipelago.common.versionset.Revision;
-import lombok.Builder;
-import lombok.Value;
+import lombok.*;
 
 @Builder
 @Value

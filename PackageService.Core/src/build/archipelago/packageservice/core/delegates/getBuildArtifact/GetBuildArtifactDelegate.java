@@ -1,10 +1,8 @@
 package build.archipelago.packageservice.core.delegates.getBuildArtifact;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.*;
 import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.packageservice.core.data.PackageData;
-import build.archipelago.packageservice.core.data.models.BuiltPackageDetails;
 import build.archipelago.packageservice.core.storage.PackageStorage;
 import build.archipelago.packageservice.core.utils.Constants;
 import com.google.common.base.Preconditions;

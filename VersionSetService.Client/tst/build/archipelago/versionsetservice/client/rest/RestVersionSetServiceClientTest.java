@@ -1,9 +1,7 @@
 package build.archipelago.versionsetservice.client.rest;
 
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 public class RestVersionSetServiceClientTest {
 

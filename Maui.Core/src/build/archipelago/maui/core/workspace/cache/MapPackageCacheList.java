@@ -3,9 +3,7 @@ package build.archipelago.maui.core.workspace.cache;
 import build.archipelago.common.ArchipelagoBuiltPackage;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 public class MapPackageCacheList implements PackageCacheList {

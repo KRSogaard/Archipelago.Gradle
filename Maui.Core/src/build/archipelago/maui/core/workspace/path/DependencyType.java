@@ -2,7 +2,7 @@ package build.archipelago.maui.core.workspace.path;
 
 import com.google.common.collect.ImmutableList;
 
-import java.util.*;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public enum DependencyType {

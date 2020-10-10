@@ -1,6 +1,6 @@
 package build.archipelago.maui.core.workspace.path.graph;
 
-import build.archipelago.common.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.core.TestData;
@@ -9,9 +9,10 @@ import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.core.workspace.path.DependencyTransversalType;
 import org.junit.*;
+
 import java.io.IOException;
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
