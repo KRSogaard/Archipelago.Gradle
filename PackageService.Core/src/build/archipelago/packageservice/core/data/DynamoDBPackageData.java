@@ -170,6 +170,7 @@ public class DynamoDBPackageData implements PackageData {
         return BuiltPackageDetails.builder()
                 .hash(item.get(DynamoDBKeys.HASH).getS())
                 .config(item.get(DynamoDBKeys.CONFIG).getS())
+                .gitCommit(item.get(DynamoDBKeys.GIT_COMMIT).getS())
                 .created(AV.toInstant(item.get(DynamoDBKeys.CREATED)))
                 .build();
     }
@@ -193,7 +194,7 @@ public class DynamoDBPackageData implements PackageData {
     }
 
     @Override
-    public void createBuild(ArchipelagoBuiltPackage pkg, String config) throws
+    public void createBuild(ArchipelagoBuiltPackage pkg, String config, String gitCommit) throws
             PackageNotFoundException, PackageExistsException {
         if (!packageExists(pkg.getName())) {
             log.debug("The package \"{}\" did not exists", pkg.getName());
@@ -258,7 +259,8 @@ public class DynamoDBPackageData implements PackageData {
                 .put(DynamoDBKeys.HASH, AV.of(searchVersion(pkg.getHash())))
                 .put(DynamoDBKeys.DISPLAY_HASH, AV.of(pkg.getHash()))
                 .put(DynamoDBKeys.CREATED, AV.of(now))
-                .put(DynamoDBKeys.CONFIG, AV.of(config));
+                .put(DynamoDBKeys.CONFIG, AV.of(config))
+                .put(DynamoDBKeys.GIT_COMMIT, AV.of(gitCommit));
         dynamoDB.putItem(new PutItemRequest(settings.getPackagesBuildsTableName(), map.build()));
     }
 

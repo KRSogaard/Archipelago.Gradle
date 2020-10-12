@@ -38,10 +38,6 @@ public class SystemPathProvider {
         return getHomePath().resolve(".archipelago");
     }
 
-    public Path getCachePath() {
-        return getMauiPath().resolve("cache");
-    }
-
     public Path getWorkspaceDir() {
         Path currentFolder = getCurrentDir();
         log.trace("Trying to find the workspace root starting at \"{}\"", currentFolder);

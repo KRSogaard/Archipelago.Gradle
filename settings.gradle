@@ -9,4 +9,6 @@ include 'PackageService.Core'
 include 'VersionSetService'
 include 'VersionSetService.Client'
 include 'VersionSetService.Core'
-
+include 'BuildServer.API'
+include 'BuildServer.Common'
+include 'BuildServer.Builder'

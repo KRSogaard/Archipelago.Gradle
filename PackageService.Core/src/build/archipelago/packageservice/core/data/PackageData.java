@@ -15,6 +15,6 @@ public interface PackageData {
     BuiltPackageDetails getBuildPackage(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException;
     BuiltPackageDetails getLatestBuildPackage(ArchipelagoPackage pkg) throws PackageNotFoundException;
 
-    void createBuild(ArchipelagoBuiltPackage pkg, String config) throws PackageNotFoundException, PackageExistsException;
+    void createBuild(ArchipelagoBuiltPackage pkg, String config, String gitCommit) throws PackageNotFoundException, PackageExistsException;
     void createPackage(CreatePackageModel model) throws PackageExistsException;
 }

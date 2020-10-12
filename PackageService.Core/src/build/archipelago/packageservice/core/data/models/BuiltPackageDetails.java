@@ -10,4 +10,5 @@ public class BuiltPackageDetails {
     private String hash;
     private Instant created;
     private String config;
+    private String gitCommit;
 }

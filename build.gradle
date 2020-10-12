@@ -18,8 +18,13 @@ allprojects {
         jcenter()
         maven { url 'https://plugins.gradle.org/m2/' }
         maven {
+            name = "Local dynamodb Repo"
             //Local DynamoDB repository
             url "https://s3-us-west-2.amazonaws.com/dynamodb-local/release"
+        }
+        maven {
+            name = "Wewelo Repo"
+            url "http://repo.wewelo.com/release"
         }
     }
 }
@@ -67,7 +72,7 @@ project(':Archipelago.Common.DynamoDB') {
     apply plugin: 'maven-publish'
 
     dependencies {
-        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.692'
+        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
     }
 }
 
@@ -97,6 +102,17 @@ project(':Maui') {
 
     compileJava {
         options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
+    }
+
+    task fatJar(type: Jar) {
+        manifest {
+            attributes 'Main-Class': 'build.archipelago.maui.Application'
+        }
+        baseName = 'Maui-cli'
+        from {
+            configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+        with jar
     }
 }
 
@@ -139,8 +155,8 @@ project(':PackageService') {
         implementation 'io.springfox:springfox-swagger2:2.9.2'
         implementation 'io.springfox:springfox-swagger-ui:2.9.2'
 
-        implementation 'com.amazonaws:aws-java-sdk-s3:1.11.692'
-        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.692'
+        implementation 'com.amazonaws:aws-java-sdk-s3:1.11.880'
+        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
 
         testImplementation 'com.google.code.gson:gson:2.8.6'
         testImplementation('org.springframework.boot:spring-boot-starter-test') {
@@ -164,8 +180,8 @@ project(':PackageService.Core') {
         implementation project(':Archipelago.Common')
         implementation project(':Archipelago.Common.DynamoDB')
 
-        implementation 'com.amazonaws:aws-java-sdk-s3:1.11.692'
-        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.692'
+        implementation 'com.amazonaws:aws-java-sdk-s3:1.11.880'
+        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
 
         // Needed for DynamoDBLocal
         testImplementation 'com.amazonaws:DynamoDBLocal:1.12.0'
@@ -209,7 +225,7 @@ project(':VersionSetService') {
         implementation 'org.springframework.boot:spring-boot-starter-log4j2'
         implementation 'io.springfox:springfox-swagger2:2.9.2'
         implementation 'io.springfox:springfox-swagger-ui:2.9.2'
-        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.692'
+        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
 
         testImplementation 'com.google.code.gson:gson:2.8.6'
         testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
@@ -240,7 +256,7 @@ project(':VersionSetService.Core') {
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
 
-        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.692'
+        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
 
         // Needed for DynamoDBLocal
         testImplementation 'com.amazonaws:DynamoDBLocal:1.12.0'
@@ -254,5 +270,95 @@ project(':VersionSetService.Client') {
         implementation project(':Archipelago.Common')
 
         implementation 'org.springframework:spring-web:5.2.9.RELEASE'
+    }
+}
+
+project(':BuildServer.API') {
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'application'
+
+    mainClassName = 'build.archipelago.buildserver.Application'
+
+    configurations {
+        all {
+            exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        }
+    }
+
+    dependencies {
+        implementation project(':Archipelago.Common')
+        implementation project(':Archipelago.Common.DynamoDB')
+        implementation project(':VersionSetService.Client')
+        implementation project(':PackageService.Client')
+        implementation project(':Maui.Core')
+        implementation project(':BuildServer.Common')
+
+        implementation 'org.springframework.boot:spring-boot-starter-jersey'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+        implementation 'io.springfox:springfox-swagger2:2.9.2'
+        implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+        implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
+
+        testImplementation 'com.google.code.gson:gson:2.8.6'
+        testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
+        testImplementation('org.springframework.boot:spring-boot-starter-test') {
+            exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+        }
+    }
+
+    task runlocal {
+        run.configure {
+            project.logger.lifecycle("======================================")
+            project.logger.lifecycle("= Running application in alpha stage =")
+            project.logger.lifecycle("======================================")
+            systemProperty "spring.profiles.active", 'alpha'
+        }
+    }
+    runlocal.finalizedBy run
+}
+
+project(':BuildServer.Builder') {
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'application'
+
+    mainClassName = 'build.archipelago.buildserver.builder.Application'
+
+    dependencies {
+        implementation project(':VersionSetService.Client')
+        implementation project(':PackageService.Client')
+        implementation project(':Archipelago.Common')
+        implementation project(':Archipelago.Common.Concurrent')
+        implementation project(':BuildServer.Common')
+
+        implementation 'com.wewelo:SQSConsumer:1.0.2'
+        implementation 'org.springframework.boot:spring-boot-starter'
+        testImplementation('org.springframework.boot:spring-boot-starter-test') {
+            exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+        }
+
+        implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
+        implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
+        implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
+        implementation 'org.jgrapht:jgrapht-core:1.5.0'
+        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+        implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
+    }
+}
+
+project(':BuildServer.Common') {
+
+    dependencies {
+        implementation project(':Archipelago.Common')
+        implementation project(':Archipelago.Common.DynamoDB')
+        implementation project(':VersionSetService.Client')
+        implementation project(':PackageService.Client')
+        implementation project(':Maui.Core')
+
+        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+        implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
     }
 }

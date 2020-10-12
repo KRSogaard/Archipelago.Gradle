@@ -1,4 +1,4 @@
-package build.archipelago.packageservice;
+package build.archipelago.buildserver;
 
 import build.archipelago.common.exceptions.*;
 import org.springframework.http.HttpStatus;
@@ -25,4 +25,8 @@ public class CustomGlobalExceptionHandler {
         response.sendError(HttpStatus.CONFLICT.value(), ex.getMessage());
     }
 
+    @ExceptionHandler(VersionSetDoseNotExistsException.class)
+    public void springHandleVersionSetDoseNotExistsException(Exception ex, HttpServletResponse response) throws IOException {
+        response.sendError(HttpStatus.CONFLICT.value(), ex.getMessage());
+    }
 }

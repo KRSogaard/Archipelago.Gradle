@@ -1,6 +1,7 @@
 package build.archipelago.maui.configuration;
 
 import build.archipelago.common.concurrent.BlockingExecutorServiceFactory;
+import build.archipelago.maui.MauiConstants;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.*;
 import build.archipelago.maui.core.workspace.cache.*;
@@ -49,11 +50,15 @@ public class ServiceConfiguration extends AbstractModule {
     @Singleton
     public PackageCacher packageCacher(PackageServiceClient packageServiceClient,
                                        SystemPathProvider systemPathProvider) throws IOException {
-        Path cachePath = systemPathProvider.getCachePath();
+        Path basePath = systemPathProvider.getMauiPath().resolve(".archipelago");
+        if ("true".equalsIgnoreCase(System.getProperty(MauiConstants.ENV_USE_LOCAL_WORKSPACE_CACHE, "false"))) {
+            basePath = systemPathProvider.getWorkspaceDir().resolve(".archipelago");
+        }
+        Path cachePath = basePath.resolve("cache");
         if (!Files.exists(cachePath)) {
             Files.createDirectory(cachePath);
         }
-        Path tempPath = systemPathProvider.getMauiPath().resolve("temp");
+        Path tempPath = basePath.resolve("temp");
         if (!Files.exists(tempPath)) {
             Files.createDirectory(tempPath);
         }

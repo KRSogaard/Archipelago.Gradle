@@ -14,4 +14,5 @@ public class DynamoDBKeys {
     public static final String HASH = "hash";
     public static final String DISPLAY_HASH = "display-hash";
     public static final String CONFIG = "config";
+    public static final String GIT_COMMIT = "git-commit";
 }

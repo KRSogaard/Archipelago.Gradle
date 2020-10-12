@@ -41,6 +41,7 @@ public class ArtifactController {
                 "build artifact is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "A name is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version), "A version is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getGitCommit()), "A git commit is required");
         Preconditions.checkArgument(request.getBuildArtifact().getSize() > 0,
                 "build artifact is required");
         try {
@@ -48,6 +49,7 @@ public class ArtifactController {
                     UploadBuildArtifactDelegateRequest.builder()
                             .pkg(new ArchipelagoPackage(name, version))
                             .config(request.getConfig())
+                            .gitCommit(request.getGitCommit())
                             .buildArtifact(request.getBuildArtifact().getBytes())
                             .build()
             );

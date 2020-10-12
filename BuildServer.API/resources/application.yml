@@ -1,0 +1,25 @@
+server:
+  port: 8070
+  error:
+    include-stacktrace: never
+
+spring:
+  jackson:
+    mapper:
+      accept_case_insensitive_properties: true
+
+aws:
+  region: "us-west-2"
+  access:
+    id: "AKIARDAF5R4ODZ2LMPNZ"
+    key: "MS7flruyxp3QPlEVEd41NZVDG7WTkkZYBfZjfWEM"
+
+services:
+  versionset:
+    url: "http://localhost:8090"
+  packages:
+    url: "http://localhost:8080"
+
+dynamodb:
+  build:
+    tableName: "builds.alpha"

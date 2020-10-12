@@ -21,8 +21,12 @@ public class AV {
     public static AttributeValue of(List<String> v) {
         return new AttributeValue().withSS(v);
     }
+    public static AttributeValue of(boolean dryRun) {
+        return new AttributeValue().withBOOL(dryRun);
+    }
 
     public static Instant toInstant(AttributeValue av) {
         return Instant.ofEpochMilli(Long.parseLong(av.getN()));
     }
+
 }

@@ -122,6 +122,7 @@ public class PackagesController {
                 .hash(build.getHash())
                 .config(build.getConfig())
                 .created(build.getCreated().toEpochMilli())
+                .gitCommit(build.getGitCommit())
                 .build();
     }
 
