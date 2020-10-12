@@ -50,7 +50,7 @@ public class ServiceConfiguration extends AbstractModule {
     @Singleton
     public PackageCacher packageCacher(PackageServiceClient packageServiceClient,
                                        SystemPathProvider systemPathProvider) throws IOException {
-        Path basePath = systemPathProvider.getMauiPath().resolve(".archipelago");
+        Path basePath = systemPathProvider.getMauiPath();
         if ("true".equalsIgnoreCase(System.getProperty(MauiConstants.ENV_USE_LOCAL_WORKSPACE_CACHE, "false"))) {
             basePath = systemPathProvider.getWorkspaceDir().resolve(".archipelago");
         }
