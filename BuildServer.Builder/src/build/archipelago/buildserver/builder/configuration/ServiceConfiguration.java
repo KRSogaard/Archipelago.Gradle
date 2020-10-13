@@ -7,7 +7,6 @@ import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.client.rest.RestVersionSetSetServiceClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.xspec.B;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.wewelo.sqsconsumer.*;
 import com.wewelo.sqsconsumer.models.SQSConsumerConfig;
@@ -15,16 +14,19 @@ import com.wewelo.sqsconsumer.threading.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.*;
+
 @Configuration
 public class ServiceConfiguration {
 
     @Bean
-    public VersionSetServiceClient versionServiceClient(@Value("services.versionset.url") String vsEndpoint) {
+    public VersionSetServiceClient versionServiceClient(@Value("${services.versionset.url}") String vsEndpoint) {
         return new RestVersionSetSetServiceClient(vsEndpoint);
     }
 
     @Bean
-    public PackageServiceClient packageServiceClient(@Value("services.packages.url") String pkgEndpoint) {
+    public PackageServiceClient packageServiceClient(@Value("${services.packages.url}") String pkgEndpoint) {
         return new RestPackageServiceClient(pkgEndpoint);
     }
 
@@ -42,13 +44,25 @@ public class ServiceConfiguration {
     }
 
     @Bean
-    public BuildRequestHandler buildRequestHandler() {
-        return new BuildRequestHandler();
+    public BuildRequestHandler buildRequestHandler(VersionSetServiceClient versionSetServiceClient,
+                                                    PackageServiceClient packageServiceClient,
+                                                    @Value("${workspace.path}") String workspacePath,
+                                                   @Value("${workspace.maui}") String mauiPath,
+                                                   BuildService buildService) throws IOException {
+        Path wsPath = Path.of(workspacePath);
+        if (!Files.exists(wsPath) || !Files.isDirectory(wsPath)) {
+            Files.createDirectory(wsPath);
+        }
+        Path mauiPathPath = Path.of(mauiPath);
+        if (!Files.exists(mauiPathPath)) {
+            throw new RuntimeException("Maui path was invalid");
+        }
+        return new BuildRequestHandler(versionSetServiceClient, packageServiceClient, wsPath, mauiPathPath, buildService);
     }
 
     @Bean
-    public BuildRequestFailureHandler buildRequestFailureHandler() {
-        return new BuildRequestFailureHandler();
+    public BuildRequestFailureHandler buildRequestFailureHandler(@Value("${sqs.build-queue}") String buildQueue) {
+        return new BuildRequestFailureHandler(buildQueue);
     }
 
     @Bean

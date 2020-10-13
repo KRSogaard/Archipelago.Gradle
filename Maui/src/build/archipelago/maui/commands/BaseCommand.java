@@ -1,6 +1,7 @@
 package build.archipelago.maui.commands;
 
 import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.contexts.*;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
@@ -20,11 +21,14 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     protected WorkspaceContextFactory workspaceContextFactory;
     protected SystemPathProvider systemPathProvider;
+    protected OutputWrapper out;
 
     public BaseCommand(WorkspaceContextFactory workspaceContextFactory,
-                       SystemPathProvider systemPathProvider) {
+                       SystemPathProvider systemPathProvider,
+                       OutputWrapper out) {
         this.workspaceContextFactory = workspaceContextFactory;
         this.systemPathProvider = systemPathProvider;
+        this.out = out;
     }
 
     protected boolean requireWorkspace() {

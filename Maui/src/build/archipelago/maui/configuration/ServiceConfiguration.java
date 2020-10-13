@@ -2,6 +2,7 @@ package build.archipelago.maui.configuration;
 
 import build.archipelago.common.concurrent.BlockingExecutorServiceFactory;
 import build.archipelago.maui.MauiConstants;
+import build.archipelago.maui.Output.*;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.*;
 import build.archipelago.maui.core.workspace.cache.*;
@@ -90,5 +91,11 @@ public class ServiceConfiguration extends AbstractModule {
                                                        @Named("sourceprovider.git.base") String gitBase,
                                                        @Named("sourceprovider.git.group") String gitGroup) {
         return new GitPackageSourceProvider(versionSetServiceClient, gitBase, gitGroup);
+    }
+
+    @Provides
+    @Singleton
+    public OutputWrapper outputWrapper() {
+        return new ConsoleOutputWrapper();
     }
 }

@@ -1,5 +1,6 @@
 package build.archipelago.maui.commands;
 
+import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.workspace.path.*;
@@ -26,19 +27,20 @@ public class BuildCommand extends BaseCommand {
 
     public BuildCommand(MauiPath path,
                         WorkspaceContextFactory workspaceContextFactory,
-                        SystemPathProvider systemPathProvider) {
-        super(workspaceContextFactory, systemPathProvider);
+                        SystemPathProvider systemPathProvider,
+                        OutputWrapper out) {
+        super(workspaceContextFactory, systemPathProvider, out);
         this.path = path;
     }
 
     @Override
     public Integer call() throws Exception {
         if (!requireWorkspace()) {
-            System.err.println("Was unable to locate the workspace");
+            out.error("Was unable to locate the workspace");
             return 1;
         }
         if (!requirePackage()) {
-            System.err.println("Was unable to locate the package");
+            out.error("Was unable to locate the package");
             return 1;
         }
 
@@ -56,8 +58,8 @@ public class BuildCommand extends BaseCommand {
             }
             buildSystemFilePath = pkgDir.resolve(buildSystemFileNameBuilder.toString());
             if (!Files.exists(buildSystemFilePath)) {
-                System.err.println(String.format("Was unable to find the build file \"%s\" in \"%s\"",
-                        buildSystemFilePath.getFileName(), buildSystemFilePath.getParent().toString()));
+                out.error("Was unable to find the build file \"%s\" in \"%s\"",
+                        buildSystemFilePath.getFileName(), buildSystemFilePath.getParent().toString());
                 return 1;
             }
         } else {
@@ -76,7 +78,7 @@ public class BuildCommand extends BaseCommand {
                 }
             }
             if (buildSystemFilePath == null) {
-                System.err.println(String.format("The build system %s was not found in the build dependency tree", buildConfig.getBuildSystem()));
+                out.error("The build system %s was not found in the build dependency tree", buildConfig.getBuildSystem());
             }
         }
 
@@ -99,10 +101,10 @@ public class BuildCommand extends BaseCommand {
         Process process = builder.start();
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            System.err.println("The build failed.");
+            out.error("The build failed.");
             return exitCode;
         }
-        System.out.println("Build successful");
+        out.write("Build successful");
         return exitCode;
     }
 }

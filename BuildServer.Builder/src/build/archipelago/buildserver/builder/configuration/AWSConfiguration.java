@@ -3,6 +3,7 @@ package build.archipelago.buildserver.builder.configuration;
 import com.amazonaws.auth.*;
 import com.amazonaws.services.dynamodbv2.*;
 import com.amazonaws.services.s3.*;
+import com.amazonaws.services.sqs.AmazonSQS;
 import com.wewelo.sqsconsumer.AmazonSQSFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -41,6 +42,11 @@ public class AWSConfiguration {
                 .build();
     }
 
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public AmazonSQS amazonSQS(AmazonSQSFactory sqsFactory) {
+        return sqsFactory.create();
+    }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)

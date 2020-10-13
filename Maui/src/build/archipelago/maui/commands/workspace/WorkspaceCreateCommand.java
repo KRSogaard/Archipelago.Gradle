@@ -1,6 +1,7 @@
 package build.archipelago.maui.commands.workspace;
 
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.contexts.*;
@@ -22,19 +23,20 @@ public class WorkspaceCreateCommand extends BaseCommand {
     private String versionSet;
 
     public WorkspaceCreateCommand(WorkspaceContextFactory workspaceContextFactory,
-                                  SystemPathProvider systemPathProvider) {
-        super(workspaceContextFactory, systemPathProvider);
+                                  SystemPathProvider systemPathProvider,
+                                  OutputWrapper out) {
+        super(workspaceContextFactory, systemPathProvider, out);
     }
 
     @Override
     public Integer call() throws Exception {
         Path dir = systemPathProvider.getCurrentDir();
-        System.out.println(String.format("Creating workspace %s", name));
+        out.write("Creating workspace %s", name);
         Path wsRoot = dir.resolve(name);
         WorkspaceContext ws = workspaceContextFactory.create(wsRoot);
 
         if (Files.exists(wsRoot)) {
-            System.err.println(String.format("The workspace \"%s\" already exists in this folder", name));
+            out.error("The workspace \"%s\" already exists in this folder", name);
             return 1;
         }
         Files.createDirectory(wsRoot);
@@ -48,12 +50,12 @@ public class WorkspaceCreateCommand extends BaseCommand {
         } catch (VersionSetDoseNotExistsException e) {
             log.error("Was unable to created the workspace as the requested version-set \"{}\" did not exist",
                     versionSet);
-            System.err.println(String.format("Was unable to created the workspace as the requested version-set " +
-                    "\"%s\" did not exist", versionSet));
+            out.error("Was unable to created the workspace as the requested version-set " +
+                    "\"%s\" did not exist", versionSet);
             return 2;
         } catch (IOException e) {
             log.error("Failed to create the workspace file in \"" + wsRoot + "\"", e);
-            System.err.println("Was unable to create the workspace file");
+            out.error("Was unable to create the workspace file");
             return 1;
         }
         return 0;

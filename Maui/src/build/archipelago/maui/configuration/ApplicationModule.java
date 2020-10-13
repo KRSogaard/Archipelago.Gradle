@@ -37,8 +37,5 @@ public class ApplicationModule extends AbstractModule {
         install(new CommandConfiguration());
     }
 
-    @Provides
-    public MauiCommand mauiCommand() {
-        return new MauiCommand();
-    }
+
 }

@@ -2,6 +2,7 @@ package build.archipelago.maui.commands.workspace;
 
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.versionset.VersionSetRevision;
+import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.WorkspaceSyncer;
@@ -23,20 +24,21 @@ public class WorkspaceSyncCommand extends BaseCommand {
 
     public WorkspaceSyncCommand(WorkspaceContextFactory workspaceContextFactory,
                                 SystemPathProvider systemPathProvider,
+                                OutputWrapper out,
                                 WorkspaceSyncer workspaceSyncer) {
-        super(workspaceContextFactory, systemPathProvider);
+        super(workspaceContextFactory, systemPathProvider, out);
         this.workspaceSyncer = workspaceSyncer;
     }
 
     @Override
     public Integer call() throws Exception {
         if (!requireWorkspace()) {
-            System.err.println("Was unable to locate the workspace");
+            out.error("Was unable to locate the workspace");
             return 1;
         }
 
         if (workspaceContext.getVersionSet() == null) {
-            System.out.println("No version set is assigned to the workspace, can not sync.");
+            out.write("No version set is assigned to the workspace, can not sync.");
             return 1;
         }
 
@@ -51,11 +53,11 @@ public class WorkspaceSyncCommand extends BaseCommand {
             log.error(String.format("Was unable to sync workspace \"%s\" as the version set \"%s#%s\" dose not exists",
                     wsDir.toString(), workspaceContext.getVersionSet(), revision), e);
             if (revision != null) {
-                System.err.println(String.format("Was unable to sync the workspace as the version set \"%s#%s\" dose not exists",
-                        workspaceContext.getVersionSet(), revision));
+                out.error("Was unable to sync the workspace as the version set \"%s#%s\" dose not exists",
+                        workspaceContext.getVersionSet(), revision);
             } else {
-                System.err.println(String.format("Was unable to sync the workspace as the version set \"%s\" dose not exists",
-                        workspaceContext.getVersionSet()));
+                out.error("Was unable to sync the workspace as the version set \"%s\" dose not exists",
+                        workspaceContext.getVersionSet());
             }
         }
 

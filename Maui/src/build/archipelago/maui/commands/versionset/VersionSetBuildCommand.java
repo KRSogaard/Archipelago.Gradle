@@ -2,6 +2,7 @@ package build.archipelago.maui.commands.versionset;
 
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.versionset.VersionSet;
+import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
@@ -25,26 +26,27 @@ public class VersionSetBuildCommand extends BaseCommand {
 
     public VersionSetBuildCommand(WorkspaceContextFactory workspaceContextFactory,
                                   SystemPathProvider systemPathProvider,
+                                  OutputWrapper out,
                                   VersionSetServiceClient versionSetServiceClient) {
-        super(workspaceContextFactory, systemPathProvider);
+        super(workspaceContextFactory, systemPathProvider, out);
         this.versionSetServiceClient = versionSetServiceClient;
     }
 
     @Override
     public Integer call() throws Exception {
         if (requireWorkspace()) {
-            System.err.println("A Version-Set can not be build inside a workspace");
+            out.error("A Version-Set can not be build inside a workspace");
             return 1;
         }
 
         Path path = systemPathProvider.getCurrentDir().resolve("artifact");
-        System.out.println(String.format("Build version-set artifact into \"%s\"", path.toString()));
+        out.write("Build version-set artifact into \"%s\"", path.toString());
 
         VersionSet versionSet;
         try {
             versionSet = versionSetServiceClient.getVersionSet(versionSetName);
         } catch (VersionSetDoseNotExistsException e) {
-            System.err.println(String.format("Unable to find the Version-Set \"%s\"", versionSetName));
+            out.error("Unable to find the Version-Set \"%s\"", versionSetName);
             return 1;
         }
 

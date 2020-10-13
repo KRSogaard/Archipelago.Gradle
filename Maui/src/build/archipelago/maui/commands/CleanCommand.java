@@ -1,5 +1,6 @@
 package build.archipelago.maui.commands;
 
+import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.WorkspaceConstants;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
@@ -16,18 +17,19 @@ import java.util.stream.Stream;
 public class CleanCommand extends BaseCommand {
 
     public CleanCommand(WorkspaceContextFactory workspaceContextFactory,
-                        SystemPathProvider systemPathProvider) {
-        super(workspaceContextFactory, systemPathProvider);
+                        SystemPathProvider systemPathProvider,
+                        OutputWrapper out) {
+        super(workspaceContextFactory, systemPathProvider, out);
     }
 
     @Override
     public Integer call() throws Exception {
         if (!requireWorkspace()) {
-            System.err.println("Was unable to locate the workspace");
+            out.error("Was unable to locate the workspace");
             return 1;
         }
         if (!requirePackage()) {
-            System.err.println("Was unable to locate the package");
+            out.error("Was unable to locate the package");
             return 1;
         }
 
@@ -40,7 +42,7 @@ public class CleanCommand extends BaseCommand {
             }
         }
 
-        System.out.println("Clean successful");
+        out.write("Clean successful");
         return 0;
     }
 }

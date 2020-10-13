@@ -328,17 +328,16 @@ project(':BuildServer.Builder') {
     mainClassName = 'build.archipelago.buildserver.builder.Application'
 
     dependencies {
+        implementation project(":Maui")
+        implementation project(":Maui.Core")
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
         implementation project(':Archipelago.Common')
         implementation project(':Archipelago.Common.Concurrent')
         implementation project(':BuildServer.Common')
 
-        implementation 'com.wewelo:SQSConsumer:1.0.2'
+        implementation 'com.wewelo:SQSConsumer:1.1'
         implementation 'org.springframework.boot:spring-boot-starter'
-        testImplementation('org.springframework.boot:spring-boot-starter-test') {
-            exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-        }
 
         implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
         implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
@@ -346,6 +345,11 @@ project(':BuildServer.Builder') {
         implementation 'org.jgrapht:jgrapht-core:1.5.0'
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
         implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
+    }
+    configurations {
+        all {
+            exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        }
     }
 }
 

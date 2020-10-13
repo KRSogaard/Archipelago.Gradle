@@ -3,6 +3,7 @@ package build.archipelago.maui.commands.workspace;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.VersionSet;
+import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.PackageSourceProvider;
@@ -34,9 +35,10 @@ public class WorkspaceUseCommand extends BaseCommand {
                 VersionSetServiceClient vsClient,
                 WorkspaceContextFactory workspaceContextFactory,
                 SystemPathProvider systemPathProvider,
+                OutputWrapper out,
                 PackageServiceClient packageServiceClient,
                 PackageSourceProvider packageSourceProvider) {
-            super(workspaceContextFactory, systemPathProvider);
+            super(workspaceContextFactory, systemPathProvider, out);
         this.vsClient = vsClient;
         this.packageServiceClient = packageServiceClient;
         this.packageSourceProvider = packageSourceProvider;
@@ -45,24 +47,24 @@ public class WorkspaceUseCommand extends BaseCommand {
     @Override
     public Integer call() throws Exception {
         if (!requireWorkspace()) {
-            System.err.println("Was unable to locate the workspace");
+            out.error("Was unable to locate the workspace");
             return 1;
         }
 
         if (versionSet != null) {
             if (versionSet.equalsIgnoreCase(workspaceContext.getVersionSet())) {
-                System.err.println(String.format("The version-set for the workspace is already \"%s\"", workspaceContext.getVersionSet()));
+                out.error("The version-set for the workspace is already \"%s\"", workspaceContext.getVersionSet());
             } else {
                 try {
                     VersionSet vs = vsClient.getVersionSet(versionSet);
-                    System.out.println(String.format("Setting the version-set for the workspace to \"%s\"", vs.getName()));
+                    out.write("Setting the version-set for the workspace to \"%s\"", vs.getName());
                     // Ensure we have the right capitalization of the version-set
                     workspaceContext.setVersionSet(vs.getName());
                     workspaceContext.save();
                     // We clear the cache as it would have been the old version-set
                     workspaceContext.clearVersionSetRevisionCache();
                 } catch (VersionSetDoseNotExistsException e) {
-                    System.err.println(String.format("The version-set \"%s\" dose not exists", versionSet));
+                    out.error("The version-set \"%s\" dose not exists", versionSet);
                 }
             }
         }
@@ -70,34 +72,34 @@ public class WorkspaceUseCommand extends BaseCommand {
         if (packages != null) {
             for (final String pkg : packages) {
                 if (!ArchipelagoPackage.validateName(pkg)) {
-                    System.err.println(String.format("The package name \"%s\" is not valid", pkg));
+                    out.error("The package name \"%s\" is not valid", pkg);
                     continue;
                 }
                 try {
                     if (workspaceContext.getLocalArchipelagoPackages().stream().anyMatch(lp -> lp.getName().equalsIgnoreCase(pkg))) {
-                        System.err.println(String.format("The package name \"%s\" already checked out", pkg));
+                        out.error("The package name \"%s\" already checked out", pkg);
                         continue;
                     }
                     GetPackageResponse pkgResponse = packageServiceClient.getPackage(pkg);
                     // Ensure we have the capitalization of the package name
                     String cleanPKGName = pkgResponse.getName();
                     if (Files.exists(wsDir.resolve(cleanPKGName))) {
-                        System.err.println(String.format("Directory %s already exists, please remove or rename it " +
-                                "before checking out the package %s", cleanPKGName, cleanPKGName));
+                        out.error("Directory %s already exists, please remove or rename it " +
+                                "before checking out the package %s", cleanPKGName, cleanPKGName);
                         continue;
                     }
 
                     if (!packageSourceProvider.checkOutSource(cleanPKGName, wsDir)) {
-                        System.err.println(String.format("Failed to checkout the source for the package \"%s\"", pkg));
+                        out.error("Failed to checkout the source for the package \"%s\"", pkg);
                         continue;
                     }
 
                     workspaceContext.addLocalPackage(cleanPKGName);
                     workspaceContext.save();
 
-                    System.out.println(String.format("Successfully added %s to the workspace", cleanPKGName));
+                    out.write("Successfully added %s to the workspace", cleanPKGName);
                 } catch (PackageNotFoundException exp) {
-                    System.err.println(String.format("The package name \"%s\" dose not exists", pkg));
+                    out.error("The package name \"%s\" dose not exists", pkg);
                 }
             }
         }

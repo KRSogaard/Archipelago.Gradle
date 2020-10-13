@@ -2,6 +2,7 @@ package build.archipelago.maui.commands.packages;
 
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.*;
+import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
@@ -29,25 +30,26 @@ public class PackageCreateCommand extends BaseCommand {
 
     public PackageCreateCommand(PackageServiceClient packageClient,
                                 WorkspaceContextFactory workspaceContextFactory,
-                                SystemPathProvider systemPathProvider) {
-        super(workspaceContextFactory, systemPathProvider);
+                                SystemPathProvider systemPathProvider,
+                                OutputWrapper out) {
+        super(workspaceContextFactory, systemPathProvider, out);
         this.packageClient = packageClient;
     }
 
     @Override
     public Integer call() throws Exception {
         if (!requireWorkspace()) {
-            System.err.println("Was unable to locate the workspace");
+            out.error("Was unable to locate the workspace");
             return 1;
         }
 
         if (Strings.isNullOrEmpty(name)) {
-            System.err.println("A package name is required");
+            out.error("A package name is required");
             return 1;
         }
 
         if (!ArchipelagoPackage.validateName(name)) {
-            System.err.println("The package name was not valid.");
+            out.error("The package name was not valid.");
             return 1;
         }
 
@@ -55,12 +57,12 @@ public class PackageCreateCommand extends BaseCommand {
 
         if (workspaceContext.getLocalPackages().stream().anyMatch(lp -> lp.equalsIgnoreCase(name)) ||
             Files.exists(pkgDir)) {
-            System.err.println(String.format("A package by the name \"%s\" is already in the workspace", name));
+            out.error("A package by the name \"%s\" is already in the workspace", name);
             return 1;
         }
 
         if (packageNameExists(name)) {
-            System.err.println(String.format("A package by the name \"%s\" is already exists, you can check it out.", name));
+            out.error("A package by the name \"%s\" is already exists, you can check it out.", name);
             return 1;
         }
 
@@ -70,7 +72,7 @@ public class PackageCreateCommand extends BaseCommand {
                     .description(description)
                     .build());
         } catch (PackageExistsException exp) {
-            System.err.println(String.format("Failed to create the package"));
+            out.error("Failed to create the package");
         }
 
         Files.createDirectory(pkgDir);

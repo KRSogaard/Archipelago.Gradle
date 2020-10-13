@@ -1,6 +1,7 @@
 package build.archipelago.maui.commands;
 
 import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.workspace.path.DependencyTransversalType;
@@ -21,27 +22,28 @@ public class RecursiveCommand extends BaseCommand {
     private CommandLine.Model.CommandSpec commandSpec;
 
     public RecursiveCommand(WorkspaceContextFactory workspaceContextFactory,
-                            SystemPathProvider systemPathProvider) {
-        super(workspaceContextFactory, systemPathProvider);
+                            SystemPathProvider systemPathProvider,
+                            OutputWrapper out) {
+        super(workspaceContextFactory, systemPathProvider, out);
     }
 
     @Override
     public Integer call() throws Exception {
         if (!requireWorkspace()) {
-            System.err.println("Was unable to locate the workspace");
+            out.error("Was unable to locate the workspace");
             return 1;
         }
         if (!requirePackage()) {
-            System.err.println("Was unable to locate the package");
+            out.error("Was unable to locate the package");
             return 1;
         }
 
         if (args.length == 0) {
-            System.err.println("No parameters where given for the recursive command to run");
+            out.error("No parameters where given for the recursive command to run");
             return 1;
         }
         if ("recursive".equalsIgnoreCase(args[0]) || "rec".equalsIgnoreCase(args[0])) {
-            System.err.println("You can not use the recursive command on a recursive command");
+            out.error("You can not use the recursive command on a recursive command");
             return 1;
         }
 
@@ -53,10 +55,10 @@ public class RecursiveCommand extends BaseCommand {
             if (workspaceContext.getLocalPackages().stream().anyMatch(lp -> lp.equalsIgnoreCase(pkg.getName()))) {
                 Path pkgRoot = workspaceContext.getPackageRoot(pkg);
                 systemPathProvider.overrideCurrentDir(pkgRoot);
-                System.out.println(String.format("Running \"%s\" on package %s", String.join(" ", args), pkg.getName()));
+                out.write("Running \"%s\" on package %s", String.join(" ", args), pkg.getName());
                 int outcome = commandLine.execute(args);
                 if (outcome != 0) {
-                    System.err.println(String.format("Recursive command \"%s\" failed on package %s", String.join(" ", args), pkg.getName()));
+                    out.error("Recursive command \"%s\" failed on package %s", String.join(" ", args), pkg.getName());
                     return outcome;
                 }
                 systemPathProvider.removeCurrentDirOverride();
