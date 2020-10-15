@@ -40,6 +40,7 @@ public class ArtifactController {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "A name is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version), "A version is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getGitCommit()), "A git commit is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getGitBranch()), "A git commit is required");
         Preconditions.checkNotNull(request.getBuildArtifact(),
                 "build artifact is required");
         Preconditions.checkArgument(request.getBuildArtifact().getSize() > 0,

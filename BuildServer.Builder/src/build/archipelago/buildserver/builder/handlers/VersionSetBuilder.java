@@ -7,6 +7,7 @@ import build.archipelago.common.*;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.maui.core.exceptions.*;
+import build.archipelago.maui.core.workspace.WorkspaceConstants;
 import build.archipelago.maui.core.workspace.cache.*;
 import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
 import build.archipelago.maui.core.workspace.models.BuildConfig;
@@ -18,8 +19,7 @@ import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import com.wewelo.sqsconsumer.exceptions.*;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.model.ZipParameters;
-
+import org.jgrapht.alg.util.Pair;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -59,6 +59,7 @@ public class VersionSetBuilder {
         graphs = new HashMap<>();
         buildQueue = new ConcurrentLinkedDeque<>();
         buildDependicies = new HashMap<>();
+        doneBuilding = new HashMap<>();
     }
 
     public void build() throws TemporaryMessageProcessingException, PermanentMessageProcessingException {
@@ -111,19 +112,38 @@ public class VersionSetBuilder {
                 pkg = getNextPackageToBuild();
             }
 
+            Map<ArchipelagoPackage, Pair<String, String>> gitMap = new HashMap<>();
+            for (BuildPackageDetails bpd : request.getBuildPackages()) {
+                Optional<ArchipelagoPackage> archipelagoPackage = getBuildPackages.stream()
+                        .filter(p -> p.getName().equalsIgnoreCase(bpd.getPackageName()))
+                        .findFirst();
+                if (archipelagoPackage.isEmpty()) {
+                    log.error("Could not find the archipelago package \"{}\" from build details", bpd.getPackageName());
+                    throw new TemporaryMessageProcessingException();
+                }
+                gitMap.put(archipelagoPackage.get(), new Pair<>(bpd.getBranch(), bpd.getCommit()));
+            }
             // Build are done
             List<ArchipelagoBuiltPackage> newBuildPackage = new ArrayList<>();
             for (ArchipelagoPackage builtPackage : getBuildPackages) {
                 Path zip = prepareBuildZip(builtPackage);
-                String buildHash = packageServiceClient.uploadBuiltArtifact(UploadPackageRequest.builder()
-                        .config("To be removed")
+                String configContent = Files.readString(wsContext.getPackageRoot(builtPackage).resolve(WorkspaceConstants.BUILD_FILE_NAME));
+                if (!gitMap.containsKey(builtPackage)) {
+                    log.error("Build package {} was not in the git map", builtPackage);
+                    throw new TemporaryMessageProcessingException();
+                }
+                Pair<String, String> gitInfo = gitMap.get(builtPackage);
+                String buildHash =  packageServiceClient.uploadBuiltArtifact(UploadPackageRequest.builder()
+                        .config(configContent)
                         .pkg(builtPackage)
+                        .gitBranch(gitInfo.getFirst())
+                        .gitCommit(gitInfo.getSecond())
                         .build(), zip);
                 newBuildPackage.add(new ArchipelagoBuiltPackage(builtPackage, buildHash));
             }
 
             List<ArchipelagoBuiltPackage> newRevision = wsContext.getVersionSetRevision().getPackages()
-                    .stream().filter(rp -> newBuildPackage.stream().noneMatch(rp::equals))
+                    .stream().filter(rp -> newBuildPackage.stream().noneMatch(p -> rp.getNameVersion().equalsIgnoreCase(p.getNameVersion())))
                     .collect(Collectors.toList());
             newRevision.addAll(newBuildPackage);
 
@@ -207,7 +227,7 @@ public class VersionSetBuilder {
                 log.error("Build failed: {}", wsCreateExit);
                 throw new TemporaryMessageProcessingException();
             }
-
+            doneBuilding.put(pkg, true);
         } catch (PackageNotLocalException e) {
             log.error("Unhandled error", e);
             throw new TemporaryMessageProcessingException(e);

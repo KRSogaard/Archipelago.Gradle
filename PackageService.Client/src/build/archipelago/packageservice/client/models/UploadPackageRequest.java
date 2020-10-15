@@ -8,4 +8,6 @@ import lombok.*;
 public class UploadPackageRequest {
     private ArchipelagoPackage pkg;
     private String config;
+    private String gitCommit;
+    private String gitBranch;
 }

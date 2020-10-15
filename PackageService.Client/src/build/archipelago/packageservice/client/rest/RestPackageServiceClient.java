@@ -188,6 +188,8 @@ public class RestPackageServiceClient implements PackageServiceClient {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("buildArtifact", new FileSystemResource(file));
         body.add("config", request.getConfig());
+        body.add("gitCommit", request.getGitCommit());
+        body.add("gitBranch", request.getGitBranch());
 
         String url = String.format("%s/artifact/%s/%s",
                 endpoint, request.getPkg().getName(), request.getPkg().getVersion());
