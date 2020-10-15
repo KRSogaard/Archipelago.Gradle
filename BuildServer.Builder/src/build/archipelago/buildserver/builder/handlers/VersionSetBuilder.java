@@ -13,10 +13,12 @@ import build.archipelago.maui.core.workspace.models.BuildConfig;
 import build.archipelago.maui.core.workspace.path.DependencyTransversalType;
 import build.archipelago.maui.core.workspace.path.graph.*;
 import build.archipelago.packageservice.client.PackageServiceClient;
-import build.archipelago.packageservice.client.models.GetPackageBuildResponse;
+import build.archipelago.packageservice.client.models.*;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import com.wewelo.sqsconsumer.exceptions.*;
 import lombok.extern.slf4j.Slf4j;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.model.ZipParameters;
 
 import java.io.*;
 import java.nio.file.*;
@@ -108,6 +110,25 @@ public class VersionSetBuilder {
                 buildPackage(pkg);
                 pkg = getNextPackageToBuild();
             }
+
+            // Build are done
+            List<ArchipelagoBuiltPackage> newBuildPackage = new ArrayList<>();
+            for (ArchipelagoPackage builtPackage : getBuildPackages) {
+                Path zip = prepareBuildZip(builtPackage);
+                String buildHash = packageServiceClient.uploadBuiltArtifact(UploadPackageRequest.builder()
+                        .config("To be removed")
+                        .pkg(builtPackage)
+                        .build(), zip);
+                newBuildPackage.add(new ArchipelagoBuiltPackage(builtPackage, buildHash));
+            }
+
+            List<ArchipelagoBuiltPackage> newRevision = wsContext.getVersionSetRevision().getPackages()
+                    .stream().filter(rp -> newBuildPackage.stream().noneMatch(rp::equals))
+                    .collect(Collectors.toList());
+            newRevision.addAll(newBuildPackage);
+
+            vsClient.createVersionRevision(wsContext.getVersionSet(), newRevision);
+
         } catch (PackageNotFoundException e) {
             log.error("Unhandled error", e);
             throw new TemporaryMessageProcessingException(e);
@@ -126,6 +147,12 @@ public class VersionSetBuilder {
         } catch (LocalPackageMalformedException e) {
             log.error("Unhandled error", e);
             throw new TemporaryMessageProcessingException(e);
+        } catch (MissingTargetPackageException e) {
+            log.error("Unhandled error", e);
+            throw new TemporaryMessageProcessingException(e);
+        } catch (VersionSetDoseNotExistsException e) {
+            log.error("Unhandled error", e);
+            throw new TemporaryMessageProcessingException(e);
         } finally {
             try {
                 if (Files.exists(workspaceLocation) && Files.isDirectory(workspaceLocation)) {
@@ -139,6 +166,35 @@ public class VersionSetBuilder {
                 log.error("Failed to delete workspace", e);
             }
         }
+    }
+
+    private Path prepareBuildZip(ArchipelagoPackage builtPackage) throws PackageNotLocalException, TemporaryMessageProcessingException, IOException {
+        Path buildPath = wsContext.getPackageBuildPath(builtPackage);
+        Path zipFolder = workspaceLocation.resolve("buildZips");
+        if (!Files.exists(zipFolder)) {
+            Files.createDirectory(zipFolder);
+        }
+        Path zipPath = workspaceLocation.resolve("buildZips").resolve(UUID.randomUUID().toString() + ".zip");
+        try {
+            ZipFile zip =new ZipFile(zipPath.toFile());
+            try (Stream<Path> walk = Files.walk(buildPath, 1, FileVisitOption.FOLLOW_LINKS)) {
+                List<File> files = walk.sorted(Comparator.reverseOrder())
+                        .filter(p -> !p.equals(buildPath))
+                        .map(Path::toFile)
+                        .collect(Collectors.toList());
+                for (File f : files) {
+                    if (f.isDirectory()) {
+                        zip.addFolder(f);
+                    } else {
+                        zip.addFile(f);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            log.error("Unhandled error", e);
+            throw new TemporaryMessageProcessingException(e);
+        }
+        return zipPath;
     }
 
     private void buildPackage(ArchipelagoPackage pkg) throws TemporaryMessageProcessingException {
