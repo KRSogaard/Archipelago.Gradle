@@ -6,6 +6,7 @@ import build.archipelago.maui.core.exceptions.VersionSetNotSyncedException;
 import build.archipelago.maui.core.workspace.WorkspaceConstants;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,6 +27,8 @@ public class VersionSetRevisionSerializer {
     public VersionSetRevisionSerializer() {}
 
     private static VersionSetRevisionSerializer convert(VersionSetRevision vsr) {
+        Preconditions.checkNotNull(vsr);
+
         List<String> packages = new ArrayList<String>();
         for (ArchipelagoBuiltPackage pkg : vsr.getPackages()) {
             packages.add(pkg.getBuiltPackageName());
@@ -38,6 +41,8 @@ public class VersionSetRevisionSerializer {
     }
 
     private static VersionSetRevision convert(VersionSetRevisionSerializer vsrs) {
+        Preconditions.checkNotNull(vsrs);
+
         return VersionSetRevision.builder()
                 .created(Instant.ofEpochMilli(vsrs.getCreated()))
                 .packages(vsrs.getPackages().stream().map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList()))
@@ -45,6 +50,9 @@ public class VersionSetRevisionSerializer {
     }
 
     public static void save(VersionSetRevision revision, Path workspaceRoot) throws IOException {
+        Preconditions.checkNotNull(revision);
+        Preconditions.checkNotNull(workspaceRoot);
+
         Path tempDir = workspaceRoot.resolve(WorkspaceConstants.TEMP_FOLDER);
         if (Files.notExists(tempDir)) {
             Files.createDirectory(tempDir);
@@ -60,6 +68,8 @@ public class VersionSetRevisionSerializer {
     }
 
     public static VersionSetRevision load(Path workspaceRoot) throws IOException, VersionSetNotSyncedException {
+        Preconditions.checkNotNull(workspaceRoot);
+
         Path revisionCacheFile = workspaceRoot
                 .resolve(WorkspaceConstants.TEMP_FOLDER)
                 .resolve(WorkspaceConstants.VERSION_SET_REVISION_CACHE);
@@ -72,6 +82,8 @@ public class VersionSetRevisionSerializer {
     }
 
     public static void clear(Path workspaceRoot) throws IOException {
+        Preconditions.checkNotNull(workspaceRoot);
+
         Path revisionCacheFile = workspaceRoot
                 .resolve(WorkspaceConstants.TEMP_FOLDER)
                 .resolve(WorkspaceConstants.VERSION_SET_REVISION_CACHE);

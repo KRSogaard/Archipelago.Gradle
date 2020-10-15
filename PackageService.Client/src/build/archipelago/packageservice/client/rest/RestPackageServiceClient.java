@@ -112,6 +112,8 @@ public class RestPackageServiceClient implements PackageServiceClient {
         Preconditions.checkNotNull(pkg);
 
         try {
+            log.info("Calling Url: " + endpoint +
+                    "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash());
             RestGetPackageBuildResponse response = restTemplate.getForObject(endpoint +
                             "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash(),
                     RestGetPackageBuildResponse.class);
@@ -120,6 +122,8 @@ public class RestPackageServiceClient implements PackageServiceClient {
                     .hash(response.getHash())
                     .created(Instant.ofEpochMilli(response.getCreated()))
                     .config(response.getConfig())
+                    .gitCommit(response.getGitCommit())
+                    .gitBranch(response.getGitBranch())
                     .build();
         } catch (HttpClientErrorException exp) {
             if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {

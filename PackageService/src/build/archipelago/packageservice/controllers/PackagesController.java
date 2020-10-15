@@ -123,6 +123,7 @@ public class PackagesController {
                 .config(build.getConfig())
                 .created(build.getCreated().toEpochMilli())
                 .gitCommit(build.getGitCommit())
+                .gitBranch(build.getGitBranch())
                 .build();
     }
 

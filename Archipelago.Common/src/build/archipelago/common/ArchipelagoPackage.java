@@ -70,8 +70,11 @@ public class ArchipelagoPackage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ArchipelagoPackage that = (ArchipelagoPackage) o;
-        return Objects.equals(name, that.name) &&
-                Objects.equals(version, that.version);
+
+        return (name == null && that.name == null ||
+                name.equalsIgnoreCase(that.name)) &&
+                (version == null && that.version == null ||
+                version.equalsIgnoreCase(that.version));
     }
 
     @Override

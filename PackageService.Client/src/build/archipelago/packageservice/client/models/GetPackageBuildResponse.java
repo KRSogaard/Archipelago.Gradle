@@ -10,4 +10,6 @@ public class GetPackageBuildResponse {
     private String hash;
     private Instant created;
     private String config;
+    private String gitCommit;
+    private String gitBranch;
 }

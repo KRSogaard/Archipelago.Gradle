@@ -6,7 +6,8 @@ import lombok.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -23,5 +24,24 @@ public class BuildConfig {
 
     public static BuildConfig from(Path path) throws IOException {
         return BuildConfigSerializer.load(path);
+    }
+
+    public List<ArchipelagoPackage> getAllDependencies() {
+        // We only want unique dependencies
+        Map<ArchipelagoPackage, Boolean> map = new HashMap<>();
+        if (libraries != null) {
+            libraries.forEach(p -> map.put(p, true));
+        }
+        if (buildTools != null) {
+            buildTools.forEach(p -> map.put(p, true));
+        }
+        if (test != null) {
+            test.forEach(p -> map.put(p, true));
+        }
+        if (runtime != null) {
+            runtime.forEach(p -> map.put(p, true));
+        }
+
+        return new ArrayList<>(map.keySet());
     }
 }

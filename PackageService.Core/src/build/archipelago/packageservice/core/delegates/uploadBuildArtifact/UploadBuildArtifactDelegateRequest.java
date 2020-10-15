@@ -10,6 +10,7 @@ public class UploadBuildArtifactDelegateRequest {
     private ArchipelagoPackage pkg;
     private String config;
     private String gitCommit;
+    private String gitBranch;
     private byte[] buildArtifact;
 
     protected void validate() {

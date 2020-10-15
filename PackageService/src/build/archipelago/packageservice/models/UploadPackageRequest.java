@@ -10,5 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class UploadPackageRequest {
     private MultipartFile buildArtifact;
     private String gitCommit;
+    private String gitBranch;
     private String config;
 }

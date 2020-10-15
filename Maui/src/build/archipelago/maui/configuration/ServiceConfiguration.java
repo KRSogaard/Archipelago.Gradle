@@ -52,8 +52,15 @@ public class ServiceConfiguration extends AbstractModule {
     public PackageCacher packageCacher(PackageServiceClient packageServiceClient,
                                        SystemPathProvider systemPathProvider) throws IOException {
         Path basePath = systemPathProvider.getMauiPath();
-        if ("true".equalsIgnoreCase(System.getProperty(MauiConstants.ENV_USE_LOCAL_WORKSPACE_CACHE, "false"))) {
-            basePath = systemPathProvider.getWorkspaceDir().resolve(".archipelago");
+        if ("true".equalsIgnoreCase(System.getenv(MauiConstants.ENV_USE_LOCAL_WORKSPACE_CACHE))) {
+            Path workspaceDir = systemPathProvider.getWorkspaceDir();
+            if (workspaceDir == null) {
+                throw new RuntimeException("Was unable to find the workspace dir");
+            }
+            basePath = workspaceDir.resolve(".archipelago");
+        }
+        if (!Files.exists(basePath)) {
+            Files.createDirectory(basePath);
         }
         Path cachePath = basePath.resolve("cache");
         if (!Files.exists(cachePath)) {

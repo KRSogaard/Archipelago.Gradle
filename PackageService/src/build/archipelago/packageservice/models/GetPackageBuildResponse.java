@@ -9,4 +9,5 @@ public class GetPackageBuildResponse {
     private long created;
     private String config;
     private String gitCommit;
+    private String gitBranch;
 }
