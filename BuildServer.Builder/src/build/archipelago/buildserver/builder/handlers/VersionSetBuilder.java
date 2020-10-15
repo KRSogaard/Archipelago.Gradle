@@ -1,6 +1,7 @@
 package build.archipelago.buildserver.builder.handlers;
 
-import build.archipelago.buildserver.common.services.build.BuildService;
+import build.archipelago.buildserver.builder.MauiWrapper;
+import build.archipelago.buildserver.common.services.build.*;
 import build.archipelago.buildserver.common.services.build.exceptions.BuildRequestNotFoundException;
 import build.archipelago.buildserver.common.services.build.models.*;
 import build.archipelago.common.*;
@@ -34,6 +35,8 @@ public class VersionSetBuilder {
     private String mauiPath;
     private BuildService buildService;
     private String buildId;
+    private PackageBuildStatus packageBuildStatus;
+    private MauiWrapper maui;
 
     private Path workspaceLocation;
     private BuildRequest request;
@@ -48,13 +51,15 @@ public class VersionSetBuilder {
 
     public VersionSetBuilder(VersionSetServiceClient vsClient, PackageServiceClient packageServiceClient,
                              Path buildLocation, String mauiPath,
-                             BuildService buildService, String buildId) {
+                             BuildService buildService, String buildId,
+                             PackageBuildStatusFactory packageBuildStatusFactory) {
         this.vsClient = vsClient;
         this.packageServiceClient = packageServiceClient;
         this.buildLocation = buildLocation;
         this.mauiPath = mauiPath;
         this.buildService = buildService;
         this.buildId = buildId;
+        this.packageBuildStatus = packageBuildStatusFactory.createPackageBuildStatus(buildId);
 
         graphs = new HashMap<>();
         buildQueue = new ConcurrentLinkedDeque<>();
@@ -63,7 +68,7 @@ public class VersionSetBuilder {
     }
 
     public void build() throws TemporaryMessageProcessingException, PermanentMessageProcessingException {
-        if (!verifyMauiIsPreset()) {
+        if (!maui.verifyMauiIsPreset()) {
             log.error("Maui is not preset on the server, can not continue");
             throw new TemporaryMessageProcessingException();
         }
@@ -433,19 +438,18 @@ public class VersionSetBuilder {
         return buildLocation.resolve(buildId);
     }
 
-    private void syncWorkspace() throws TemporaryMessageProcessingException {
-        ProcessBuilder processBuilder = getMauiProcess();
-        processBuilder.directory(workspaceLocation.toFile());
-        processBuilder.command(mauiPath, "ws", "sync");
+    private void syncWorkspace() throws PermanentMessageProcessingException {
+        MauiWrapper.ExecutionResult result;
         try {
-            int wsCreateExit = processBuilder.start().waitFor();
-            if (wsCreateExit != 0) {
-                log.error("Got non zero return code when creating workspace: {}", wsCreateExit);
-                throw new TemporaryMessageProcessingException();
+            result = maui.execute(workspaceLocation, "ws", "sync");
+            if (result.getExitCode() != 0) {
+                log.error("Got non zero return code ({}) when syncing the workspace", result.getExitCode());
+                buildService.setBuildStatus(buildId, BuildStatus.FAILED);
+                throw new PermanentMessageProcessingException("Failed to sync workspace");
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error("Exception while creating workspace");
-            throw new TemporaryMessageProcessingException();
+            throw new PermanentMessageProcessingException("Failed to sync workspace", e);
         }
     }
 
@@ -463,33 +467,5 @@ public class VersionSetBuilder {
             log.error("Exception while creating workspace");
             throw new TemporaryMessageProcessingException();
         }
-    }
-
-    private boolean verifyMauiIsPreset() {
-        try {
-            ProcessBuilder processBuilder = getMauiProcess(false);
-            processBuilder.directory(buildLocation.toFile());
-            processBuilder.command(mauiPath, "version");
-            int versionExit = processBuilder.start().waitFor();
-            return versionExit == 0;
-        } catch (Exception e) {
-            log.error("Failed maui preset check with exception", e);
-            return false;
-        }
-    }
-
-    private ProcessBuilder getMauiProcess() {
-        return getMauiProcess(true);
-    }
-
-    private ProcessBuilder getMauiProcess(boolean useWorkspaceCache) {
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.redirectErrorStream(true);
-        processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
-        processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        if (useWorkspaceCache) {
-            processBuilder.environment().put("MAUI_USE_WORKSPACE_CACHE", "true");
-        }
-        return processBuilder;
     }
 }
