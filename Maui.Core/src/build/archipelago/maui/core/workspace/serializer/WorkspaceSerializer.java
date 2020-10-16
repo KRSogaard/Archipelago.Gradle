@@ -6,8 +6,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
@@ -57,8 +56,7 @@ public class WorkspaceSerializer {
     public static Workspace load(Path workspaceRoot) throws IOException {
         Path workspaceFilePath = workspaceRoot.resolve(WorkspaceConstants.WORKSPACE_FILE_NAME);
         if (Files.notExists(workspaceFilePath)) {
-            throw new IOException(String.format("Could not find the workspace file \"%s\" in \"%s\"",
-                    WorkspaceConstants.WORKSPACE_FILE_NAME, workspaceRoot));
+            throw new FileNotFoundException(workspaceFilePath.toString());
         }
 
         WorkspaceSerializer wss = mapper.readValue(workspaceFilePath.toFile(), WorkspaceSerializer.class);

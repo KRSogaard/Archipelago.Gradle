@@ -1,5 +1,6 @@
 package build.archipelago.buildserver.builder.configuration;
 
+import build.archipelago.buildserver.builder.MauiWrapper;
 import build.archipelago.buildserver.builder.handlers.*;
 import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.packageservice.client.PackageServiceClient;
@@ -43,21 +44,26 @@ public class ServiceConfiguration {
         return new BlockingExecutorServiceFactory();
     }
 
+    public MauiWrapper mauiWrapper(@Value("${workspace.maui}") String mauiPath,
+                                   @Value("${workspace.path}") String workspacePath) throws IOException {
+        Path cachePath = Path.of(workspacePath).resolve("temp");
+        if (!Files.exists(cachePath)) {
+            Files.createDirectory(cachePath);
+        }
+        return new MauiWrapper(mauiPath, cachePath);
+    }
+
     @Bean
     public BuildRequestHandler buildRequestHandler(VersionSetServiceClient versionSetServiceClient,
-                                                    PackageServiceClient packageServiceClient,
-                                                    @Value("${workspace.path}") String workspacePath,
-                                                   @Value("${workspace.maui}") String mauiPath,
+                                                   PackageServiceClient packageServiceClient,
+                                                   @Value("${workspace.path}") String workspacePath,
+                                                   MauiWrapper mauiWrapper,
                                                    BuildService buildService) throws IOException {
         Path wsPath = Path.of(workspacePath);
         if (!Files.exists(wsPath) || !Files.isDirectory(wsPath)) {
             Files.createDirectory(wsPath);
         }
-        Path mauiPathPath = Path.of(mauiPath);
-        if (!Files.exists(mauiPathPath)) {
-            throw new RuntimeException("Maui path was invalid");
-        }
-        return new BuildRequestHandler(versionSetServiceClient, packageServiceClient, wsPath, mauiPathPath, buildService);
+        return new BuildRequestHandler(versionSetServiceClient, packageServiceClient, wsPath, mauiWrapper, buildService);
     }
 
     @Bean

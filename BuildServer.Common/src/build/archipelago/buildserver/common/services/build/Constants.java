@@ -7,4 +7,8 @@ public class Constants {
     public static final String ATTRIBUTE_BUILD_PACKAGES = "build-packages";
     public static final String ATTRIBUTE_CREATED = "created";
     public static final String ATTRIBUTE_BUILD_STATUS = "build-status";
+    public static final String ATTRIBUTE_STAGE_PREPARE = "stage-prepare";
+    public static final String ATTRIBUTE_STAGE_PACKAGES = "stage-packages";
+    public static final String ATTRIBUTE_STAGE_PUBLISH = "stage-publish";
+    public static final String ATTRIBUTE_UPDATED = "updated";
 }

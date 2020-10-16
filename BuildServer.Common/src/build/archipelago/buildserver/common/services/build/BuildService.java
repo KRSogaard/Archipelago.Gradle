@@ -42,13 +42,17 @@ public class BuildService {
                 .put(Constants.ATTRIBUTE_BUILD_PACKAGES, AV.of(buildPackages.stream()
                         .map(BuildPackageDetails::toString).collect(Collectors.toList())))
                 .put(Constants.ATTRIBUTE_BUILD_STATUS, AV.of(BuildStatus.WAITING.getStatus()))
+                .put(Constants.ATTRIBUTE_STAGE_PREPARE, AV.of(BuildStatus.WAITING.getStatus()))
+                .put(Constants.ATTRIBUTE_STAGE_PACKAGES, AV.of(BuildStatus.WAITING.getStatus()))
+                .put(Constants.ATTRIBUTE_STAGE_PUBLISH, AV.of(BuildStatus.WAITING.getStatus()))
+                .put(Constants.ATTRIBUTE_UPDATED, AV.of(Instant.now()))
                 .build()));
 
         amazonSQS.sendMessage(buildQueue, new BuildQueueMessage(buildId).toJson());
         return buildId;
     }
 
-    public BuildRequest getBuildRequest(String buildId) throws BuildRequestNotFoundException {
+    public ArchipelagoBuild getBuildRequest(String buildId) throws BuildRequestNotFoundException {
         GetItemResult result = dynamoDB.getItem(new GetItemRequest(buildTable,
                 ImmutableMap.<String, AttributeValue>builder()
                     .put(Constants.ATTRIBUTE_ID, AV.of(buildId))
@@ -58,7 +62,7 @@ public class BuildService {
             throw new BuildRequestNotFoundException(buildId);
         }
 
-        return BuildRequest.builder()
+        return ArchipelagoBuild.builder()
                 .buildId(result.getItem().get(Constants.ATTRIBUTE_ID).getS())
                 .versionSet(result.getItem().get(Constants.ATTRIBUTE_VERSION_SET).getS())
                 .dryRun(result.getItem().get(Constants.ATTRIBUTE_DRY_RUN).getBOOL())
@@ -67,10 +71,15 @@ public class BuildService {
                         .map(BuildPackageDetails::parse)
                         .collect(Collectors.toList()))
                 .created(AV.toInstant(result.getItem().get(Constants.ATTRIBUTE_CREATED)))
+                .updated(AV.toInstant(result.getItem().get(Constants.ATTRIBUTE_UPDATED)))
+                .buildStatus(BuildStatus.valueOf(result.getItem().get(Constants.ATTRIBUTE_BUILD_STATUS).getS()))
+                .stagePrepare(BuildStatus.valueOf(result.getItem().get(Constants.ATTRIBUTE_STAGE_PREPARE).getS()))
+                .stagePackages(BuildStatus.valueOf(result.getItem().get(Constants.ATTRIBUTE_STAGE_PACKAGES).getS()))
+                .stagePublish(BuildStatus.valueOf(result.getItem().get(Constants.ATTRIBUTE_STAGE_PUBLISH).getS()))
                 .build();
     }
 
-    public void setBuildStatus(String buildId, BuildStatus status) {
+    public void setBuildStatus(String buildId, BuildStage stage, BuildStatus status) {
         GetItemResult itemResult = dynamoDB.getItem(new GetItemRequest(buildTable,ImmutableMap.<String, AttributeValue>builder()
                 .put(Constants.ATTRIBUTE_ID, AV.of(buildId))
                 .build()));
@@ -79,8 +88,34 @@ public class BuildService {
             return;
         }
         Map<String, AttributeValue> item = itemResult.getItem();
-        item.put(Constants.ATTRIBUTE_BUILD_STATUS, AV.of(BuildStatus.WAITING.getStatus()));
+        if (BuildStatus.FAILED.equals(status)) {
+            item.put(Constants.ATTRIBUTE_BUILD_STATUS, AV.of(BuildStatus.FAILED.getStatus()));
+        } else if (BuildStatus.FINISHED.equals(status) && BuildStage.PUBLISHING.equals(stage)) {
+            item.put(Constants.ATTRIBUTE_BUILD_STATUS, AV.of(BuildStatus.FINISHED.getStatus()));
+        } else {
+            item.put(Constants.ATTRIBUTE_BUILD_STATUS, AV.of(BuildStatus.IN_PROGRESS.getStatus()));
+        }
+        switch (stage) {
+            case PREPARE:
+                item.put(Constants.ATTRIBUTE_STAGE_PREPARE, AV.of(stage.getStage()));
+                break;
+            case PACKAGES:
+                item.put(Constants.ATTRIBUTE_STAGE_PACKAGES, AV.of(stage.getStage()));
+                break;
+            case PUBLISHING:
+                item.put(Constants.ATTRIBUTE_STAGE_PUBLISH, AV.of(stage.getStage()));
+                break;
+        }
+        item.put(Constants.ATTRIBUTE_UPDATED, AV.of(Instant.now()));
 
         dynamoDB.putItem(new PutItemRequest(buildTable, item));
+    }
+
+    public void setPackageStatus(String buildId, String packageNameVersion, BuildStatus status) {
+
+    }
+
+    public void uploadBuildLog(String buildId, String nameVersion, String readString) {
+
     }
 }

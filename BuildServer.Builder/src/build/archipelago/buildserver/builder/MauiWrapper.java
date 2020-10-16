@@ -11,37 +11,50 @@ public class MauiWrapper {
     public String mauiPath;
     public Path outputFilesPath;
 
-    public ExecutionResult execute(Path executionFolder, String... args) throws IOException {
-        return execute(executionFolder, false);
-    }
-    public ExecutionResult executeWithWorkspaceCache(Path executionFolder, String... args) throws IOException {
-        return execute(executionFolder, true);
+    public MauiWrapper(String mauiPath, Path outputFilesPath) {
+        this.mauiPath = mauiPath;
+        this.outputFilesPath = outputFilesPath;
     }
 
-    private ExecutionResult execute(Path executionFolder, boolean useWorkspaceCache, String... args) throws IOException {
+    public int execute(Path executionFolder, String... args) throws IOException {
+        return execute(executionFolder, false, false, args).getExitCode();
+    }
+    public int executeWithWorkspaceCache(Path executionFolder, String... args) throws IOException {
+        return execute(executionFolder, true, false, args).getExitCode();
+    }
+    public ExecutionResult executeWithOutput(Path executionFolder, String... args) throws IOException {
+        return execute(executionFolder, false, true, args);
+    }
+    public ExecutionResult executeWithWorkspaceCacheWithOutput(Path executionFolder, String... args) throws IOException {
+        return execute(executionFolder, true, true, args);
+    }
+
+    private ExecutionResult execute(Path executionFolder, boolean useWorkspaceCache, boolean storeOutput, String... args) throws IOException {
         String uuid = UUID.randomUUID().toString();
-        Path errorFile = outputFilesPath.resolve(uuid + ".error.log");
         Path outputFile = outputFilesPath.resolve(uuid + ".output.log");
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.directory(executionFolder.toFile());
+        if (storeOutput) {
+            processBuilder.redirectErrorStream(true);
+            processBuilder.redirectOutput(outputFile.toFile());
+        } else {
+            outputFile = null;
+            processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        }
         if (useWorkspaceCache) {
             processBuilder.environment().put("MAUI_USE_WORKSPACE_CACHE", "true");
         }
-        processBuilder.redirectError(errorFile.toFile());
-        processBuilder.redirectOutput(outputFile.toFile());
         processBuilder.command(createMauiCommand(args));
 
         try {
             int exitCode = processBuilder.start().waitFor();
-            return new ExecutionResult(exitCode, outputFile, errorFile);
+            return new ExecutionResult(exitCode, outputFile);
         } catch (Exception e) {
             log.warn("Process thread was interrupted.");
             try {
                 if (Files.exists(outputFile)) {
                     Files.delete(outputFile);
-                }
-                if (Files.exists(errorFile)) {
-                    Files.delete(errorFile);
                 }
             } catch (IOException e2) {
                 log.error("Failed to delete the log files after an exception", e2);
@@ -74,12 +87,10 @@ public class MauiWrapper {
     public static class ExecutionResult {
         private int exitCode;
         private Path outputFile;
-        private Path errorFile;
 
-        private ExecutionResult(int exitCode, Path outputFile, Path errorFile) {
+        private ExecutionResult(int exitCode, Path outputFile) {
             this.exitCode = exitCode;
             this.outputFile = outputFile;
-            this.errorFile = errorFile;
         }
 
         public int getExitCode() {
@@ -90,10 +101,6 @@ public class MauiWrapper {
             return outputFile;
         }
 
-        public Path getErrorFile() {
-            return errorFile;
-        }
-
         public void clearFiles() {
             try {
                 if (Files.exists(outputFile)) {
@@ -101,13 +108,6 @@ public class MauiWrapper {
                 }
             } catch (IOException e) {
                 log.warn("Failed to delete the log file " + outputFile, e);
-            }
-            try {
-                if (Files.exists(errorFile)) {
-                    Files.delete(errorFile);
-                }
-            } catch (IOException e) {
-                log.warn("Failed to delete the log file " + errorFile, e);
             }
         }
     }

@@ -3,7 +3,7 @@ package build.archipelago.buildserver.common.services.build;
 public enum BuildStatus {
     WAITING("waiting"),
     PREPARING("preparing"),
-    BUILDING("building"),
+    IN_PROGRESS("in-progress"),
     FINISHED("finished"),
     FAILED("failed");
 
