@@ -5,7 +5,7 @@ import build.archipelago.common.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class PackageNotFoundException extends Exception {
+public class PackageNotFoundException extends ArchipelagoException {
 
     public PackageNotFoundException(String name) {
         super(getMessage(name));

@@ -16,8 +16,11 @@ services:
     url: "http://localhost:8080"
 
 dynamodb:
-  build:
-    tableName: "builds.alpha"
+  build: "builds.alpha"
+  build-packages: "builds-packages.alpha"
+s3:
+  logs: "alpha-archipelago-build-log"
+
 sqs:
   build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-queue-alpha"
 workspace:

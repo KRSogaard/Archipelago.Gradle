@@ -1,6 +1,8 @@
 package build.archipelago.maui.core.exceptions;
 
-public class PackageVersionConflictException extends Exception {
+import build.archipelago.common.exceptions.ArchipelagoException;
+
+public class PackageVersionConflictException extends ArchipelagoException {
 
     private String name;
     private String version1;

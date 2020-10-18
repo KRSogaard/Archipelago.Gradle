@@ -12,7 +12,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.util.*;
 import org.springframework.web.client.*;
-
 import java.io.IOException;
 import java.nio.file.*;
 import java.time.Instant;
@@ -130,6 +129,28 @@ public class RestPackageServiceClient implements PackageServiceClient {
                 throw new PackageNotFoundException(pkg);
             }
             throw new RuntimeException("Was unable to fetch package " + pkg.toString(), exp);
+        }
+    }
+
+    @Override
+    public ArchipelagoBuiltPackage getPackageByGit(String packageName, String branch, String commit) throws PackageNotFoundException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(packageName));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(branch));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(commit));
+
+        try {
+            String url = endpoint +
+                    "/package/" + packageName + "/git/" + branch + "/" + commit;
+            log.info("Calling Url: " + url);
+            ArchipelagoBuiltPackageResponse response = restTemplate.getForObject(url,
+                    ArchipelagoBuiltPackageResponse.class);
+
+            return new ArchipelagoBuiltPackage(response.getName(), response.getVersion(), response.getHash());
+        } catch (HttpClientErrorException exp) {
+            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
+                throw new PackageNotFoundException(packageName);
+            }
+            throw new RuntimeException("Was unable to fetch package " + packageName + " from git " + branch + "/" + commit, exp);
         }
     }
 

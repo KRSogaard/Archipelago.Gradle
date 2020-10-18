@@ -6,6 +6,7 @@ import build.archipelago.common.exceptions.*;
 import build.archipelago.packageservice.core.data.models.*;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -130,7 +131,7 @@ public class DynamoDBPackageData implements PackageData {
                 .withProjectionExpression("#hash, #created")
                 .withKeyConditionExpression("#packageNameVersion = :packageNameVersion")
                 .withExpressionAttributeNames(ImmutableMap.of(
-                        "#hash", DynamoDBKeys.DISPLAY_HASH,
+                        "#hash", DynamoDBKeys.HASH,
                         "#created", DynamoDBKeys.CREATED,
                         "#packageNameVersion", DynamoDBKeys.NAME_VERSION
                 ))
@@ -142,7 +143,7 @@ public class DynamoDBPackageData implements PackageData {
         if (result.getItems() != null) {
             result.getItems().forEach(x -> builds.add(
                     VersionBuildDetails.builder()
-                            .hash(x.get(DynamoDBKeys.DISPLAY_HASH).getS())
+                            .hash(x.get(DynamoDBKeys.HASH).getS())
                             .created(AV.toInstant(x.get(DynamoDBKeys.CREATED)))
                             .build()
             ));
@@ -174,6 +175,25 @@ public class DynamoDBPackageData implements PackageData {
                 .gitBranch(item.get(DynamoDBKeys.GIT_BRANCH).getS())
                 .created(AV.toInstant(item.get(DynamoDBKeys.CREATED)))
                 .build();
+    }
+
+    @Override
+    public ArchipelagoBuiltPackage getBuildPackageByGit(String packageName, String branch, String commit) throws PackageNotFoundException {
+        log.debug("Find build \"{}\" from git commit \"{}\", branch \"{}\"", packageName, commit, branch);
+        GetItemRequest getItemRequest = new GetItemRequest(settings.getPackagesBuildsGitTableName(),
+                ImmutableMap.<String, AttributeValue>builder()
+                        .put(DynamoDBKeys.LOOKUP_KEY, AV.of(createGitHash(packageName, branch, commit)))
+                        .build());
+        Map<String, AttributeValue> item = dynamoDB.getItem(getItemRequest).getItem();
+        if (item == null) {
+            log.debug("Did not find the build \"{}\" from git commit \"{}\", branch \"{}\"", packageName, commit, branch);
+            throw new PackageNotFoundException(packageName);
+        }
+
+        return new ArchipelagoBuiltPackage(
+                item.get(DynamoDBKeys.PACKAGE_NAME).getS(),
+                item.get(DynamoDBKeys.VERSION).getS(),
+                item.get(DynamoDBKeys.HASH).getS());
     }
 
     @Override
@@ -258,12 +278,29 @@ public class DynamoDBPackageData implements PackageData {
         ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
                 .put(DynamoDBKeys.NAME_VERSION, AV.of(searchNameVersion(pkg)))
                 .put(DynamoDBKeys.HASH, AV.of(searchVersion(pkg.getHash())))
-                .put(DynamoDBKeys.DISPLAY_HASH, AV.of(pkg.getHash()))
                 .put(DynamoDBKeys.CREATED, AV.of(now))
                 .put(DynamoDBKeys.CONFIG, AV.of(config))
                 .put(DynamoDBKeys.GIT_COMMIT, AV.of(gitCommit))
                 .put(DynamoDBKeys.GIT_BRANCH, AV.of(gitBranch));
         dynamoDB.putItem(new PutItemRequest(settings.getPackagesBuildsTableName(), map.build()));
+
+        map = ImmutableMap.<String, AttributeValue>builder()
+                .put(DynamoDBKeys.LOOKUP_KEY, AV.of(createGitHash(pkg.getName(), gitBranch, gitCommit)))
+                .put(DynamoDBKeys.PACKAGE_NAME, AV.of(pkg.getName()))
+                .put(DynamoDBKeys.VERSION, AV.of(pkg.getVersion()))
+                .put(DynamoDBKeys.HASH, AV.of(searchVersion(pkg.getHash())));
+        dynamoDB.putItem(new PutItemRequest(settings.getPackagesBuildsGitTableName(), map.build()));
+    }
+
+    private String createGitHash(String packageName, String gitBranch, String gitCommit) {
+        Preconditions.checkNotNull(packageName);
+        Preconditions.checkNotNull(gitBranch);
+        Preconditions.checkNotNull(gitCommit);
+        String commit = gitCommit;
+        if (commit.length() > 7) {
+            commit = commit.substring(0, 7);
+        }
+        return packageName.toLowerCase() + "|" + gitBranch.toLowerCase() + "|" + commit.toLowerCase();
     }
 
     @Override

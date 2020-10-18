@@ -2,7 +2,7 @@ package build.archipelago.common.exceptions;
 
 import build.archipelago.common.ArchipelagoPackage;
 
-public class MissingTargetPackageException extends Exception {
+public class MissingTargetPackageException extends ArchipelagoException {
     public MissingTargetPackageException() {
         super("A target package was missing");
     }

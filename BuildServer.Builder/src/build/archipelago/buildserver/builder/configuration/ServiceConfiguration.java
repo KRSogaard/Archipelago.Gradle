@@ -1,5 +1,6 @@
 package build.archipelago.buildserver.builder.configuration;
 
+import build.archipelago.buildserver.builder.MauiWrapper;
 import build.archipelago.buildserver.builder.handlers.*;
 import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.packageservice.client.PackageServiceClient;
@@ -7,6 +8,7 @@ import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.client.rest.RestVersionSetSetServiceClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.wewelo.sqsconsumer.*;
 import com.wewelo.sqsconsumer.models.SQSConsumerConfig;
@@ -33,9 +35,12 @@ public class ServiceConfiguration {
     @Bean
     public BuildService buildService(AmazonSQS amazonSQS,
                                      AmazonDynamoDB amazonDynamoDB,
-                                     @Value("${dynamodb.build.tableName}") String buildTable,
+                                     AmazonS3 amazonS3,
+                                     @Value("${dynamodb.build}") String buildTable,
+                                     @Value("${dynamodb.build-packages}") String buildPackagesTable,
+                                     @Value("${s3.logs}") String bucketNameLogs,
                                      @Value("${sqs.build-queue}") String queueUrl) {
-        return new BuildService(amazonDynamoDB, amazonSQS, buildTable, queueUrl);
+        return new BuildService(amazonDynamoDB, amazonSQS, amazonS3, buildTable, buildPackagesTable, bucketNameLogs, queueUrl);
     }
 
     @Bean
@@ -44,20 +49,26 @@ public class ServiceConfiguration {
     }
 
     @Bean
+    public MauiWrapper mauiWrapper(@Value("${workspace.maui}") String mauiPath,
+                                   @Value("${workspace.path}") String workspacePath) throws IOException {
+        Path cachePath = Path.of(workspacePath).resolve("temp");
+        if (!Files.exists(cachePath)) {
+            Files.createDirectory(cachePath);
+        }
+        return new MauiWrapper(mauiPath, cachePath);
+    }
+
+    @Bean
     public BuildRequestHandler buildRequestHandler(VersionSetServiceClient versionSetServiceClient,
-                                                    PackageServiceClient packageServiceClient,
-                                                    @Value("${workspace.path}") String workspacePath,
-                                                   @Value("${workspace.maui}") String mauiPath,
+                                                   PackageServiceClient packageServiceClient,
+                                                   @Value("${workspace.path}") String workspacePath,
+                                                   MauiWrapper mauiWrapper,
                                                    BuildService buildService) throws IOException {
         Path wsPath = Path.of(workspacePath);
         if (!Files.exists(wsPath) || !Files.isDirectory(wsPath)) {
             Files.createDirectory(wsPath);
         }
-        Path mauiPathPath = Path.of(mauiPath);
-        if (!Files.exists(mauiPathPath)) {
-            throw new RuntimeException("Maui path was invalid");
-        }
-        return new BuildRequestHandler(versionSetServiceClient, packageServiceClient, wsPath, mauiPathPath, buildService);
+        return new BuildRequestHandler(versionSetServiceClient, packageServiceClient, wsPath, mauiWrapper, buildService);
     }
 
     @Bean

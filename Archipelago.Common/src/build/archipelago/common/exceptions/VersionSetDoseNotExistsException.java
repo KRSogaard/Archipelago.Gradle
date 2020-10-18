@@ -1,6 +1,6 @@
 package build.archipelago.common.exceptions;
 
-public class VersionSetDoseNotExistsException extends Throwable {
+public class VersionSetDoseNotExistsException extends ArchipelagoException {
     public VersionSetDoseNotExistsException(String name) {
         super(getMessage(name));
     }

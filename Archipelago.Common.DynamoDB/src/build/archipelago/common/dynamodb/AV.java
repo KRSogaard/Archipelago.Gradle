@@ -1,9 +1,11 @@
 package build.archipelago.common.dynamodb;
 
+import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 
 import java.time.Instant;
-import java.util.List;
+import java.util.*;
+import java.util.function.*;
 
 public class AV {
     public static AttributeValue of(String v) {
@@ -27,6 +29,19 @@ public class AV {
 
     public static Instant toInstant(AttributeValue av) {
         return Instant.ofEpochMilli(Long.parseLong(av.getN()));
+    }
+
+    public static <T> T getOrNull(Map<String, AttributeValue> map, String key, Function<AttributeValue, T> parse) {
+        if (!map.containsKey(key)) {
+            return null;
+        }
+        return parse.apply(map.get(key));
+    }
+    public static String getStringOrNull(Map<String, AttributeValue> map, String key) {
+        if (!map.containsKey(key)) {
+            return null;
+        }
+        return map.get(key).getS();
     }
 
 }

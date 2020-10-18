@@ -8,6 +8,7 @@ public class DynamoDBPackageConfig {
     private String packagesTableName;
     private String packagesVersionsTableName;
     private String packagesBuildsTableName;
+    private String packagesBuildsGitTableName;
 
     @Override
     public String toString() {
@@ -15,6 +16,7 @@ public class DynamoDBPackageConfig {
                 "packagesTableName='" + packagesTableName + '\'' +
                 ", packagesVersionsTableName='" + packagesVersionsTableName + '\'' +
                 ", packagesBuildsTableName='" + packagesBuildsTableName + '\'' +
+                ", packagesBuildsGitTableName='" + packagesBuildsGitTableName + '\'' +
                 '}';
     }
 }

@@ -13,6 +13,7 @@ public interface PackageData {
     PackageDetails getPackageDetails(String name) throws PackageNotFoundException;
     ImmutableList<VersionBuildDetails> getPackageVersionBuilds(ArchipelagoPackage pkg);
     BuiltPackageDetails getBuildPackage(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException;
+    ArchipelagoBuiltPackage getBuildPackageByGit(String packageName, String branch, String gitCommit) throws PackageNotFoundException;
     BuiltPackageDetails getLatestBuildPackage(ArchipelagoPackage pkg) throws PackageNotFoundException;
 
     void createBuild(ArchipelagoBuiltPackage pkg, String config, String gitCommit, String gitBranch) throws PackageNotFoundException, PackageExistsException;
