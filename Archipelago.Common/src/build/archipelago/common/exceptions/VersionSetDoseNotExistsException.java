@@ -1,6 +1,6 @@
 package build.archipelago.common.exceptions;
 
-public class VersionSetDoseNotExistsException extends Exception {
+public class VersionSetDoseNotExistsException extends ArchipelagoException {
     public VersionSetDoseNotExistsException(String name) {
         super(getMessage(name));
     }

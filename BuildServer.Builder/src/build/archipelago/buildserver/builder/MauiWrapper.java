@@ -1,6 +1,7 @@
 package build.archipelago.buildserver.builder;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 
 import java.io.*;
 import java.nio.file.*;
@@ -45,6 +46,8 @@ public class MauiWrapper {
         if (useWorkspaceCache) {
             processBuilder.environment().put("MAUI_USE_WORKSPACE_CACHE", "true");
         }
+
+        log.debug("Running maui command in \"{}\": {}", executionFolder, Strings.join(Arrays.asList(args), ' '));
         processBuilder.command(createMauiCommand(args));
 
         try {

@@ -1,10 +1,11 @@
 package build.archipelago.maui.core.exceptions;
 
 import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.exceptions.ArchipelagoException;
 
 import java.util.*;
 
-public class PackageDependencyLoopDetectedException extends Exception {
+public class PackageDependencyLoopDetectedException extends ArchipelagoException {
 
     List<ArchipelagoPackage> archipelagoPackages;
 

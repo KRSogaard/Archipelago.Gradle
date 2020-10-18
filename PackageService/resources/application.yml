@@ -19,6 +19,8 @@ dynamodb:
     name: "packages-versions.alpha"
   packages_builds:
     name: "packages-builds.alpha"
+  packages_builds_git:
+    name: "packages-builds-git.alpha"
 
 aws:
   region: "us-west-2"

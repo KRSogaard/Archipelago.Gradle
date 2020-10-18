@@ -6,6 +6,7 @@ import build.archipelago.packageservice.core.data.models.*;
 import build.archipelago.packageservice.core.delegates.createPackage.*;
 import build.archipelago.packageservice.core.delegates.getPackage.GetPackageDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuild.GetPackageBuildDelegate;
+import build.archipelago.packageservice.core.delegates.getPackageBuildByGit.GetPackageBuildByGitDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuilds.GetPackageBuildsDelegate;
 import build.archipelago.packageservice.core.delegates.verifyBuildsExists.VerifyBuildsExistsDelegate;
 import build.archipelago.packageservice.core.delegates.verifyPackageExists.VerifyPackageExistsDelegate;
@@ -27,6 +28,7 @@ public class PackagesController {
     private GetPackageDelegate getPackageDelegate;
     private GetPackageBuildsDelegate getPackageBuildsDelegate;
     private GetPackageBuildDelegate getPackageBuildDelegate;
+    private GetPackageBuildByGitDelegate getPackageBuildByGitDelegate;
     private VerifyBuildsExistsDelegate verifyBuildsExistsDelegate;
     private VerifyPackageExistsDelegate verifyPackageExistsDelegate;
 
@@ -34,6 +36,7 @@ public class PackagesController {
                               CreatePackageDelegate createPackageDelegate,
                               GetPackageBuildsDelegate getPackageBuildsDelegate,
                               GetPackageBuildDelegate getPackageBuildDelegate,
+                              GetPackageBuildByGitDelegate getPackageBuildByGitDelegate,
                               VerifyBuildsExistsDelegate verifyBuildsExistsDelegate,
                               VerifyPackageExistsDelegate verifyPackageExistsDelegate) {
         Preconditions.checkNotNull(createPackageDelegate);
@@ -48,6 +51,8 @@ public class PackagesController {
         this.verifyBuildsExistsDelegate = verifyBuildsExistsDelegate;
         Preconditions.checkNotNull(verifyPackageExistsDelegate);
         this.verifyPackageExistsDelegate = verifyPackageExistsDelegate;
+        Preconditions.checkNotNull(getPackageBuildByGitDelegate);
+        this.getPackageBuildByGitDelegate = getPackageBuildByGitDelegate;
     }
 
     @PostMapping
@@ -124,6 +129,25 @@ public class PackagesController {
                 .created(build.getCreated().toEpochMilli())
                 .gitCommit(build.getGitCommit())
                 .gitBranch(build.getGitBranch())
+                .build();
+    }
+
+    @GetMapping(value = "{name}/git/{branch}/{commit}")
+    @ResponseStatus(HttpStatus.OK)
+    public ArchipelagoBuiltPackageResponse getPackageByGit(
+            @PathVariable("name") String name,
+            @PathVariable("branch") String branch,
+            @PathVariable("commit") String commit) throws PackageNotFoundException {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(branch);
+        Preconditions.checkNotNull(commit);
+
+        ArchipelagoBuiltPackage pkg = getPackageBuildByGitDelegate.get(name, branch, commit);
+
+        return ArchipelagoBuiltPackageResponse.builder()
+                .name(pkg.getName())
+                .version(pkg.getVersion())
+                .hash(pkg.getHash())
                 .build();
     }
 

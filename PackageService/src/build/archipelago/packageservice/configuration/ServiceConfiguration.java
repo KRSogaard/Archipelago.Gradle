@@ -29,15 +29,18 @@ public class ServiceConfiguration {
             @Value("${dynamodb.packages.name}") String packageTable,
             @Value("${dynamodb.packages_versions.name}") String packageVersionsTable,
             @Value("${dynamodb.packages_builds.name}") String packageBuildsTable,
+            @Value("${dynamodb.packages_builds_git.name}") String packageBuildsGitTable,
             AmazonDynamoDB dynamoDB) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageTable));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageVersionsTable));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageBuildsTable));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(packageBuildsGitTable));
 
         DynamoDBPackageConfig config = DynamoDBPackageConfig.builder()
                 .packagesTableName(packageTable)
                 .packagesVersionsTableName(packageVersionsTable)
                 .packagesBuildsTableName(packageBuildsTable)
+                .packagesBuildsGitTableName(packageBuildsGitTable)
                 .build();
 
         log.info("Creating DynamoDBPackageData with config \"{}\"",

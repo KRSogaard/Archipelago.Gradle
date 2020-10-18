@@ -14,6 +14,7 @@ public interface PackageServiceClient {
     GetPackageResponse getPackage(String name) throws PackageNotFoundException;
     PackageBuildsResponse getPackageBuilds(ArchipelagoPackage pks) throws PackageNotFoundException;
     GetPackageBuildResponse getPackageBuild(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException;
+    ArchipelagoBuiltPackage getPackageByGit(String packageName, String branch, String commit) throws PackageNotFoundException;
 
     PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(List<ArchipelagoPackage> packages);
     PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(List<ArchipelagoBuiltPackage> packages);

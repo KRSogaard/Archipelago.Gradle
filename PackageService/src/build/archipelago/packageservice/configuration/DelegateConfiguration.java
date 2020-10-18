@@ -5,6 +5,7 @@ import build.archipelago.packageservice.core.delegates.createPackage.CreatePacka
 import build.archipelago.packageservice.core.delegates.getBuildArtifact.GetBuildArtifactDelegate;
 import build.archipelago.packageservice.core.delegates.getPackage.GetPackageDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuild.GetPackageBuildDelegate;
+import build.archipelago.packageservice.core.delegates.getPackageBuildByGit.GetPackageBuildByGitDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuilds.GetPackageBuildsDelegate;
 import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.UploadBuildArtifactDelegate;
 import build.archipelago.packageservice.core.delegates.verifyBuildsExists.VerifyBuildsExistsDelegate;
@@ -74,5 +75,12 @@ public class DelegateConfiguration {
     public VerifyPackageExistsDelegate verifyPackageExistsDelegate(
             PackageData packageData) {
         return new VerifyPackageExistsDelegate(packageData);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public GetPackageBuildByGitDelegate getPackageBuildByGitDelegate(
+            PackageData packageData) {
+        return new GetPackageBuildByGitDelegate(packageData);
     }
 }

@@ -1,4 +1,6 @@
 package build.archipelago.maui.core.exceptions;
 
-public class VersionSetNotSyncedException extends Exception {
+import build.archipelago.common.exceptions.ArchipelagoException;
+
+public class VersionSetNotSyncedException extends ArchipelagoException {
 }

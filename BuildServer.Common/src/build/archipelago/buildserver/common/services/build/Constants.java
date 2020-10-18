@@ -11,4 +11,5 @@ public class Constants {
     public static final String ATTRIBUTE_STAGE_PACKAGES = "stage-packages";
     public static final String ATTRIBUTE_STAGE_PUBLISH = "stage-publish";
     public static final String ATTRIBUTE_UPDATED = "updated";
+    public static final String ATTRIBUTE_PACKAGE = "package";
 }

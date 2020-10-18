@@ -16,13 +16,13 @@
         <RollingFile
                 name="File"
                 fileName="${LOG_DIR}/application.log"
-                filePattern="${LOG_DIR}/archive/packageservice.%d{yyyy-MM-dd-HH}.log.gz"
+                filePattern="${LOG_DIR}/archive/buildserver.%d{yyyy-MM-dd-HH}.log.gz"
                 ignoreExceptions="false">
             <PatternLayout>
                 <Pattern>${LOG_PATTERN}</Pattern>
             </PatternLayout>
             <Policies>
-                <TimeBasedTriggeringPolicy filePattern="${LOG_DIR}/archive/packageservice.%d{yyyy-MM-dd-HH}.log.gz" />
+                <TimeBasedTriggeringPolicy filePattern="${LOG_DIR}/archive/buildserver.%d{yyyy-MM-dd-HH}.log.gz" />
             </Policies>
             <!-- This will store 1 weeks of logs if not removed by other means 24 hours * 7 days -->
             <DefaultRolloverStrategy max="168"/>
@@ -40,7 +40,7 @@
 
         <Root level="DEBUG">
             <AppenderRef ref="File" level="DEBUG" />
-            <AppenderRef ref="ConsoleAppender" level="INFO" />
+            <AppenderRef ref="ConsoleAppender" level="DEBUG" />
         </Root>
     </Loggers>
 </Configuration>

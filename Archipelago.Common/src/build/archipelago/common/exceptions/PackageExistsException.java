@@ -2,7 +2,7 @@ package build.archipelago.common.exceptions;
 
 import build.archipelago.common.*;
 
-public class PackageExistsException extends Exception {
+public class PackageExistsException extends ArchipelagoException {
     public PackageExistsException(String name) {
         super("The package \"" + name + "\" already exists");
     }

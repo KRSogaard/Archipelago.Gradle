@@ -8,6 +8,7 @@ import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.client.rest.RestVersionSetSetServiceClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.wewelo.sqsconsumer.*;
 import com.wewelo.sqsconsumer.models.SQSConsumerConfig;
@@ -34,9 +35,12 @@ public class ServiceConfiguration {
     @Bean
     public BuildService buildService(AmazonSQS amazonSQS,
                                      AmazonDynamoDB amazonDynamoDB,
-                                     @Value("${dynamodb.build.tableName}") String buildTable,
+                                     AmazonS3 amazonS3,
+                                     @Value("${dynamodb.build}") String buildTable,
+                                     @Value("${dynamodb.build-packages}") String buildPackagesTable,
+                                     @Value("${s3.logs}") String bucketNameLogs,
                                      @Value("${sqs.build-queue}") String queueUrl) {
-        return new BuildService(amazonDynamoDB, amazonSQS, buildTable, queueUrl);
+        return new BuildService(amazonDynamoDB, amazonSQS, amazonS3, buildTable, buildPackagesTable, bucketNameLogs, queueUrl);
     }
 
     @Bean
@@ -44,6 +48,7 @@ public class ServiceConfiguration {
         return new BlockingExecutorServiceFactory();
     }
 
+    @Bean
     public MauiWrapper mauiWrapper(@Value("${workspace.maui}") String mauiPath,
                                    @Value("${workspace.path}") String workspacePath) throws IOException {
         Path cachePath = Path.of(workspacePath).resolve("temp");
