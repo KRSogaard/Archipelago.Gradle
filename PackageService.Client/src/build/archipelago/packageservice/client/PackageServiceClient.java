@@ -9,16 +9,16 @@ import java.nio.file.Path;
 import java.util.List;
 
 public interface PackageServiceClient {
-    void createPackage(CreatePackageRequest request) throws PackageExistsException;
+    void createPackage(String accountId, CreatePackageRequest request) throws PackageExistsException;
 
-    GetPackageResponse getPackage(String name) throws PackageNotFoundException;
-    PackageBuildsResponse getPackageBuilds(ArchipelagoPackage pks) throws PackageNotFoundException;
-    GetPackageBuildResponse getPackageBuild(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException;
-    ArchipelagoBuiltPackage getPackageByGit(String packageName, String branch, String commit) throws PackageNotFoundException;
+    GetPackageResponse getPackage(String accountId, String name) throws PackageNotFoundException;
+    PackageBuildsResponse getPackageBuilds(String accountId, ArchipelagoPackage pks) throws PackageNotFoundException;
+    GetPackageBuildResponse getPackageBuild(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException;
+    ArchipelagoBuiltPackage getPackageByGit(String accountId, String packageName, String branch, String commit) throws PackageNotFoundException;
 
-    PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(List<ArchipelagoPackage> packages);
-    PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(List<ArchipelagoBuiltPackage> packages);
+    PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(String accountId, List<ArchipelagoPackage> packages);
+    PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(String accountId, List<ArchipelagoBuiltPackage> packages);
 
-    String uploadBuiltArtifact(UploadPackageRequest request, Path file) throws PackageNotFoundException;
-    Path getBuildArtifact(ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, IOException;
+    String uploadBuiltArtifact(String accountId, UploadPackageRequest request, Path file) throws PackageNotFoundException;
+    Path getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, IOException;
 }

@@ -21,8 +21,8 @@ public class S3PackageStorage implements PackageStorage {
     }
 
     @Override
-    public void upload(ArchipelagoBuiltPackage pkg, byte[] artifactBytes) {
-        String keyName = getS3FileName(pkg);
+    public void upload(String accountId, ArchipelagoBuiltPackage pkg, byte[] artifactBytes) {
+        String keyName = getS3FileName(accountId, pkg);
         log.info("Saving build artifact to \"{}\"", keyName);
 
         ObjectMetadata om = new ObjectMetadata();
@@ -33,10 +33,11 @@ public class S3PackageStorage implements PackageStorage {
     }
 
     @Override
-    public byte[] get(ArchipelagoBuiltPackage pkg) throws IOException {
-        String keyName = getS3FileName(pkg);
+    public byte[] get(String accountId, ArchipelagoBuiltPackage pkg) throws IOException {
+        String keyName = getS3FileName(accountId, pkg);
         log.debug("Fetching build artifact from S3 \"{}\" with key \"{}\"", bucketName, keyName);
         S3Object result = s3Client.getObject(bucketName, keyName);
+        // TODO: Check is object exists
         try {
             return IOUtils.toByteArray(result.getObjectContent());
         } catch (AmazonServiceException exp) {
@@ -45,7 +46,7 @@ public class S3PackageStorage implements PackageStorage {
         }
     }
 
-    private String getS3FileName(ArchipelagoBuiltPackage pkg) {
-        return pkg.toString() + ".zip";
+    private String getS3FileName(String accountId, ArchipelagoBuiltPackage pkg) {
+        return accountId + "/" + pkg.toString() + ".zip";
     }
 }

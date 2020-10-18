@@ -34,7 +34,7 @@ public class RestPackageServiceClient implements PackageServiceClient {
     }
 
     @Override
-    public void createPackage(CreatePackageRequest request) throws PackageExistsException {
+    public void createPackage(String accountId, CreatePackageRequest request) throws PackageExistsException {
         Preconditions.checkNotNull(request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getDescription()));
@@ -45,7 +45,8 @@ public class RestPackageServiceClient implements PackageServiceClient {
         );
 
         try {
-            restTemplate.postForEntity(endpoint + "/package", restRequest, ResponseEntity.class);
+            restTemplate.postForEntity(endpoint +
+                    "/" + accountId + "/package", restRequest, ResponseEntity.class);
         } catch (HttpClientErrorException exp) {
             if (HttpStatus.CONFLICT.equals(exp.getStatusCode())) {
                 throw new PackageExistsException(request.getName());
@@ -55,11 +56,12 @@ public class RestPackageServiceClient implements PackageServiceClient {
     }
 
     @Override
-    public GetPackageResponse getPackage(String name) throws PackageNotFoundException {
+    public GetPackageResponse getPackage(String accountId, String name) throws PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
         try {
-            RestGetPackageResponse response = restTemplate.getForObject(endpoint + "/package/" + name,
+            RestGetPackageResponse response = restTemplate.getForObject(endpoint +
+                    "/" + accountId + "/package/" + name,
                     RestGetPackageResponse.class);
 
             ImmutableList.Builder<GetPackageResponse.Version> versions = ImmutableList.builder();
@@ -82,11 +84,12 @@ public class RestPackageServiceClient implements PackageServiceClient {
     }
 
     @Override
-    public PackageBuildsResponse getPackageBuilds(ArchipelagoPackage pkg) throws PackageNotFoundException {
+    public PackageBuildsResponse getPackageBuilds(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException {
         Preconditions.checkNotNull(pkg);
 
         try {
             RestPackageBuildsResponse response = restTemplate.getForObject(endpoint +
+                            "/" + accountId + "/" +
                             "/package/" + pkg.getName() + "/" + pkg.getVersion(),
                     RestPackageBuildsResponse.class);
 
@@ -107,15 +110,15 @@ public class RestPackageServiceClient implements PackageServiceClient {
     }
 
     @Override
-    public GetPackageBuildResponse getPackageBuild(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
+    public GetPackageBuildResponse getPackageBuild(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
         Preconditions.checkNotNull(pkg);
 
         try {
-            log.info("Calling Url: " + endpoint +
-                    "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash());
-            RestGetPackageBuildResponse response = restTemplate.getForObject(endpoint +
-                            "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash(),
-                    RestGetPackageBuildResponse.class);
+            String url = endpoint +
+                    "/" + accountId + "/" +
+                    "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash();
+            log.info("Calling Url: " + url);
+            RestGetPackageBuildResponse response = restTemplate.getForObject(url, RestGetPackageBuildResponse.class);
 
             return GetPackageBuildResponse.builder()
                     .hash(response.getHash())
@@ -133,13 +136,14 @@ public class RestPackageServiceClient implements PackageServiceClient {
     }
 
     @Override
-    public ArchipelagoBuiltPackage getPackageByGit(String packageName, String branch, String commit) throws PackageNotFoundException {
+    public ArchipelagoBuiltPackage getPackageByGit(String accountId, String packageName, String branch, String commit) throws PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageName));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(branch));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(commit));
 
         try {
             String url = endpoint +
+                    "/" + accountId + "/" +
                     "/package/" + packageName + "/git/" + branch + "/" + commit;
             log.info("Calling Url: " + url);
             ArchipelagoBuiltPackageResponse response = restTemplate.getForObject(url,
@@ -155,7 +159,7 @@ public class RestPackageServiceClient implements PackageServiceClient {
     }
 
     @Override
-    public PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(List<ArchipelagoPackage> packages) {
+    public PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(String accountId, List<ArchipelagoPackage> packages) {
         Preconditions.checkNotNull(packages);
         Preconditions.checkArgument(packages.size() > 0);
 
@@ -163,7 +167,7 @@ public class RestPackageServiceClient implements PackageServiceClient {
                 packages.stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()));
 
         try {
-            RestVerificationResponse res = restTemplate.postForObject(endpoint + "/package/verify-packages",
+            RestVerificationResponse res = restTemplate.postForObject(endpoint + "/" + accountId + "/package/verify-packages",
                     restRequest, RestVerificationResponse.class);
 
             return PackageVerificationResult.<ArchipelagoPackage>builder()
@@ -176,7 +180,7 @@ public class RestPackageServiceClient implements PackageServiceClient {
     }
 
     @Override
-    public PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(List<ArchipelagoBuiltPackage> packages) {
+    public PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(String accountId, List<ArchipelagoBuiltPackage> packages) {
         Preconditions.checkNotNull(packages);
         Preconditions.checkArgument(packages.size() > 0);
 
@@ -184,7 +188,7 @@ public class RestPackageServiceClient implements PackageServiceClient {
                 packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList()));
 
         try {
-            RestVerificationResponse res = restTemplate.postForObject(endpoint + "/package/verify-builds",
+            RestVerificationResponse res = restTemplate.postForObject(endpoint + "/" + accountId + "/package/verify-builds",
                     restRequest, RestVerificationResponse.class);
 
             return PackageVerificationResult.<ArchipelagoBuiltPackage>builder()
@@ -197,7 +201,7 @@ public class RestPackageServiceClient implements PackageServiceClient {
     }
 
     @Override
-    public String uploadBuiltArtifact(UploadPackageRequest request, Path file) throws PackageNotFoundException {
+    public String uploadBuiltArtifact(String accountId, UploadPackageRequest request, Path file) throws PackageNotFoundException {
         Preconditions.checkNotNull(request);
         Preconditions.checkNotNull(request.getPkg());
         Preconditions.checkNotNull(file);
@@ -212,8 +216,8 @@ public class RestPackageServiceClient implements PackageServiceClient {
         body.add("gitCommit", request.getGitCommit());
         body.add("gitBranch", request.getGitBranch());
 
-        String url = String.format("%s/artifact/%s/%s",
-                endpoint, request.getPkg().getName(), request.getPkg().getVersion());
+        String url = String.format("%s/%s/artifact/%s/%s",
+                endpoint, accountId, request.getPkg().getName(), request.getPkg().getVersion());
         try {
             RestArtifactUploadResponse response = restTemplate.postForObject(url,
                     new HttpEntity<>(body, headers), RestArtifactUploadResponse.class);
@@ -227,7 +231,7 @@ public class RestPackageServiceClient implements PackageServiceClient {
     }
 
     @Override
-    public Path getBuildArtifact(ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, IOException {
+    public Path getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, IOException {
         Preconditions.checkNotNull(pkg, "Name and Version is required");
         Preconditions.checkNotNull(directory, "A save location is required");
 
@@ -236,8 +240,8 @@ public class RestPackageServiceClient implements PackageServiceClient {
             Files.createDirectories(directory);
         }
 
-        String url = String.format("%s/artifact/%s/%s/%s",
-                endpoint, pkg.getName(), pkg.getVersion(), pkg.getHash());
+        String url = String.format("%s/%s/artifact/%s/%s/%s",
+                endpoint, accountId, pkg.getName(), pkg.getVersion(), pkg.getHash());
         try {
             byte[] data = restTemplate.getForObject(url, byte[].class);
             Path filePath = Paths.get(

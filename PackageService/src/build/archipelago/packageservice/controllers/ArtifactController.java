@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("artifact")
+@RequestMapping
 @Slf4j
 public class ArtifactController {
 
@@ -29,14 +29,16 @@ public class ArtifactController {
         this.getBuildArtifactDelegate = getBuildArtifactDelegate;
     }
 
-    @PostMapping("{name}/{version}")
+    @PostMapping("{accountId}/artifact/{name}/{version}")
     @ResponseStatus(HttpStatus.OK)
     public ArtifactUploadResponse uploadBuiltArtifact(
+            @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
             @ModelAttribute UploadPackageRequest request)
             throws PackageNotFoundException, PackageExistsException {
         log.info("Request to upload new build: {}", request);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "A name is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version), "A version is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getGitCommit()), "A git commit is required");
@@ -48,6 +50,7 @@ public class ArtifactController {
         try {
             String hash = uploadBuildArtifactDelegate.uploadArtifact(
                     UploadBuildArtifactDelegateRequest.builder()
+                            .accountId(accountId)
                             .pkg(new ArchipelagoPackage(name, version))
                             .config(request.getConfig())
                             .gitCommit(request.getGitCommit())
@@ -64,18 +67,20 @@ public class ArtifactController {
         }
     }
 
-    @GetMapping(value = {"{name}/{version}/{hash}", "{name}/{version}"})
+    @GetMapping(value = {"{accountId}/artifact/{name}/{version}/{hash}", "{accountId}/{name}/{version}"})
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<Resource> getBuildArtifact(
+            @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
             @PathVariable("hash") Optional<String> hash) throws PackageNotFoundException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         log.info("Request to get build artifact for Package {}, Version: {}, Hash: {}", name, version, hash);
         ArchipelagoPackage pkg = new ArchipelagoPackage(name, version);
 
         GetBuildArtifactResponse response = null;
         try {
-            response = getBuildArtifactDelegate.getBuildArtifact(pkg, hash);
+            response = getBuildArtifactDelegate.getBuildArtifact(accountId, pkg, hash);
         } catch (IOException e) {
             log.error("Unable to read build artifact. " + e.getMessage(), e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());

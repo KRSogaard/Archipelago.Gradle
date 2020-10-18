@@ -16,4 +16,5 @@ public class DynamoDBKeys {
     public static final String GIT_COMMIT = "git-commit";
     public static final String GIT_BRANCH = "git-branch";
     public static final String LOOKUP_KEY = "lookup-key";
+    public static final String ACCOUNT_ID = "account-id";
 }

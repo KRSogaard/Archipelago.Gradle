@@ -25,9 +25,6 @@ public class DynamoDBPackageData implements PackageData {
         this.settings = settings;
     }
 
-    private static String searchNameVersion(ArchipelagoPackage pkg) {
-        return pkg.getNameVersion().toLowerCase();
-    }
     private static String searchName(String name) {
         return name.toLowerCase();
     }
@@ -39,11 +36,11 @@ public class DynamoDBPackageData implements PackageData {
     }
 
     @Override
-    public boolean buildExists(ArchipelagoBuiltPackage pkg) {
+    public boolean buildExists(String accountId, ArchipelagoBuiltPackage pkg) {
         log.debug("Finding if build \"{}\" exists", pkg.toString());
         GetItemRequest request = new GetItemRequest(settings.getPackagesBuildsTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
-                        .put(DynamoDBKeys.NAME_VERSION, AV.of(searchNameVersion(pkg)))
+                        .put(DynamoDBKeys.NAME_VERSION, AV.of(mergeAccountPackage(accountId, pkg.getNameVersion())))
                         .put(DynamoDBKeys.HASH, AV.of(searchHash(pkg.getHash())))
                     .build());
         Map<String, AttributeValue> item = dynamoDB.getItem(request).getItem();
@@ -52,11 +49,11 @@ public class DynamoDBPackageData implements PackageData {
     }
 
     @Override
-    public boolean packageVersionExists(ArchipelagoPackage pkg) {
+    public boolean packageVersionExists(String accountId, ArchipelagoPackage pkg) {
         log.debug("Finding if package and version \"{}\" exists", pkg.getNameVersion());
         GetItemRequest request = new GetItemRequest(settings.getPackagesVersionsTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
-                        .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(pkg.getName())))
+                        .put(DynamoDBKeys.PACKAGE_NAME, AV.of(mergeAccountPackage(accountId, pkg.getName())))
                         .put(DynamoDBKeys.VERSION, AV.of(searchHash(pkg.getVersion())))
                         .build());
         Map<String, AttributeValue> item = dynamoDB.getItem(request).getItem();
@@ -65,10 +62,11 @@ public class DynamoDBPackageData implements PackageData {
     }
 
     @Override
-    public boolean packageExists(String name) {
+    public boolean packageExists(String accountId, String name) {
         log.debug("Finding if package \"{}\" exists", name);
         GetItemRequest request = new GetItemRequest(settings.getPackagesTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
+                        .put(DynamoDBKeys.ACCOUNT_ID, AV.of(accountId))
                         .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(name)))
                         .build());
         Map<String, AttributeValue> item = dynamoDB.getItem(request).getItem();
@@ -77,10 +75,11 @@ public class DynamoDBPackageData implements PackageData {
     }
 
     @Override
-    public PackageDetails getPackageDetails(String name) throws PackageNotFoundException {
+    public PackageDetails getPackageDetails(String accountId, String name) throws PackageNotFoundException {
         log.debug("Getting package details for \"{}\"", name);
         GetItemRequest request = new GetItemRequest(settings.getPackagesTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
+                        .put(DynamoDBKeys.ACCOUNT_ID, AV.of(accountId))
                         .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(name)))
                         .build());
         Map<String, AttributeValue> pkgItem = dynamoDB.getItem(request).getItem();
@@ -100,7 +99,7 @@ public class DynamoDBPackageData implements PackageData {
                         "#packageName", DynamoDBKeys.PACKAGE_NAME
                 ))
                 .withExpressionAttributeValues(ImmutableMap.of(":packageName",
-                        new AttributeValue().withS(searchName(name))));
+                        AV.of(mergeAccountPackage(accountId, name))));
         QueryResult result = dynamoDB.query(queryRequest);
         ImmutableList.Builder<PackageDetailsVersion> versions = ImmutableList.builder();
         if (result.getItems() != null) {
@@ -124,7 +123,7 @@ public class DynamoDBPackageData implements PackageData {
     }
 
     @Override
-    public ImmutableList<VersionBuildDetails> getPackageVersionBuilds(ArchipelagoPackage pkg) {
+    public ImmutableList<VersionBuildDetails> getPackageVersionBuilds(String accountId, ArchipelagoPackage pkg) {
         log.info("Find all builds for the package \"{}\"", pkg.getNameVersion());
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(settings.getPackagesBuildsTableName())
@@ -136,7 +135,7 @@ public class DynamoDBPackageData implements PackageData {
                         "#packageNameVersion", DynamoDBKeys.NAME_VERSION
                 ))
                 .withExpressionAttributeValues(ImmutableMap.of(":packageNameVersion",
-                        new AttributeValue().withS(searchNameVersion(pkg))));
+                        AV.of(mergeAccountPackage(accountId, pkg.getNameVersion()))));
         log.debug("Builds query: {}", queryRequest);
         QueryResult result = dynamoDB.query(queryRequest);
         ImmutableList.Builder<VersionBuildDetails> builds = ImmutableList.builder();
@@ -155,11 +154,11 @@ public class DynamoDBPackageData implements PackageData {
     }
 
     @Override
-    public BuiltPackageDetails getBuildPackage(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
+    public BuiltPackageDetails getBuildPackage(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
         log.debug("Find build \"{}\"", pkg.toString());
         GetItemRequest getItemRequest = new GetItemRequest(settings.getPackagesBuildsTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
-                        .put(DynamoDBKeys.NAME_VERSION, AV.of(searchNameVersion(pkg)))
+                        .put(DynamoDBKeys.NAME_VERSION, AV.of(mergeAccountPackage(accountId, pkg.getNameVersion())))
                         .put(DynamoDBKeys.HASH, AV.of(searchHash(pkg.getHash())))
                         .build());
         Map<String, AttributeValue> item = dynamoDB.getItem(getItemRequest).getItem();
@@ -178,11 +177,11 @@ public class DynamoDBPackageData implements PackageData {
     }
 
     @Override
-    public ArchipelagoBuiltPackage getBuildPackageByGit(String packageName, String branch, String commit) throws PackageNotFoundException {
+    public ArchipelagoBuiltPackage getBuildPackageByGit(String accountId, String packageName, String branch, String commit) throws PackageNotFoundException {
         log.debug("Find build \"{}\" from git commit \"{}\", branch \"{}\"", packageName, commit, branch);
         GetItemRequest getItemRequest = new GetItemRequest(settings.getPackagesBuildsGitTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
-                        .put(DynamoDBKeys.LOOKUP_KEY, AV.of(createGitHash(packageName, branch, commit)))
+                        .put(DynamoDBKeys.LOOKUP_KEY, AV.of(createGitHash(accountId, packageName, branch, commit)))
                         .build());
         Map<String, AttributeValue> item = dynamoDB.getItem(getItemRequest).getItem();
         if (item == null) {
@@ -197,11 +196,11 @@ public class DynamoDBPackageData implements PackageData {
     }
 
     @Override
-    public BuiltPackageDetails getLatestBuildPackage(ArchipelagoPackage pkg) throws PackageNotFoundException {
+    public BuiltPackageDetails getLatestBuildPackage(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException {
         log.debug("Findind the latest build of \"{}\"", pkg.getNameVersion());
         GetItemRequest getItemRequest = new GetItemRequest(settings.getPackagesVersionsTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
-                        .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(pkg.getName())))
+                        .put(DynamoDBKeys.PACKAGE_NAME, AV.of(mergeAccountPackage(accountId, pkg.getName())))
                         .put(DynamoDBKeys.VERSION, AV.of(searchHash(pkg.getVersion())))
                         .build());
         Map<String, AttributeValue> item = dynamoDB.getItem(getItemRequest).getItem();
@@ -211,17 +210,17 @@ public class DynamoDBPackageData implements PackageData {
         }
         String latestBuild = item.get(DynamoDBKeys.LATEST_BUILD).getS();
         log.debug("Found \"{}\" as the latest build for \"{}\"", latestBuild, pkg.getNameVersion());
-        return getBuildPackage(new ArchipelagoBuiltPackage(pkg, latestBuild));
+        return getBuildPackage(accountId, new ArchipelagoBuiltPackage(pkg, latestBuild));
     }
 
     @Override
-    public void createBuild(ArchipelagoBuiltPackage pkg, String config, String gitCommit, String gitBranch) throws
+    public void createBuild(String accountId, ArchipelagoBuiltPackage pkg, String config, String gitCommit, String gitBranch) throws
             PackageNotFoundException, PackageExistsException {
-        if (!packageExists(pkg.getName())) {
+        if (!packageExists(accountId, pkg.getName())) {
             log.debug("The package \"{}\" did not exists", pkg.getName());
             throw new PackageNotFoundException(pkg.getName());
         }
-        if (buildExists(pkg)) {
+        if (buildExists(accountId, pkg)) {
             log.debug("The build \"{}\" already exists", pkg.toString());
             throw new PackageExistsException(pkg);
         }
@@ -230,6 +229,7 @@ public class DynamoDBPackageData implements PackageData {
 
         UpdateItemRequest updateItemRequest = new UpdateItemRequest()
                 .withTableName(settings.getPackagesTableName())
+                .addKeyEntry(DynamoDBKeys.ACCOUNT_ID, AV.of(searchName(accountId)))
                 .addKeyEntry(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(pkg.getName())))
                 .withUpdateExpression("set #latestVersion = :latestVersion, " +
                         "#latestBuild = :latestBuild, " +
@@ -247,10 +247,10 @@ public class DynamoDBPackageData implements PackageData {
                         ":latestVersion", AV.of(pkg.getVersion())));
         dynamoDB.updateItem(updateItemRequest);
 
-        if (!packageVersionExists(pkg)) {
+        if (!packageVersionExists(accountId, pkg)) {
             log.debug("The package version \"{}\" is new", pkg.getNameVersion());
             ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
-                    .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(pkg.getName())))
+                    .put(DynamoDBKeys.PACKAGE_NAME, AV.of(mergeAccountPackage(accountId, pkg.getName())))
                     .put(DynamoDBKeys.VERSION, AV.of(searchVersion(pkg.getVersion())))
                     .put(DynamoDBKeys.DISPLAY_VERSION, AV.of(searchVersion(pkg.getVersion())))
                     .put(DynamoDBKeys.CREATED, AV.of(Instant.now()))
@@ -260,7 +260,7 @@ public class DynamoDBPackageData implements PackageData {
         } else {
             updateItemRequest = new UpdateItemRequest()
                     .withTableName(settings.getPackagesVersionsTableName())
-                    .addKeyEntry(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(pkg.getName())))
+                    .addKeyEntry(DynamoDBKeys.PACKAGE_NAME, AV.of(mergeAccountPackage(accountId, pkg.getName())))
                     .addKeyEntry(DynamoDBKeys.VERSION, AV.of(searchVersion(pkg.getVersion())))
                     .withUpdateExpression("set #latestBuild = :latestBuild, #latestBuildTime = :latestBuildTime")
                     .withConditionExpression("attribute_exists(#packageName)")
@@ -276,7 +276,7 @@ public class DynamoDBPackageData implements PackageData {
         }
 
         ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
-                .put(DynamoDBKeys.NAME_VERSION, AV.of(searchNameVersion(pkg)))
+                .put(DynamoDBKeys.NAME_VERSION, AV.of(mergeAccountPackage(accountId, pkg.getNameVersion())))
                 .put(DynamoDBKeys.HASH, AV.of(searchVersion(pkg.getHash())))
                 .put(DynamoDBKeys.CREATED, AV.of(now))
                 .put(DynamoDBKeys.CONFIG, AV.of(config))
@@ -285,14 +285,18 @@ public class DynamoDBPackageData implements PackageData {
         dynamoDB.putItem(new PutItemRequest(settings.getPackagesBuildsTableName(), map.build()));
 
         map = ImmutableMap.<String, AttributeValue>builder()
-                .put(DynamoDBKeys.LOOKUP_KEY, AV.of(createGitHash(pkg.getName(), gitBranch, gitCommit)))
+                .put(DynamoDBKeys.LOOKUP_KEY, AV.of(createGitHash(accountId, pkg.getName(), gitBranch, gitCommit)))
                 .put(DynamoDBKeys.PACKAGE_NAME, AV.of(pkg.getName()))
                 .put(DynamoDBKeys.VERSION, AV.of(pkg.getVersion()))
                 .put(DynamoDBKeys.HASH, AV.of(searchVersion(pkg.getHash())));
         dynamoDB.putItem(new PutItemRequest(settings.getPackagesBuildsGitTableName(), map.build()));
     }
 
-    private String createGitHash(String packageName, String gitBranch, String gitCommit) {
+    private String mergeAccountPackage(String accountId, String packageName) {
+        return accountId.toLowerCase() + "_" + packageName.toLowerCase();
+    }
+
+    private String createGitHash(String accountId, String packageName, String gitBranch, String gitCommit) {
         Preconditions.checkNotNull(packageName);
         Preconditions.checkNotNull(gitBranch);
         Preconditions.checkNotNull(gitCommit);
@@ -300,20 +304,21 @@ public class DynamoDBPackageData implements PackageData {
         if (commit.length() > 7) {
             commit = commit.substring(0, 7);
         }
-        return packageName.toLowerCase() + "|" + gitBranch.toLowerCase() + "|" + commit.toLowerCase();
+        return accountId.toLowerCase() + "_" + packageName.toLowerCase() + "_" + gitBranch.toLowerCase() + "_" + commit.toLowerCase();
     }
 
     @Override
-    public void createPackage(CreatePackageModel model) throws PackageExistsException {
+    public void createPackage(String accountId, CreatePackageModel model) throws PackageExistsException {
         log.debug("Create new package: {}", model);
         model.validate();
 
-        if (packageExists(model.getName())) {
+        if (packageExists(accountId, model.getName())) {
             log.debug("The package \"{}\" already exists", model.getName());
             throw new PackageExistsException(model.getName());
         }
 
         ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
+                .put(DynamoDBKeys.ACCOUNT_ID, AV.of(searchName(accountId)))
                 .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(model.getName())))
                 .put(DynamoDBKeys.DISPLAY_PACKAGE_NAME, AV.of(model.getName()))
                 .put(DynamoDBKeys.CREATED, AV.of(Instant.now()))

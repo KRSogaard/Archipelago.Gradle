@@ -7,6 +7,7 @@ import lombok.*;
 @Builder
 @Data
 public class UploadBuildArtifactDelegateRequest {
+    private String accountId;
     private ArchipelagoPackage pkg;
     private String config;
     private String gitCommit;
@@ -14,6 +15,7 @@ public class UploadBuildArtifactDelegateRequest {
     private byte[] buildArtifact;
 
     protected void validate() {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id required");
         Preconditions.checkNotNull(pkg, "Name required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(config), "Config required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(gitCommit), "Config required");

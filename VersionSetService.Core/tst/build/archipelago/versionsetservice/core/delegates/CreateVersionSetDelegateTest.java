@@ -43,7 +43,7 @@ public class CreateVersionSetDelegateTest {
             VersionSetDoseNotExistsException, PackageNotFoundException {
         when(packageServiceClient.verifyPackagesExists(any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoPackage>builder().missingPackages(ImmutableList.of()).build());
-        when(versionSetService.get(eq(parentVSName))).thenReturn(createVS(parentVSName, List.of(pA)));
+        when(versionSetService.get(accountId, eq(parentVSName))).thenReturn(createVS(parentVSName, List.of(pA)));
 
         delegate.create(testVSName, List.of(pA, pB), Optional.of(parentVSName));
     }
@@ -61,7 +61,7 @@ public class CreateVersionSetDelegateTest {
             VersionSetDoseNotExistsException, PackageNotFoundException {
         when(packageServiceClient.verifyPackagesExists(any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoPackage>builder().missingPackages(ImmutableList.of()).build());
-        when(versionSetService.get(eq(testVSName))).thenReturn(createVS(testVSName, List.of(pA, pB)));
+        when(versionSetService.get(accountId, eq(testVSName))).thenReturn(createVS(testVSName, List.of(pA, pB)));
         delegate.create(testVSName, List.of(pA, pB), Optional.empty());
 
     }
@@ -79,7 +79,7 @@ public class CreateVersionSetDelegateTest {
         when(packageServiceClient.verifyPackagesExists(any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoPackage>builder().missingPackages(
                         ImmutableList.of(ArchipelagoPackage.parse(packageName))).build());
-        when(versionSetService.get(eq(testVSName))).thenReturn(null);
+        when(versionSetService.get(accountId, eq(testVSName))).thenReturn(null);
 
         delegate.create(testVSName, List.of(ArchipelagoPackage.parse(packageName)), Optional.empty());
     }

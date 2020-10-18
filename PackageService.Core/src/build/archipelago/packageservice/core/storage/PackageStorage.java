@@ -5,6 +5,6 @@ import build.archipelago.common.ArchipelagoBuiltPackage;
 import java.io.IOException;
 
 public interface PackageStorage {
-    void upload(ArchipelagoBuiltPackage pkg, byte[] artifactBytes);
-    byte[] get(ArchipelagoBuiltPackage pkg) throws IOException;
+    void upload(String accountId, ArchipelagoBuiltPackage pkg, byte[] artifactBytes);
+    byte[] get(String accountId, ArchipelagoBuiltPackage pkg) throws IOException;
 }

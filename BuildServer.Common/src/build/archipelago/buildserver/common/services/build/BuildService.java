@@ -75,6 +75,7 @@ public class BuildService {
 
         return ArchipelagoBuild.builder()
                 .buildId(result.getItem().get(Constants.ATTRIBUTE_ID).getS())
+                .account(result.getItem().get(Constants.ATTRIBUTE_ACCOUNT).getS())
                 .versionSet(result.getItem().get(Constants.ATTRIBUTE_VERSION_SET).getS())
                 .dryRun(result.getItem().get(Constants.ATTRIBUTE_DRY_RUN).getBOOL())
                 .buildPackages(result.getItem().get(Constants.ATTRIBUTE_BUILD_PACKAGES).getL().stream()

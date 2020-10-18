@@ -40,7 +40,7 @@ public class CreateVersionSetRevisionDelegateTest {
         testVSName = UUID.randomUUID().toString().split("-", 2)[0];
         List<ArchipelagoPackage> targets = List.of(pA, pB);
         VersionSet vs = createVS(testVSName, targets);
-        when(versionSetService.get(eq(testVSName))).thenReturn(vs);
+        when(versionSetService.get(accountId, eq(testVSName))).thenReturn(vs);
     }
 
     @Test
@@ -52,9 +52,9 @@ public class CreateVersionSetRevisionDelegateTest {
 
         VersionSet vs = createVS(vsName, targets);
 
-        when(versionSetService.get(eq(vsName))).thenReturn(vs);
+        when(versionSetService.get(accountId, eq(vsName))).thenReturn(vs);
         when(versionSetService.createRevision(eq(vsName), any())).thenReturn(revisionId);
-        when(packageServiceClient.verifyBuildsExists(any())).thenReturn(
+        when(packageServiceClient.verifyBuildsExists(accountId, any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoBuiltPackage>builder().missingPackages(ImmutableList.of()).build());
 
         String result = delegate.createRevision(vsName, List.of(pbA, pbB, pbC));
@@ -89,7 +89,7 @@ public class CreateVersionSetRevisionDelegateTest {
     @Test(expected = PackageNotFoundException.class)
     public void testCreateRevisionWithPackageThatDoseNotExits() throws MissingTargetPackageException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
-        when(packageServiceClient.verifyBuildsExists(any())).thenReturn(
+        when(packageServiceClient.verifyBuildsExists(accountId, any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoBuiltPackage>builder().missingPackages(ImmutableList.of(pbC)).build());
         delegate.createRevision(testVSName, List.of(pbA, pbB, pbC));
 

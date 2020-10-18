@@ -1,5 +1,6 @@
 package build.archipelago.buildserver.builder.configuration;
 
+import build.archipelago.account.common.AccountService;
 import build.archipelago.buildserver.builder.MauiWrapper;
 import build.archipelago.buildserver.builder.handlers.*;
 import build.archipelago.buildserver.common.services.build.BuildService;
@@ -33,6 +34,12 @@ public class ServiceConfiguration {
     }
 
     @Bean
+    public AccountService accountService(AmazonDynamoDB amazonDynamoDB,
+                                         @Value("${dynamodb.accounts}") String accountsTableName) {
+        return new AccountService(amazonDynamoDB, accountsTableName);
+    }
+
+    @Bean
     public BuildService buildService(AmazonSQS amazonSQS,
                                      AmazonDynamoDB amazonDynamoDB,
                                      AmazonS3 amazonS3,
@@ -63,12 +70,13 @@ public class ServiceConfiguration {
                                                    PackageServiceClient packageServiceClient,
                                                    @Value("${workspace.path}") String workspacePath,
                                                    MauiWrapper mauiWrapper,
-                                                   BuildService buildService) throws IOException {
+                                                   BuildService buildService,
+                                                   AccountService accountService) throws IOException {
         Path wsPath = Path.of(workspacePath);
         if (!Files.exists(wsPath) || !Files.isDirectory(wsPath)) {
             Files.createDirectory(wsPath);
         }
-        return new BuildRequestHandler(versionSetServiceClient, packageServiceClient, wsPath, mauiWrapper, buildService);
+        return new BuildRequestHandler(versionSetServiceClient, packageServiceClient, wsPath, mauiWrapper, buildService, accountService);
     }
 
     @Bean

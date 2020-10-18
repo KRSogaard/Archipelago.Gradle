@@ -1,5 +1,6 @@
 package build.archipelago.buildserver.builder.handlers;
 
+import build.archipelago.account.common.AccountService;
 import build.archipelago.buildserver.builder.MauiWrapper;
 import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.buildserver.common.services.build.models.BuildQueueMessage;
@@ -20,17 +21,19 @@ public class BuildRequestHandler implements SqsMessageHandler {
     private Path workspaceLocation;
     private BuildService buildService;
     private MauiWrapper mauiWrapper;
+    private AccountService accountService;
 
     public BuildRequestHandler(VersionSetServiceClient vsClient,
                                PackageServiceClient packageServiceClient,
                                Path workspaceLocation,
                                MauiWrapper mauiWrapper,
-                               BuildService buildService) {
+                               BuildService buildService, AccountService accountService) {
         this.vsClient = vsClient;
         this.packageServiceClient = packageServiceClient;
         this.workspaceLocation = workspaceLocation;
         this.buildService = buildService;
         this.mauiWrapper = mauiWrapper;
+        this.accountService = accountService;
     }
 
     @Override
@@ -45,7 +48,7 @@ public class BuildRequestHandler implements SqsMessageHandler {
             }
 
             VersionSetBuilder builder = new VersionSetBuilder(
-                    vsClient, packageServiceClient, workspaceLocation, buildService, mauiWrapper,
+                    vsClient, packageServiceClient, workspaceLocation, buildService, mauiWrapper, accountService,
                     buildMsg.getBuildId());
             builder.build();
 

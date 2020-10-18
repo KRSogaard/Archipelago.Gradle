@@ -14,12 +14,13 @@ public class GetVersionSetPackagesDelegate {
         this.versionSetService = versionSetService;
     }
 
-    public VersionSetRevision getPackages(String versionSetName, String revision)
+    public VersionSetRevision getPackages(String accountId, String versionSetName, String revision)
             throws VersionSetDoseNotExistsException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "An account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "A version set name is required");
         Preconditions.checkArgument(NameUtil.validateVersionSetName(versionSetName), "Version set name was invalid");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(revision), "A version set revision id is required");
 
-        return versionSetService.getRevision(versionSetName, revision);
+        return versionSetService.getRevision(accountId, versionSetName, revision);
     }
 }

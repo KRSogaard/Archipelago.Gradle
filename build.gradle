@@ -335,6 +335,7 @@ project(':BuildServer.Builder') {
         implementation project(':Archipelago.Common')
         implementation project(':Archipelago.Common.Concurrent')
         implementation project(':BuildServer.Common')
+        implementation project(':Archipelago.Account.Common')
 
         implementation 'com.wewelo:SQSConsumer:1.1'
         implementation 'org.springframework.boot:spring-boot-starter'
@@ -366,5 +367,18 @@ project(':BuildServer.Common') {
 
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
         implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
+    }
+}
+
+project(':Archipelago.Account.Common') {
+
+    dependencies {
+        implementation project(':Archipelago.Common')
+        implementation project(':Archipelago.Common.DynamoDB')
+        implementation project(':VersionSetService.Client')
+        implementation project(':PackageService.Client')
+        implementation project(':Maui.Core')
+
+        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
     }
 }

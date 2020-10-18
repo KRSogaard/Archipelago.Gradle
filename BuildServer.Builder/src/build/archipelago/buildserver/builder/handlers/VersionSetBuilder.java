@@ -1,5 +1,8 @@
 package build.archipelago.buildserver.builder.handlers;
 
+import build.archipelago.account.common.AccountService;
+import build.archipelago.account.common.exceptions.AccountNotFoundException;
+import build.archipelago.account.common.models.AccountDetails;
 import build.archipelago.buildserver.builder.*;
 import build.archipelago.buildserver.common.services.build.*;
 import build.archipelago.buildserver.common.services.build.exceptions.BuildRequestNotFoundException;
@@ -36,9 +39,11 @@ public class VersionSetBuilder {
     private BuildService buildService;
     private String buildId;
     private MauiWrapper maui;
+    private AccountService accountService;
 
     private Path workspaceLocation;
     private ArchipelagoBuild request;
+    private AccountDetails accountDetails;
     private VersionSet vs;
     private WorkspaceContext wsContext;
     private Map<ArchipelagoPackage, ArchipelagoDependencyGraph> graphs;
@@ -51,13 +56,14 @@ public class VersionSetBuilder {
 
     public VersionSetBuilder(VersionSetServiceClient vsClient, PackageServiceClient packageServiceClient,
                              Path buildLocation, BuildService buildService, MauiWrapper maui,
-                             String buildId) {
+                             AccountService accountService, String buildId) {
         this.vsClient = vsClient;
         this.packageServiceClient = packageServiceClient;
         this.buildLocation = buildLocation;
         this.buildService = buildService;
         this.buildId = buildId;
         this.maui = maui;
+        this.accountService = accountService;
 
         graphs = new HashMap<>();
         buildQueue = new ConcurrentLinkedDeque<>();
@@ -77,6 +83,11 @@ public class VersionSetBuilder {
                 request = buildService.getBuildRequest(buildId);
             } catch (BuildRequestNotFoundException e) {
                 throw new PermanentMessageProcessingException("The build request was not found", e);
+            }
+            try {
+                accountDetails = accountService.getAccountDetails(request.getAccount());
+            } catch (AccountNotFoundException e) {
+                throw new PermanentMessageProcessingException("The build account was not found", e);
             }
             try {
                 vs = vsClient.getVersionSet(request.getVersionSet());

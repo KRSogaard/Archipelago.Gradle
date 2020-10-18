@@ -17,13 +17,13 @@ public class VerifyPackageExistsDelegate {
         this.packageData = packageData;
     }
 
-    public ImmutableList<ArchipelagoPackage> verify(final List<ArchipelagoPackage> packages) {
+    public ImmutableList<ArchipelagoPackage> verify(String accountId, final List<ArchipelagoPackage> packages) {
         Preconditions.checkNotNull(packages, "A list of packages are required");
 
         var missingPackages = ImmutableList.<ArchipelagoPackage>builder();
         for (ArchipelagoPackage pkg : packages) {
             log.debug("Checking if {} exists", pkg);
-            if (packageData.getPackageVersionBuilds(pkg).isEmpty()) {
+            if (packageData.getPackageVersionBuilds(accountId, pkg).isEmpty()) {
                 log.debug("There where no builds for {} so it must not exist", pkg);
                 missingPackages.add(pkg);
             }

@@ -1,6 +1,7 @@
 include 'Archipelago.Common'
 include 'Archipelago.Common.Concurrent'
 include 'Archipelago.Common.DynamoDB'
+include 'Archipelago.Account.Common'
 include 'Maui'
 include 'Maui.Core'
 include 'PackageService'

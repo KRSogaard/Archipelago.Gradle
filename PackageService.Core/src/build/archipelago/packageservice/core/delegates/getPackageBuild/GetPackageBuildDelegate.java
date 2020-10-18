@@ -13,7 +13,7 @@ public class GetPackageBuildDelegate {
         this.packageData = packageData;
     }
 
-    public BuiltPackageDetails get(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
-        return packageData.getBuildPackage(pkg);
+    public BuiltPackageDetails get(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
+        return packageData.getBuildPackage(accountId, pkg);
     }
 }
