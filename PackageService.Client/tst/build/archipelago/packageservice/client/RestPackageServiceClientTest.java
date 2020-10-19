@@ -1,12 +1,37 @@
 package build.archipelago.packageservice.client;
 
-import org.junit.Assert;
+import build.archipelago.common.ClientConstants;
+import build.archipelago.common.exceptions.*;
+import build.archipelago.packageservice.client.rest.models.*;
+import org.junit.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 public class RestPackageServiceClientTest {
 
     private PackageServiceClient client;
 
-    public void testEmptyTest() {
+    @Test
+    public void testEmptyTest() throws PackageNotFoundException {
+        try {
+            WebClient webClient = WebClient.builder()
+                    .baseUrl("https://google.com/blsddsfds")
+                    .defaultHeader(ClientConstants.HEADER_ACCOUNT_ID, "123-345")
+                    .build();
+
+            RestGetPackageResponse response = webClient.get()
+                    .uri("/package/lol")
+                    .retrieve()
+                    .onStatus(HttpStatus.NOT_FOUND::equals, r -> Mono.error(new PackageNotFoundException("lol")))
+                    .bodyToMono(RestGetPackageResponse.class)
+                    .block();
+        } catch (RuntimeException exp) {
+            if (exp.getCause() != null && exp.getCause().getClass().equals(PackageNotFoundException.class)) {
+                throw (PackageNotFoundException)exp.getCause();
+            }
+            throw exp;
+        }
         Assert.assertTrue(true);
     }
 //

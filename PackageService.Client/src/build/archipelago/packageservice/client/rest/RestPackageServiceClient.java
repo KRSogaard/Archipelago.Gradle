@@ -9,9 +9,14 @@ import com.google.common.base.*;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.buffer.*;
 import org.springframework.http.*;
 import org.springframework.util.*;
 import org.springframework.web.client.*;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.*;
+
 import java.io.IOException;
 import java.nio.file.*;
 import java.time.Instant;
@@ -23,6 +28,7 @@ public class RestPackageServiceClient implements PackageServiceClient {
 
     private RestTemplate restTemplate;
     private String endpoint;
+    private WebClient webClient;
 
     public RestPackageServiceClient(String endpoint) {
         restTemplate = new RestTemplate();
@@ -31,10 +37,21 @@ public class RestPackageServiceClient implements PackageServiceClient {
         } else {
             this.endpoint = endpoint;
         }
+
+        webClient = WebClient.builder()
+                .baseUrl(endpoint)
+                .build();
+    }
+
+    public void useInternalAuthentication(String accountId) {
+        webClient = WebClient.builder()
+                .baseUrl(endpoint)
+                .defaultHeader(ClientConstants.HEADER_ACCOUNT_ID, accountId)
+                .build();
     }
 
     @Override
-    public void createPackage(String accountId, CreatePackageRequest request) throws PackageExistsException {
+    public void createPackage(CreatePackageRequest request) throws PackageExistsException {
         Preconditions.checkNotNull(request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getDescription()));
@@ -45,121 +62,137 @@ public class RestPackageServiceClient implements PackageServiceClient {
         );
 
         try {
-            restTemplate.postForEntity(endpoint +
-                    "/" + accountId + "/package", restRequest, ResponseEntity.class);
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.CONFLICT.equals(exp.getStatusCode())) {
-                throw new PackageExistsException(request.getName());
+            webClient.post()
+                    .uri("/package")
+                    .body(Mono.just(restRequest), RestCreatePackageRequest.class)
+                    .retrieve()
+                    .onStatus(HttpStatus.CONFLICT::equals, response -> Mono.error(new PackageExistsException(request.getName())))
+                    .bodyToMono(String.class)
+                    .block();
+        } catch (RuntimeException exp) {
+            if (exp.getCause() != null && exp.getCause().getClass().equals(PackageExistsException.class)) {
+                throw (PackageExistsException)exp.getCause();
             }
-            throw new RuntimeException("Was unable to create the package", exp);
+            throw exp;
         }
     }
 
     @Override
-    public GetPackageResponse getPackage(String accountId, String name) throws PackageNotFoundException {
+    public GetPackageResponse getPackage(String name) throws PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
+        RestGetPackageResponse response;
         try {
-            RestGetPackageResponse response = restTemplate.getForObject(endpoint +
-                    "/" + accountId + "/package/" + name,
-                    RestGetPackageResponse.class);
-
-            ImmutableList.Builder<GetPackageResponse.Version> versions = ImmutableList.builder();
-            response.getVersions().forEach(x -> versions.add(new GetPackageResponse.Version(
-                    x.getVersion(), x.getLatestBuildHash(), Instant.ofEpochMilli(x.getLatestBuildTime())
-            )));
-
-            return GetPackageResponse.builder()
-                    .name(response.getName())
-                    .description(response.getDescription())
-                    .created(Instant.ofEpochMilli(response.getCreated()))
-                    .versions(versions.build())
-                    .build();
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(name);
+            response = webClient.get()
+                    .uri("/package/" + name)
+                    .retrieve()
+                    .onStatus(HttpStatus.NOT_FOUND::equals, r -> Mono.error(new PackageNotFoundException(name)))
+                    .bodyToMono(RestGetPackageResponse.class)
+                    .block();
+        } catch (RuntimeException exp) {
+            if (exp.getCause() != null && exp.getCause().getClass().equals(PackageNotFoundException.class)) {
+                throw (PackageNotFoundException)exp.getCause();
             }
-            throw new RuntimeException("Was unable to fetch package " + name, exp);
+            throw exp;
         }
+
+        ImmutableList.Builder<GetPackageResponse.Version> versions = ImmutableList.builder();
+        response.getVersions().forEach(x -> versions.add(new GetPackageResponse.Version(
+                x.getVersion(), x.getLatestBuildHash(), Instant.ofEpochMilli(x.getLatestBuildTime())
+        )));
+
+        return GetPackageResponse.builder()
+                .name(response.getName())
+                .description(response.getDescription())
+                .created(Instant.ofEpochMilli(response.getCreated()))
+                .versions(versions.build())
+                .build();
     }
 
     @Override
-    public PackageBuildsResponse getPackageBuilds(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException {
+    public PackageBuildsResponse getPackageBuilds(ArchipelagoPackage pkg) throws PackageNotFoundException {
         Preconditions.checkNotNull(pkg);
 
+
+        RestPackageBuildsResponse response;
         try {
-            RestPackageBuildsResponse response = restTemplate.getForObject(endpoint +
-                            "/" + accountId + "/" +
-                            "/package/" + pkg.getName() + "/" + pkg.getVersion(),
-                    RestPackageBuildsResponse.class);
-
-            ImmutableList.Builder<PackageBuildsResponse.Build> builds = ImmutableList.builder();
-            response.getBuilds().forEach(x -> builds.add(new PackageBuildsResponse.Build(
-                    x.getHash(), Instant.ofEpochMilli(x.getCreated())
-            )));
-
-            return PackageBuildsResponse.builder()
-                    .builds(builds.build())
-                    .build();
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(pkg);
+            response = webClient.get()
+                    .uri("/package/" + pkg.getName() + "/" + pkg.getVersion())
+                    .retrieve()
+                    .onStatus(HttpStatus.NOT_FOUND::equals, r -> Mono.error(new PackageNotFoundException(pkg)))
+                    .bodyToMono(RestPackageBuildsResponse.class)
+                    .block();
+        } catch (RuntimeException exp) {
+            if (exp.getCause() != null && exp.getCause().getClass().equals(PackageNotFoundException.class)) {
+                throw (PackageNotFoundException)exp.getCause();
             }
-            throw new RuntimeException("Was unable to fetch package " + pkg.getNameVersion(), exp);
+            throw exp;
         }
+
+        ImmutableList.Builder<PackageBuildsResponse.Build> builds = ImmutableList.builder();
+        response.getBuilds().forEach(x -> builds.add(new PackageBuildsResponse.Build(
+                x.getHash(), Instant.ofEpochMilli(x.getCreated())
+        )));
+
+        return PackageBuildsResponse.builder()
+                .builds(builds.build())
+                .build();
     }
 
     @Override
-    public GetPackageBuildResponse getPackageBuild(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
+    public GetPackageBuildResponse getPackageBuild(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
         Preconditions.checkNotNull(pkg);
 
+        RestGetPackageBuildResponse response;
         try {
-            String url = endpoint +
-                    "/" + accountId + "/" +
-                    "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash();
-            log.info("Calling Url: " + url);
-            RestGetPackageBuildResponse response = restTemplate.getForObject(url, RestGetPackageBuildResponse.class);
-
-            return GetPackageBuildResponse.builder()
-                    .hash(response.getHash())
-                    .created(Instant.ofEpochMilli(response.getCreated()))
-                    .config(response.getConfig())
-                    .gitCommit(response.getGitCommit())
-                    .gitBranch(response.getGitBranch())
-                    .build();
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(pkg);
+            response = webClient.get()
+                    .uri("/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
+                    .retrieve()
+                    .onStatus(HttpStatus.NOT_FOUND::equals, r -> Mono.error(new PackageNotFoundException(pkg)))
+                    .bodyToMono(RestGetPackageBuildResponse.class)
+                    .block();
+        } catch (RuntimeException exp) {
+            if (exp.getCause() != null && exp.getCause().getClass().equals(PackageNotFoundException.class)) {
+                throw (PackageNotFoundException)exp.getCause();
             }
-            throw new RuntimeException("Was unable to fetch package " + pkg.toString(), exp);
+            throw exp;
         }
+
+        return GetPackageBuildResponse.builder()
+                .hash(response.getHash())
+                .created(Instant.ofEpochMilli(response.getCreated()))
+                .config(response.getConfig())
+                .gitCommit(response.getGitCommit())
+                .gitBranch(response.getGitBranch())
+                .build();
     }
 
     @Override
-    public ArchipelagoBuiltPackage getPackageByGit(String accountId, String packageName, String branch, String commit) throws PackageNotFoundException {
+    public ArchipelagoBuiltPackage getPackageByGit(String packageName, String branch, String commit) throws PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageName));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(branch));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(commit));
 
+        ArchipelagoBuiltPackageResponse response;
         try {
-            String url = endpoint +
-                    "/" + accountId + "/" +
-                    "/package/" + packageName + "/git/" + branch + "/" + commit;
-            log.info("Calling Url: " + url);
-            ArchipelagoBuiltPackageResponse response = restTemplate.getForObject(url,
-                    ArchipelagoBuiltPackageResponse.class);
-
-            return new ArchipelagoBuiltPackage(response.getName(), response.getVersion(), response.getHash());
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(packageName);
+            response = webClient.get()
+                    .uri("/package/" + packageName + "/git/" + branch + "/" + commit)
+                    .retrieve()
+                    .onStatus(HttpStatus.NOT_FOUND::equals, r -> Mono.error(new PackageNotFoundException(packageName)))
+                    .bodyToMono(ArchipelagoBuiltPackageResponse.class)
+                    .block();
+        } catch (RuntimeException exp) {
+            if (exp.getCause() != null && exp.getCause().getClass().equals(PackageNotFoundException.class)) {
+                throw (PackageNotFoundException)exp.getCause();
             }
-            throw new RuntimeException("Was unable to fetch package " + packageName + " from git " + branch + "/" + commit, exp);
+            throw exp;
         }
+
+        return new ArchipelagoBuiltPackage(response.getName(), response.getVersion(), response.getHash());
     }
 
     @Override
-    public PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(String accountId, List<ArchipelagoPackage> packages) {
+    public PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(List<ArchipelagoPackage> packages) {
         Preconditions.checkNotNull(packages);
         Preconditions.checkArgument(packages.size() > 0);
 
@@ -167,7 +200,7 @@ public class RestPackageServiceClient implements PackageServiceClient {
                 packages.stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()));
 
         try {
-            RestVerificationResponse res = restTemplate.postForObject(endpoint + "/" + accountId + "/package/verify-packages",
+            RestVerificationResponse res = restTemplate.postForObject(endpoint + "/package/verify-packages",
                     restRequest, RestVerificationResponse.class);
 
             return PackageVerificationResult.<ArchipelagoPackage>builder()
@@ -180,35 +213,33 @@ public class RestPackageServiceClient implements PackageServiceClient {
     }
 
     @Override
-    public PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(String accountId, List<ArchipelagoBuiltPackage> packages) {
+    public PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(List<ArchipelagoBuiltPackage> packages) {
         Preconditions.checkNotNull(packages);
         Preconditions.checkArgument(packages.size() > 0);
 
         RestVerificationRequest restRequest = new RestVerificationRequest(
                 packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList()));
 
-        try {
-            RestVerificationResponse res = restTemplate.postForObject(endpoint + "/" + accountId + "/package/verify-builds",
-                    restRequest, RestVerificationResponse.class);
+        RestVerificationResponse response = webClient.post()
+                .uri("/package/verify-builds")
+                .body(Mono.just(restRequest), RestVerificationRequest.class)
+                .retrieve()
+                .bodyToMono(RestVerificationResponse.class)
+                .block();
 
-            return PackageVerificationResult.<ArchipelagoBuiltPackage>builder()
-                    .missingPackages(ImmutableList.copyOf(
-                            res.getMissing().stream().map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList())))
-                    .build();
-        } catch (HttpClientErrorException exp) {
-            throw new RuntimeException("Was unable to verify packages", exp);
-        }
+        return PackageVerificationResult.<ArchipelagoBuiltPackage>builder()
+                .missingPackages(ImmutableList.copyOf(
+                        response.getMissing().stream().map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList())))
+                .build();
     }
 
     @Override
-    public String uploadBuiltArtifact(String accountId, UploadPackageRequest request, Path file) throws PackageNotFoundException {
+    public String uploadBuiltArtifact(UploadPackageRequest request, Path file) throws PackageNotFoundException {
         Preconditions.checkNotNull(request);
         Preconditions.checkNotNull(request.getPkg());
         Preconditions.checkNotNull(file);
         Preconditions.checkArgument(Files.exists(file), "File did not exists");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("buildArtifact", new FileSystemResource(file));
@@ -216,46 +247,55 @@ public class RestPackageServiceClient implements PackageServiceClient {
         body.add("gitCommit", request.getGitCommit());
         body.add("gitBranch", request.getGitBranch());
 
-        String url = String.format("%s/%s/artifact/%s/%s",
-                endpoint, accountId, request.getPkg().getName(), request.getPkg().getVersion());
+        RestArtifactUploadResponse response;
         try {
-            RestArtifactUploadResponse response = restTemplate.postForObject(url,
-                    new HttpEntity<>(body, headers), RestArtifactUploadResponse.class);
-            return response.getHash();
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(request.getPkg());
+            response = webClient.post()
+                    .uri("/artifact/" + request.getPkg().getName() + "/" + request.getPkg().getVersion())
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(body))
+                    .retrieve()
+                    .onStatus(HttpStatus.NOT_FOUND::equals, r -> Mono.error(new PackageNotFoundException(request.getPkg())))
+                    .bodyToMono(RestArtifactUploadResponse.class)
+                    .block();
+        } catch (RuntimeException exp) {
+            if (exp.getCause() != null && exp.getCause().getClass().equals(PackageNotFoundException.class)) {
+                throw (PackageNotFoundException)exp.getCause();
             }
-            throw new RuntimeException("Was unable to upload package " + request.getPkg(), exp);
+            throw exp;
         }
+        return response.getHash();
     }
 
     @Override
-    public Path getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, IOException {
+    public Path getBuildArtifact(ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, IOException {
         Preconditions.checkNotNull(pkg, "Name and Version is required");
         Preconditions.checkNotNull(directory, "A save location is required");
+
+        Path filePath = Paths.get(
+                directory.toString(),
+                String.format("%s.zip", java.util.UUID.randomUUID().toString()));
 
         if (!Files.isDirectory(directory)) {
             log.info("Creating directory \"%s\"", directory.toString());
             Files.createDirectories(directory);
         }
 
-        String url = String.format("%s/%s/artifact/%s/%s/%s",
-                endpoint, accountId, pkg.getName(), pkg.getVersion(), pkg.getHash());
         try {
-            byte[] data = restTemplate.getForObject(url, byte[].class);
-            Path filePath = Paths.get(
-                    directory.toString(),
-                    String.format("%s.zip", java.util.UUID.randomUUID().toString()));
-            log.debug("writing {} byes to \"{}\"", data.length, filePath);
-            Files.write(filePath, data);
-            return filePath;
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(pkg);
-            }
-            throw new RuntimeException("Was unable to fetch artifact for package " + pkg, exp);
-        }
+            final Flux<DataBuffer> dataBufferFlux = webClient.get()
+                    .uri("/artifact/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
+                    .retrieve()
+                    .onStatus(HttpStatus.NOT_FOUND::equals, r -> Mono.error(new PackageNotFoundException(pkg)))
+                    .bodyToFlux(DataBuffer.class);
+            DataBufferUtils
+                    .write(dataBufferFlux, filePath, StandardOpenOption.CREATE_NEW)
+                    .block();
 
+            return filePath;
+        } catch (RuntimeException exp) {
+            if (exp.getCause() != null && exp.getCause().getClass().equals(PackageNotFoundException.class)) {
+                throw (PackageNotFoundException)exp.getCause();
+            }
+            throw exp;
+        }
     }
 }

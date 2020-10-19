@@ -1,6 +1,6 @@
 package build.archipelago.packageservice.controllers;
 
-import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.*;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.packageservice.core.delegates.getBuildArtifact.*;
 import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.*;
@@ -32,7 +32,7 @@ public class ArtifactController {
     @PostMapping("{accountId}/artifact/{name}/{version}")
     @ResponseStatus(HttpStatus.OK)
     public ArtifactUploadResponse uploadBuiltArtifact(
-            @PathVariable("accountId") String accountId,
+            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
             @ModelAttribute UploadPackageRequest request)
@@ -70,7 +70,7 @@ public class ArtifactController {
     @GetMapping(value = {"{accountId}/artifact/{name}/{version}/{hash}", "{accountId}/{name}/{version}"})
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<Resource> getBuildArtifact(
-            @PathVariable("accountId") String accountId,
+            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
             @PathVariable("hash") Optional<String> hash) throws PackageNotFoundException {
