@@ -15,7 +15,7 @@
         </Console>
         <RollingFile
                 name="File"
-                fileName="${LOG_DIR}/application.log"
+                fileName="${LOG_DIR}/packageservice.log"
                 filePattern="${LOG_DIR}/archive/packageservice.%d{yyyy-MM-dd-HH}.log.gz"
                 ignoreExceptions="false">
             <PatternLayout>
@@ -40,7 +40,7 @@
 
         <Root level="DEBUG">
             <AppenderRef ref="File" level="DEBUG" />
-            <AppenderRef ref="ConsoleAppender" level="INFO" />
+            <AppenderRef ref="ConsoleAppender" level="DEBUG" />
         </Root>
     </Loggers>
 </Configuration>

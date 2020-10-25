@@ -47,6 +47,6 @@ public class S3PackageStorage implements PackageStorage {
     }
 
     private String getS3FileName(String accountId, ArchipelagoBuiltPackage pkg) {
-        return accountId + "/" + pkg.toString() + ".zip";
+        return accountId + "/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash() + ".zip";
     }
 }

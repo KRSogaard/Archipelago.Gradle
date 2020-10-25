@@ -16,8 +16,9 @@ import java.io.IOException;
 import java.util.Optional;
 
 @RestController
-@RequestMapping
+@RequestMapping("account/{accountId}/artifact")
 @Slf4j
+@CrossOrigin(origins = "*")
 public class ArtifactController {
 
     private UploadBuildArtifactDelegate uploadBuildArtifactDelegate;
@@ -29,10 +30,10 @@ public class ArtifactController {
         this.getBuildArtifactDelegate = getBuildArtifactDelegate;
     }
 
-    @PostMapping("{accountId}/artifact/{name}/{version}")
+    @PostMapping("{name}/{version}")
     @ResponseStatus(HttpStatus.OK)
     public ArtifactUploadResponse uploadBuiltArtifact(
-            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
+            @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
             @ModelAttribute UploadPackageRequest request)
@@ -67,10 +68,10 @@ public class ArtifactController {
         }
     }
 
-    @GetMapping(value = {"{accountId}/artifact/{name}/{version}/{hash}", "{accountId}/{name}/{version}"})
+    @GetMapping(value = {"{name}/{version}/{hash}", "{name}/{version}"})
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<Resource> getBuildArtifact(
-            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
+            @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
             @PathVariable("hash") Optional<String> hash) throws PackageNotFoundException {

@@ -3,7 +3,14 @@ server:
   error:
     include-stacktrace: never
 
+auth0:
+  audience: http://packageservice.archipelago.build
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-1nl95fdx.us.auth0.com/
   jackson:
     mapper:
       accept_case_insensitive_properties: true

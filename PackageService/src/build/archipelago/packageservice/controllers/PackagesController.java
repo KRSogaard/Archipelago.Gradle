@@ -20,8 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("package")
+@RequestMapping("account/{accountId}/package")
 @Slf4j
+@CrossOrigin(origins = "*")
 public class PackagesController {
 
     private CreatePackageDelegate createPackageDelegate;
@@ -55,17 +56,19 @@ public class PackagesController {
         this.getPackageBuildByGitDelegate = getPackageBuildByGitDelegate;
     }
 
-    @PostMapping(value = "{accountId}/package")
+    @PostMapping()
     @ResponseStatus(HttpStatus.OK)
     public void createPackage(
-            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
+            @PathVariable("accountId") String accountId,
             @RequestBody CreatePackageRequest request) throws PackageExistsException {
+        log.info("Request to create package {} for account {}", request.getName(), accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getDescription()));
 
         createPackageDelegate.create(CreatePackageDelegateRequest.builder()
+                .accountId(accountId)
                 .name(request.getName())
                 .description(request.getDescription())
                 .build());
@@ -74,9 +77,10 @@ public class PackagesController {
     @GetMapping(value = "{name}")
     @ResponseStatus(HttpStatus.OK)
     public GetPackageResponse getPackage(
-            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
+            @PathVariable("accountId") String accountId,
             @PathVariable("name") String name
     ) throws PackageNotFoundException {
+        log.debug("Request to get information on package {} for account {}", name, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
@@ -96,10 +100,11 @@ public class PackagesController {
     @GetMapping(value = "{name}/{version}")
     @ResponseStatus(HttpStatus.OK)
     public GetPackageBuildsResponse getPackageBuilds(
-            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
+            @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version
     ) {
+        log.info("Request to get package builds for {}-{} for account {}", name, version, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
@@ -118,11 +123,12 @@ public class PackagesController {
     @GetMapping(value = "{name}/{version}/{hash}")
     @ResponseStatus(HttpStatus.OK)
     public GetPackageBuildResponse getPackageBuild(
-            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
+            @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
             @PathVariable("hash") String hash
     ) throws PackageNotFoundException {
+        log.info("Request to get package build for {}-{}#{} for account {}", name, version, hash, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
@@ -144,10 +150,11 @@ public class PackagesController {
     @GetMapping(value = "{name}/git/{branch}/{commit}")
     @ResponseStatus(HttpStatus.OK)
     public ArchipelagoBuiltPackageResponse getPackageByGit(
-            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
+            @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("branch") String branch,
             @PathVariable("commit") String commit) throws PackageNotFoundException {
+        log.info("Request to get package build by git {} (B: {}, C: {}) for account {}", name, branch, commit, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(branch);
@@ -165,8 +172,9 @@ public class PackagesController {
     @PostMapping(value = "verify-packages")
     @ResponseStatus(HttpStatus.OK)
     public VerificationResponse verifyPackages(
-            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
+            @PathVariable("accountId") String accountId,
             @RequestBody VerificationRequest request) {
+        log.info("Request to get verify {} packages for account {}", request.getPackages().size(), accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         ImmutableList.Builder<ArchipelagoPackage> packages = ImmutableList.builder();
         for (String pkg : request.getPackages()) {
@@ -184,8 +192,9 @@ public class PackagesController {
     @PostMapping(value = "verify-builds")
     @ResponseStatus(HttpStatus.OK)
     public VerificationResponse verifyBuilds(
-            @RequestHeader(name = ClientConstants.HEADER_ACCOUNT_ID, required = false) String accountId,
+            @PathVariable("accountId") String accountId,
             @RequestBody VerificationRequest request) {
+        log.info("Request to get verify {} builds for account {}", request.getPackages().size(), accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         ImmutableList.Builder<ArchipelagoBuiltPackage> packages = ImmutableList.builder();
         for (String pkg : request.getPackages()) {
