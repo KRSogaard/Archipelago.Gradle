@@ -27,9 +27,13 @@ public class DynamoDbVersionSetService implements VersionSetService {
 
     @Override
     public VersionSet get(String accountId, String versionSetName) {
+        Preconditions.checkNotNull(accountId);
+        Preconditions.checkNotNull(versionSetName);
+
         GetItemResult result = dynamoDB.getItem(new GetItemRequest(config.getVersionSetTable(),
                 ImmutableMap.<String, AttributeValue>builder()
-                        .put(Keys.NAME, AV.of(sanitizeName(versionSetName)))
+                        .put(Keys.ACCOUNT_ID, AV.of(sanitizeName(accountId)))
+                        .put(Keys.VERSION_SET_NAME, AV.of(sanitizeName(versionSetName)))
                         .build()));
 
         if (result.getItem() == null) {
@@ -55,7 +59,7 @@ public class DynamoDbVersionSetService implements VersionSetService {
             latestRevisionCreated = AV.toInstant(dbItem.get(Keys.REVISION_CREATED));
         }
 
-        List<Revision> revisions = getRevisions(versionSetName);
+        List<Revision> revisions = getRevisions(accountId, versionSetName);
 
         return VersionSet.builder()
                 .name(dbItem.get(Keys.DISPLAY_NAME).getS())
@@ -68,18 +72,21 @@ public class DynamoDbVersionSetService implements VersionSetService {
                 .build();
     }
 
-    private List<Revision> getRevisions(String versionSetName) {
+    private List<Revision> getRevisions(String accountId, String versionSetName) {
+        Preconditions.checkNotNull(accountId);
+        Preconditions.checkNotNull(versionSetName);
+
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(config.getVersionSetRevisionTable())
                 .withProjectionExpression("#revision, #created")
-                .withKeyConditionExpression("#name = :nameValue")
+                .withKeyConditionExpression("#nameKey = :nameKeyValue")
                 .withExpressionAttributeNames(ImmutableMap.of(
-                        "#name", Keys.NAME,
+                        "#nameKey", Keys.NAME_KEY,
                         "#revision", Keys.REVISION,
                         "#created", Keys.CREATED
                         ))
-                .withExpressionAttributeValues(ImmutableMap.of(":nameValue",
-                        new AttributeValue().withS(sanitizeName(versionSetName))));
+                .withExpressionAttributeValues(ImmutableMap.of(
+                        ":nameKeyValue", AV.of(getKey(accountId, versionSetName))));
 
         QueryResult result = dynamoDB.query(queryRequest);
         if (result.getItems() == null || result.getItems().size() == 0) {
@@ -93,12 +100,13 @@ public class DynamoDbVersionSetService implements VersionSetService {
 
     @Override
     public VersionSetRevision getRevision(String accountId, String versionSetName, String revision) throws VersionSetDoseNotExistsException {
+        Preconditions.checkNotNull(accountId);
         Preconditions.checkNotNull(versionSetName);
         Preconditions.checkNotNull(revision);
 
         GetItemResult result = dynamoDB.getItem(new GetItemRequest(config.getVersionSetRevisionTable(),
                 ImmutableMap.<String, AttributeValue>builder()
-                .put(Keys.NAME, AV.of(sanitizeName(versionSetName)))
+                .put(Keys.NAME_KEY, AV.of(getKey(accountId, versionSetName)))
                 .put(Keys.REVISION, AV.of(revision.toLowerCase()))
                 .build()));
         if (result.getItem() == null) {
@@ -114,8 +122,10 @@ public class DynamoDbVersionSetService implements VersionSetService {
 
     @Override
     public void create(String accountId, final String name, final List<ArchipelagoPackage> targets, final Optional<String> parent) {
+        Preconditions.checkNotNull(accountId);
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(targets);
+
         for (ArchipelagoPackage t : targets) {
             if (t instanceof ArchipelagoBuiltPackage) {
                 throw new IllegalArgumentException(t.toString() + " can not have a build version");
@@ -123,7 +133,8 @@ public class DynamoDbVersionSetService implements VersionSetService {
         }
 
         ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
-                .put(Keys.NAME, AV.of(sanitizeName(name)))
+                .put(Keys.ACCOUNT_ID, AV.of(sanitizeName(accountId)))
+                .put(Keys.VERSION_SET_NAME, AV.of(sanitizeName(name)))
                 .put(Keys.DISPLAY_NAME, AV.of(name))
                 .put(Keys.CREATED, AV.of(Instant.now()))
                 .put(Keys.TARGETS,
@@ -150,14 +161,16 @@ public class DynamoDbVersionSetService implements VersionSetService {
         try {
             UpdateItemRequest updateItemRequest = new UpdateItemRequest()
                     .withTableName(config.getVersionSetTable())
-                    .addKeyEntry(Keys.NAME, AV.of(sanitizeName(versionSetName)))
+                    .addKeyEntry(Keys.ACCOUNT_ID, AV.of(sanitizeName(accountId)))
+                    .addKeyEntry(Keys.VERSION_SET_NAME, AV.of(sanitizeName(versionSetName)))
                     .withUpdateExpression("set #revisionLatest = :revisionLatest, #revisionCreated = :revisionCreated")
-                    .withConditionExpression("attribute_exists(#name)")
+                    .withConditionExpression("(attribute_exists(#name) and attribute_exists(#accountId))")
                     .withReturnItemCollectionMetrics(ReturnItemCollectionMetrics.SIZE)
                     .withExpressionAttributeNames(ImmutableMap.of(
                             "#revisionLatest", Keys.REVISION_LATEST,
                             "#revisionCreated", Keys.REVISION_CREATED,
-                            "#name", Keys.NAME))
+                            "#name", Keys.VERSION_SET_NAME,
+                            "#accountId", Keys.ACCOUNT_ID))
                     .withExpressionAttributeValues(ImmutableMap.of(
                             ":revisionLatest", AV.of(revisionId),
                             ":revisionCreated", AV.of(now)));
@@ -168,7 +181,7 @@ public class DynamoDbVersionSetService implements VersionSetService {
 
 
         dynamoDB.putItem(new PutItemRequest(config.getVersionSetRevisionTable(), ImmutableMap.<String, AttributeValue>builder()
-                .put(Keys.NAME, AV.of(sanitizeName(versionSetName)))
+                .put(Keys.NAME_KEY, AV.of(getKey(accountId, versionSetName)))
                 .put(Keys.REVISION, AV.of(revisionId))
                 .put(Keys.CREATED, AV.of(now))
                 .put(Keys.PACKAGES, AV.of(
@@ -182,5 +195,8 @@ public class DynamoDbVersionSetService implements VersionSetService {
     // DynamoDB is case sensitive, the name we get may be entered by a human so we need to sanitize it
     protected String sanitizeName(final String n) {
         return n.trim().toLowerCase();
+    }
+    private String getKey(String accountId, String name) {
+        return sanitizeName(accountId)+"_"+ sanitizeName(name);
     }
 }

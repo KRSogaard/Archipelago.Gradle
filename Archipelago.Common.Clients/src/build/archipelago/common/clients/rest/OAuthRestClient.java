@@ -1,20 +1,14 @@
-package build.archipelago.packageservice.client.rest;
+package build.archipelago.common.clients.rest;
 
-import build.archipelago.packageservice.client.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.math.BigInteger;
 import java.net.*;
 import java.net.http.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
 import java.time.Instant;
-import java.util.*;
 
 @Slf4j
-public abstract class OAuthRestClient implements PackageServiceClient {
+public abstract class OAuthRestClient {
 
     private String oauthToken;
     private Instant expires;

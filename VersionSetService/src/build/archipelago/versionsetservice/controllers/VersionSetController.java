@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("version-sets")
+@RequestMapping("/account/{accountId}/version-sets")
 @Slf4j
 public class VersionSetController {
 
@@ -36,7 +36,9 @@ public class VersionSetController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public void createVersionSet(@RequestBody CreateVersionSetRequest request) throws
+    public void createVersionSet(
+            @PathVariable("accountId") String accountId,
+            @RequestBody CreateVersionSetRequest request) throws
             VersionSetDoseNotExistsException, VersionSetExistsException, PackageNotFoundException {
         log.info("Create version Set Request: {}", request);
         request.validate();
@@ -48,13 +50,14 @@ public class VersionSetController {
         if (!Strings.isNullOrEmpty(request.getParent())) {
             parent = Optional.of(request.getParent());
         }
-        createVersionSetDelegate.create(request.getName(), targets, parent);
+        createVersionSetDelegate.create(accountId, request.getName(), targets, parent);
         log.debug("Version set \"{}\" was successfully installed", request.getName());
     }
 
     @PostMapping("/{versionSet}")
     @ResponseStatus(HttpStatus.OK)
     public CreateVersionSetRevisionResponse createVersionSetRevision(
+            @PathVariable("accountId") String accountId,
             @PathVariable("versionSet") String versionSetName,
             @RequestBody CreateVersionSetRevisionRequest request) throws VersionSetDoseNotExistsException,
             MissingTargetPackageException, PackageNotFoundException {
@@ -66,7 +69,7 @@ public class VersionSetController {
                 .map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList());
 
         String revisionId = createVersionSetRevisionDelegate.createRevision(
-                versionSetName, packages);
+                accountId, versionSetName, packages);
 
         log.debug("New revision \"{}\" was created for version set \"{}\"", revisionId, versionSetName);
         return CreateVersionSetRevisionResponse.builder()
@@ -76,13 +79,15 @@ public class VersionSetController {
 
     @GetMapping("{versionSet}")
     @ResponseStatus(HttpStatus.OK)
-    public VersionSetResponse getVersionSet(@PathVariable("versionSet") String versionSetName)
+    public VersionSetResponse getVersionSet(
+            @PathVariable("accountId") String accountId,
+            @PathVariable("versionSet") String versionSetName)
             throws VersionSetDoseNotExistsException {
         log.info("Request to get version set \"{}\"", versionSetName);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
                 "Version Set name is required");
 
-        VersionSet vs = getVersionSetDelegate.getVersionSet(versionSetName);
+        VersionSet vs = getVersionSetDelegate.getVersionSet(accountId, versionSetName);
 
         VersionSetResponse response = VersionSetResponse.builder()
                 .name(vs.getName())
@@ -100,8 +105,10 @@ public class VersionSetController {
 
     @GetMapping("{versionSet}/{revision}")
     @ResponseStatus(HttpStatus.OK)
-    public VersionSetRevisionResponse getVersionSetPackages(@PathVariable("versionSet") String versionSetName,
-                                                         @PathVariable("revision") String revisionId)
+    public VersionSetRevisionResponse getVersionSetPackages(
+            @PathVariable("accountId") String accountId,
+            @PathVariable("versionSet") String versionSetName,
+            @PathVariable("revision") String revisionId)
             throws VersionSetDoseNotExistsException {
         log.info("Request to get version set packages for \"{}\" revision \"{}\"", versionSetName, revisionId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
@@ -109,7 +116,7 @@ public class VersionSetController {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(revisionId),
                 "Revision id is required");
 
-        VersionSetRevision revision = getVersionSetPackagesDelegate.getPackages(versionSetName, revisionId);
+        VersionSetRevision revision = getVersionSetPackagesDelegate.getPackages(accountId, versionSetName, revisionId);
 
         VersionSetRevisionResponse response = VersionSetRevisionResponse.builder()
                 .created(revision.getCreated().toEpochMilli())

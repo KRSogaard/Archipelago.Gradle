@@ -2,7 +2,7 @@ package build.archipelago.versionsetservice.core.delegates;
 
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.*;
-import build.archipelago.packageservice.client.PackageServiceClient;
+import build.archipelago.packageservice.client.*;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
 import build.archipelago.versionsetservice.core.utils.NameUtil;
@@ -23,7 +23,7 @@ public class CreateVersionSetDelegate {
     }
 
     public void create(String accountId, String name, List<ArchipelagoPackage> targets, Optional<String> parent)
-            throws VersionSetExistsException, VersionSetDoseNotExistsException, PackageNotFoundException {
+            throws VersionSetExistsException, PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "An account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
         Preconditions.checkArgument(NameUtil.validateVersionSetName(name), "Version set name was invalid");
@@ -34,7 +34,7 @@ public class CreateVersionSetDelegate {
             throw new VersionSetExistsException(name);
         }
 
-        PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(targets);
+        PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(accountId, targets);
         if (!targetsVerified.isValid()) {
             throw new PackageNotFoundException(targets);
         }

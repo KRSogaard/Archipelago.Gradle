@@ -1,14 +1,14 @@
 package build.archipelago.packageservice.client.rest;
 
 import build.archipelago.common.*;
+import build.archipelago.common.clients.rest.*;
 import build.archipelago.common.exceptions.*;
-import build.archipelago.packageservice.client.UnauthorizedException;
+import build.archipelago.packageservice.client.*;
 import build.archipelago.packageservice.client.models.*;
 import build.archipelago.packageservice.client.rest.models.*;
 import com.google.common.base.*;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpStatus;
 import java.io.IOException;
 import java.net.*;
 import java.net.http.*;
@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class RestPackageServiceClient extends OAuthRestClient {
+public class RestPackageServiceClient extends OAuthRestClient implements PackageServiceClient {
 
     private static final String OAUTH2_AUDIENCE = "http://packageservice.archipelago.build";
     private static final String OAUTH2_TOKENURL = "https://dev-1nl95fdx.us.auth0.com/oauth/token";
@@ -52,9 +52,9 @@ public class RestPackageServiceClient extends OAuthRestClient {
         }
 
         switch (response.statusCode()) {
-            case HttpStatus.SC_CONFLICT:
+            case 409: // Conflict
                 throw new PackageExistsException(request.getName());
-            case HttpStatus.SC_OK:
+            case 200: // Ok
                 return;
             default:
                 throw new RuntimeException("Unknown response " + response.statusCode());
@@ -192,7 +192,7 @@ public class RestPackageServiceClient extends OAuthRestClient {
             throw new RuntimeException(e);
         }
         switch (restResponse.statusCode()) {
-            case HttpStatus.SC_OK:
+            case 200: // Ok
                 try {
                     response = objectMapper.readValue(restResponse.body(), RestVerificationResponse.class);
                 } catch (IOException e) {
@@ -229,7 +229,7 @@ public class RestPackageServiceClient extends OAuthRestClient {
             throw new RuntimeException(e);
         }
         switch (restResponse.statusCode()) {
-            case HttpStatus.SC_OK:
+            case 200: // Ok
                 try {
                     response = objectMapper.readValue(restResponse.body(), RestVerificationResponse.class);
                 } catch (IOException e) {
@@ -303,9 +303,9 @@ public class RestPackageServiceClient extends OAuthRestClient {
             throw new RuntimeException(e);
         }
         switch (restResponse.statusCode()) {
-            case HttpStatus.SC_NOT_FOUND:
+            case 404: // Not found
                 throw new PackageNotFoundException(pkg);
-            case HttpStatus.SC_OK:
+            case 200: // Ok
                 return restResponse.body();
             default:
                 throw new RuntimeException("Unknown response " + restResponse.statusCode());
@@ -315,9 +315,9 @@ public class RestPackageServiceClient extends OAuthRestClient {
     private <T> T validateResponse(HttpResponse<String> response, String packageName, Function<String, T> onOk) throws PackageNotFoundException {
 
         switch (response.statusCode()) {
-            case HttpStatus.SC_NOT_FOUND:
+            case 404: // Not found
                 throw new PackageNotFoundException(packageName);
-            case HttpStatus.SC_OK:
+            case 200: // Ok
                 return onOk.apply(response.body());
             default:
                 throw new RuntimeException("Unknown response " + response.statusCode());

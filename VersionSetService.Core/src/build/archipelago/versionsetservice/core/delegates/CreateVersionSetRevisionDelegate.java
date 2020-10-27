@@ -3,7 +3,7 @@ package build.archipelago.versionsetservice.core.delegates;
 import build.archipelago.common.*;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.packageservice.client.PackageServiceClient;
+import build.archipelago.packageservice.client.*;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
 import build.archipelago.versionsetservice.core.utils.NameUtil;
@@ -33,7 +33,7 @@ public class CreateVersionSetRevisionDelegate {
         validateVersionSetTargets(accountId, versionSetName, packages);
         validatePackages(accountId, packages);
 
-        return versionSetService.createRevision(versionSetName, packages);
+        return versionSetService.createRevision(accountId, versionSetName, packages);
     }
 
     private void validateVersionSetTargets(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages)

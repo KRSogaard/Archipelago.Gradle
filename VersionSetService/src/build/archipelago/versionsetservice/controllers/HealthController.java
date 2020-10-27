@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class HealthController {
 
-    protected static final String HEALTHY_REPLY = "Healthy";
-    protected static final String HEALTH_PATH = "/health-check";
+    public static final String HEALTHY_REPLY = "Healthy";
+    public static final String HEALTH_PATH = "/health-check";
 
     @GetMapping(value = {HEALTH_PATH})
     @ResponseStatus(HttpStatus.OK)

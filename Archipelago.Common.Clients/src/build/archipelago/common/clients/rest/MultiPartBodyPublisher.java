@@ -1,12 +1,9 @@
-package build.archipelago.packageservice.client.rest;
+package build.archipelago.common.clients.rest;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -68,7 +65,7 @@ public class MultiPartBodyPublisher {
             STRING, FILE, STREAM, FINAL_BOUNDARY
         }
 
-        PartsSpecification.TYPE type;
+        TYPE type;
         String name;
         String value;
         Path path;

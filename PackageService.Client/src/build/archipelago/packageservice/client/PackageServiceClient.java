@@ -1,6 +1,7 @@
 package build.archipelago.packageservice.client;
 
 import build.archipelago.common.*;
+import build.archipelago.common.clients.rest.UnauthorizedException;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.packageservice.client.models.*;
 

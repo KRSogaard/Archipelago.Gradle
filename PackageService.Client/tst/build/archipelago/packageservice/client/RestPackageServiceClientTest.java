@@ -1,10 +1,10 @@
 package build.archipelago.packageservice.client;
 
 import build.archipelago.common.*;
+import build.archipelago.common.clients.rest.UnauthorizedException;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.packageservice.client.models.*;
 import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
-import build.archipelago.packageservice.client.rest.models.*;
 import org.junit.*;
 
 import java.io.IOException;
@@ -18,36 +18,36 @@ public class RestPackageServiceClientTest {
 
     @Test
     public void testEmptyTest() throws PackageNotFoundException, UnauthorizedException, PackageExistsException, IOException {
-        RestPackageServiceClient client = new RestPackageServiceClient("http://localhost:8080",
-                "ImRTxga0z1WT6LSdNMRird9R29QQ8GBn",
-                "3RjLmcYj1M6jZkEoG6AAMsvtfWkkmt6s3AJgem1xumxcDe_8FVvztwU66D4Maz2M");
-
-        client.createPackage(accountId, CreatePackageRequest.builder()
-                .name("CopyBuildSystem")
-                .description("The copy build system")
-                .build());
-
-        String hash = client.uploadBuiltArtifact(accountId, UploadPackageRequest.builder()
-                .pkg(new ArchipelagoPackage("CopyBuildSystem", "1.0"))
-                .gitBranch("master")
-                .gitCommit("5d3fd1ed75e99f36b92a6e1c9ebd3b21b9b85058")
-                .config("version: 1.0\n" +
-                        "buildSystem: bash")
-                .build(),
-                Path.of("C:\\Users\\accou\\workspace\\personal\\TestWorkspaces\\CopyBuildSystem\\build\\bin.zip")
-                );
-
-
-
-        var getPackage = client.getPackage(accountId, "CopyBuildSystem");
-        var builds = client.getPackageBuilds(accountId, new ArchipelagoPackage("CopyBuildSystem", "1.0"));
-        var build = client.getPackageBuild(accountId, new ArchipelagoBuiltPackage("CopyBuildSystem", "1.0", hash));
-        var pkgByGit = client.getPackageByGit(accountId, "CopyBuildSystem", "master", "5d3fd1ed75e99f36b92a6e1c9ebd3b21b9b85058");
-        var artifact = client.getBuildArtifact(accountId, new ArchipelagoBuiltPackage("CopyBuildSystem", "1.0", hash), Path.of("C:\\Users\\accou\\Downloads\\Temp"));
-        var verify = client.verifyPackagesExists(accountId, List.of(new ArchipelagoPackage("CopyBuildSystem", "1.0")));
-        var verifyBuilds = client.verifyBuildsExists(accountId, List.of(new ArchipelagoBuiltPackage("CopyBuildSystem", "1.0", hash)));
-
-        Assert.assertTrue(true);
+//        RestPackageServiceClient client = new RestPackageServiceClient("http://localhost:8080",
+//                "ImRTxga0z1WT6LSdNMRird9R29QQ8GBn",
+//                "3RjLmcYj1M6jZkEoG6AAMsvtfWkkmt6s3AJgem1xumxcDe_8FVvztwU66D4Maz2M");
+//
+//        client.createPackage(accountId, CreatePackageRequest.builder()
+//                .name("CopyBuildSystem")
+//                .description("The copy build system")
+//                .build());
+//
+//        String hash = client.uploadBuiltArtifact(accountId, UploadPackageRequest.builder()
+//                .pkg(new ArchipelagoPackage("CopyBuildSystem", "1.0"))
+//                .gitBranch("master")
+//                .gitCommit("5d3fd1ed75e99f36b92a6e1c9ebd3b21b9b85058")
+//                .config("version: 1.0\n" +
+//                        "buildSystem: bash")
+//                .build(),
+//                Path.of("C:\\Users\\accou\\workspace\\personal\\TestWorkspaces\\CopyBuildSystem\\build\\bin.zip")
+//                );
+//
+//
+//
+//        var getPackage = client.getPackage(accountId, "CopyBuildSystem");
+//        var builds = client.getPackageBuilds(accountId, new ArchipelagoPackage("CopyBuildSystem", "1.0"));
+//        var build = client.getPackageBuild(accountId, new ArchipelagoBuiltPackage("CopyBuildSystem", "1.0", hash));
+//        var pkgByGit = client.getPackageByGit(accountId, "CopyBuildSystem", "master", "5d3fd1ed75e99f36b92a6e1c9ebd3b21b9b85058");
+//        var artifact = client.getBuildArtifact(accountId, new ArchipelagoBuiltPackage("CopyBuildSystem", "1.0", hash), Path.of("C:\\Users\\accou\\Downloads\\Temp"));
+//        var verify = client.verifyPackagesExists(accountId, List.of(new ArchipelagoPackage("CopyBuildSystem", "1.0")));
+//        var verifyBuilds = client.verifyBuildsExists(accountId, List.of(new ArchipelagoBuiltPackage("CopyBuildSystem", "1.0", hash)));
+//
+//        Assert.assertTrue(true);
     }
 //
 //    @Before

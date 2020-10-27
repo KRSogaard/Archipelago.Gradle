@@ -8,12 +8,12 @@ import build.archipelago.versionsetservice.client.model.CreateVersionSetRequest;
 import java.util.List;
 
 public interface VersionSetServiceClient {
-    void createVersionSet(CreateVersionSetRequest request)
+    void createVersionSet(String accountId, CreateVersionSetRequest request)
             throws VersionSetExistsException, VersionSetDoseNotExistsException, PackageNotFoundException;
-    String createVersionRevision(String versionSetName, List<ArchipelagoBuiltPackage> packages)
+    String createVersionRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages)
             throws VersionSetDoseNotExistsException, MissingTargetPackageException, PackageNotFoundException;
-    VersionSet getVersionSet(String versionSetName)
+    VersionSet getVersionSet(String accountId, String versionSetName)
             throws VersionSetDoseNotExistsException;
-    VersionSetRevision getVersionSetPackages(String versionSetName, String revisionId)
+    VersionSetRevision getVersionSetPackages(String accountId, String versionSetName, String revisionId)
             throws VersionSetDoseNotExistsException;
 }

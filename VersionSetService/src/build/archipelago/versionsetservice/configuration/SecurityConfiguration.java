@@ -1,14 +1,13 @@
-package build.archipelago.packageservice.configuration;
+package build.archipelago.versionsetservice.configuration;
 
-import build.archipelago.packageservice.controllers.HealthController;
-import build.archipelago.packageservice.security.AudienceValidator;
+import build.archipelago.versionsetservice.controllers.HealthController;
+import build.archipelago.versionsetservice.security.AudienceValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.*;
 import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.jwt.*;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 
 @Configuration
 @EnableWebSecurity

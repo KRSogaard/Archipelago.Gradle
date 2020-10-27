@@ -199,8 +199,8 @@ project(':PackageService.Client') {
 
     dependencies {
         implementation project(':Archipelago.Common')
+        implementation project(':Archipelago.Common.Clients')
 
-        implementation 'com.mashape.unirest:unirest-java:1.4.9'
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 }
@@ -224,10 +224,15 @@ project(':VersionSetService') {
         implementation project(':VersionSetService.Core')
         implementation project(':PackageService.Client')
         implementation project(':PackageService.Core')
+        implementation project(':Archipelago.Common.Clients')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+        implementation 'org.springframework.security:spring-security-oauth2-jose'
+        implementation 'org.springframework.security:spring-security-config'
         implementation 'io.springfox:springfox-swagger2:2.9.2'
         implementation 'io.springfox:springfox-swagger-ui:2.9.2'
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
@@ -260,6 +265,7 @@ project(':VersionSetService.Core') {
         implementation project(':Archipelago.Common.DynamoDB')
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
+        implementation project(':Archipelago.Common.Clients')
 
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
 
@@ -273,8 +279,9 @@ project(':VersionSetService.Core') {
 project(':VersionSetService.Client') {
     dependencies {
         implementation project(':Archipelago.Common')
+        implementation project(':Archipelago.Common.Clients')
 
-        implementation 'org.springframework:spring-web:5.2.9.RELEASE'
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 }
 
@@ -385,5 +392,11 @@ project(':Archipelago.Account.Common') {
         implementation project(':Maui.Core')
 
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+    }
+}
+
+project(':Archipelago.Common.Clients') {
+    dependencies {
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 }

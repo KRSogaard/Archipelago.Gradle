@@ -3,8 +3,11 @@ server:
   error:
     include-stacktrace: never
 
-auth0:
+oauth:
+  client-id: "H4L36UXifMqdt4T3pLgajGvap0oJ63HD"
+  client-secret: "3YLhyrPbphWtZtD0quk-H_3sp9HoGMVdPej0DQNZXJ3_WTgYqeNTNzCe6bVGfPnO"
   audience: http://packageservice.archipelago.build
+
 spring:
   security:
     oauth2:

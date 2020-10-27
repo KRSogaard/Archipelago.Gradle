@@ -1,6 +1,7 @@
 package build.archipelago.versionsetservice;
 
 import build.archipelago.common.exceptions.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @ControllerAdvice
+@Slf4j
 public class CustomGlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -27,13 +29,11 @@ public class CustomGlobalExceptionHandler {
 
     @ExceptionHandler(PackageNotFoundException.class)
     public void stringHandlePackageNotFoundException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.NOT_ACCEPTABLE.value(), ex.getMessage());
+        response.sendError(HttpStatus.NOT_ACCEPTABLE.value(), ((PackageNotFoundException)ex).getPackageName());
     }
 
     @ExceptionHandler(MissingTargetPackageException.class)
     public void stringHandleMissingTargetPackageException(Exception ex, HttpServletResponse response) throws IOException {
         response.sendError(HttpStatus.PRECONDITION_FAILED.value(), ex.getMessage());
     }
-
-
 }
