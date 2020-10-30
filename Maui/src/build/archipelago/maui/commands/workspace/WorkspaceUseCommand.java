@@ -3,14 +3,13 @@ package build.archipelago.maui.commands.workspace;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.VersionSet;
+import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.BaseCommand;
+import build.archipelago.maui.common.PackageSourceProvider;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.PackageSourceProvider;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
-import build.archipelago.packageservice.client.PackageServiceClient;
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import build.archipelago.packageservice.client.models.GetPackageResponse;
-import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -27,20 +26,17 @@ public class WorkspaceUseCommand extends BaseCommand {
     @CommandLine.Option(names = { "-vs", "--versionset"})
     private String versionSet;
 
-    private PackageServiceClient packageServiceClient;
     private PackageSourceProvider packageSourceProvider;
-    private VersionSetServiceClient vsClient;
+    private HarborClient harborClient;
 
     public WorkspaceUseCommand(
-                VersionSetServiceClient vsClient,
                 WorkspaceContextFactory workspaceContextFactory,
                 SystemPathProvider systemPathProvider,
                 OutputWrapper out,
-                PackageServiceClient packageServiceClient,
+                HarborClient harborClient,
                 PackageSourceProvider packageSourceProvider) {
             super(workspaceContextFactory, systemPathProvider, out);
-        this.vsClient = vsClient;
-        this.packageServiceClient = packageServiceClient;
+        this.harborClient = harborClient;
         this.packageSourceProvider = packageSourceProvider;
     }
 
@@ -56,7 +52,7 @@ public class WorkspaceUseCommand extends BaseCommand {
                 out.error("The version-set for the workspace is already \"%s\"", workspaceContext.getVersionSet());
             } else {
                 try {
-                    VersionSet vs = vsClient.getVersionSet(versionSet);
+                    VersionSet vs = harborClient.getVersionSet(versionSet);
                     out.write("Setting the version-set for the workspace to \"%s\"", vs.getName());
                     // Ensure we have the right capitalization of the version-set
                     workspaceContext.setVersionSet(vs.getName());
@@ -80,9 +76,9 @@ public class WorkspaceUseCommand extends BaseCommand {
                         out.error("The package name \"%s\" already checked out", pkg);
                         continue;
                     }
-                    GetPackageResponse pkgResponse = packageServiceClient.getPackage(pkg);
+                    GetPackageResponse aPackage = harborClient.getPackage(pkg);
                     // Ensure we have the capitalization of the package name
-                    String cleanPKGName = pkgResponse.getName();
+                    String cleanPKGName = aPackage.getName();
                     if (Files.exists(wsDir.resolve(cleanPKGName))) {
                         out.error("Directory %s already exists, please remove or rename it " +
                                 "before checking out the package %s", cleanPKGName, cleanPKGName);

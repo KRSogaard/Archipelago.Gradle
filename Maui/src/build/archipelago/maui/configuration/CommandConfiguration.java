@@ -1,16 +1,18 @@
 package build.archipelago.maui.configuration;
 
+import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.*;
 import build.archipelago.maui.commands.packages.*;
 import build.archipelago.maui.commands.workspace.*;
+import build.archipelago.maui.common.PackageSourceProvider;
+import build.archipelago.maui.common.cache.PackageCacher;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.*;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
-import build.archipelago.maui.core.workspace.path.MauiPath;
-import build.archipelago.packageservice.client.PackageServiceClient;
-import build.archipelago.versionsetservice.client.VersionSetServiceClient;
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.path.MauiPath;
 import com.google.inject.*;
+
+import java.util.concurrent.ExecutorService;
 
 public class CommandConfiguration extends AbstractModule {
 
@@ -29,17 +31,20 @@ public class CommandConfiguration extends AbstractModule {
     @Singleton
     public WorkspaceSyncCommand workspaceSyncCommand(WorkspaceContextFactory workspaceContextFactory,
                                                      SystemPathProvider systemPathProvider,
-                                                     OutputWrapper outputWrapper,
-                                                     WorkspaceSyncer workspaceSyncer) {
-        return new WorkspaceSyncCommand(workspaceContextFactory, systemPathProvider, outputWrapper, workspaceSyncer);
+                                                     OutputWrapper out,
+                                                     HarborClient harborClient,
+                                                     PackageCacher packageCacher,
+                                                     ExecutorService executorr) {
+        return new WorkspaceSyncCommand(workspaceContextFactory, systemPathProvider, out, harborClient, packageCacher, executorr);
     }
 
     @Provides
     @Singleton
     public WorkspaceCreateCommand workspaceCreateCommand(WorkspaceContextFactory workspaceContextFactory,
                                                          SystemPathProvider systemPathProvider,
-                                                         OutputWrapper outputWrapper) {
-        return new WorkspaceCreateCommand(workspaceContextFactory, systemPathProvider, outputWrapper);
+                                                         OutputWrapper out,
+                                                         HarborClient harborClient) {
+        return new WorkspaceCreateCommand(workspaceContextFactory, systemPathProvider, out, harborClient);
     }
 
     @Provides
@@ -71,20 +76,18 @@ public class CommandConfiguration extends AbstractModule {
     public PackageCreateCommand packageCreateCommand(WorkspaceContextFactory workspaceContextFactory,
                                                      SystemPathProvider systemPathProvider,
                                                      OutputWrapper outputWrapper,
-                                                     PackageServiceClient packageServiceClient) {
-        return new PackageCreateCommand(packageServiceClient, workspaceContextFactory, systemPathProvider, outputWrapper);
+                                                     HarborClient harborClient) {
+        return new PackageCreateCommand(workspaceContextFactory, systemPathProvider, outputWrapper, harborClient);
     }
 
     @Provides
     @Singleton
-    public WorkspaceUseCommand workspaceUseCommand(VersionSetServiceClient versionSetServiceClient,
-                                                   WorkspaceContextFactory workspaceContextFactory,
+    public WorkspaceUseCommand workspaceUseCommand(WorkspaceContextFactory workspaceContextFactory,
                                                    SystemPathProvider systemPathProvider,
-                                                   OutputWrapper outputWrapper,
-                                                   PackageServiceClient packageServiceClient,
+                                                   OutputWrapper out,
+                                                   HarborClient harborClient,
                                                    PackageSourceProvider packageSourceProvider) {
-        return new WorkspaceUseCommand(versionSetServiceClient, workspaceContextFactory, systemPathProvider, outputWrapper, packageServiceClient,
-                packageSourceProvider);
+        return new WorkspaceUseCommand(workspaceContextFactory, systemPathProvider, out, harborClient, packageSourceProvider);
     }
 
     @Provides

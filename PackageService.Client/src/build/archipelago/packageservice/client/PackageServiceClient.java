@@ -1,11 +1,8 @@
 package build.archipelago.packageservice.client;
 
 import build.archipelago.common.*;
-import build.archipelago.common.clients.rest.UnauthorizedException;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.packageservice.client.models.*;
-
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -21,5 +18,5 @@ public interface PackageServiceClient {
     PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(String accountId, List<ArchipelagoBuiltPackage> packages) throws UnauthorizedException;
 
     String uploadBuiltArtifact(String accountId, UploadPackageRequest request, Path file) throws PackageNotFoundException, UnauthorizedException;
-    Path getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, IOException, UnauthorizedException;
+    Path getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, UnauthorizedException;
 }

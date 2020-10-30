@@ -4,7 +4,7 @@ import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import picocli.CommandLine;
 
 import java.io.*;

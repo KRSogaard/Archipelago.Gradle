@@ -3,9 +3,8 @@ package build.archipelago.maui.commands;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
-import build.archipelago.maui.core.workspace.path.DependencyTransversalType;
-import build.archipelago.maui.core.workspace.path.graph.*;
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.graph.*;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 

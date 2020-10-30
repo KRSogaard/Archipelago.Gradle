@@ -2,9 +2,10 @@ package build.archipelago.maui.commands;
 
 import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
-import build.archipelago.maui.core.workspace.path.*;
-import build.archipelago.maui.core.workspace.path.recipies.BinRecipe;
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.graph.DependencyTransversalType;
+import build.archipelago.maui.path.MauiPath;
+import build.archipelago.maui.path.recipies.BinRecipe;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
 import picocli.CommandLine;

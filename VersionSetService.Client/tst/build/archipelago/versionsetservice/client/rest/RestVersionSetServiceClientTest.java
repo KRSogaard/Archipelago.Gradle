@@ -1,12 +1,8 @@
 package build.archipelago.versionsetservice.client.rest;
 
-import build.archipelago.common.*;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import build.archipelago.versionsetservice.client.model.CreateVersionSetRequest;
 import org.junit.*;
-
-import java.util.List;
 
 public class RestVersionSetServiceClientTest {
 

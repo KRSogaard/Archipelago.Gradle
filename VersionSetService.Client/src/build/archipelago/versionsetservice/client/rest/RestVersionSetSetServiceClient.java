@@ -5,7 +5,7 @@ import build.archipelago.common.clients.rest.*;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.*;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import build.archipelago.versionsetservice.client.model.CreateVersionSetRequest;
+import build.archipelago.versionsetservice.client.models.CreateVersionSetRequest;
 import build.archipelago.versionsetservice.client.rest.models.*;
 import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;

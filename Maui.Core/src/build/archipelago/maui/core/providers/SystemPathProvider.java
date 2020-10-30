@@ -1,6 +1,6 @@
 package build.archipelago.maui.core.providers;
 
-import build.archipelago.maui.core.workspace.WorkspaceConstants;
+import build.archipelago.maui.common.WorkspaceConstants;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 

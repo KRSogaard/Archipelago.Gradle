@@ -1,5 +1,6 @@
 package build.archipelago.common.clients.rest;
 
+import build.archipelago.common.exceptions.UnauthorizedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 

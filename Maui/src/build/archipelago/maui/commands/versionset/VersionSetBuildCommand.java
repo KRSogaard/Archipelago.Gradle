@@ -2,11 +2,11 @@ package build.archipelago.maui.commands.versionset;
 
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.versionset.VersionSet;
+import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
-import build.archipelago.versionsetservice.client.VersionSetServiceClient;
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -22,14 +22,14 @@ public class VersionSetBuildCommand extends BaseCommand {
     @CommandLine.Option(names = { "-r", "--revision"})
     private String revisionId;
 
-    private VersionSetServiceClient versionSetServiceClient;
+    private HarborClient harborClient;
 
     public VersionSetBuildCommand(WorkspaceContextFactory workspaceContextFactory,
                                   SystemPathProvider systemPathProvider,
                                   OutputWrapper out,
-                                  VersionSetServiceClient versionSetServiceClient) {
+                                  HarborClient harborClient) {
         super(workspaceContextFactory, systemPathProvider, out);
-        this.versionSetServiceClient = versionSetServiceClient;
+        this.harborClient = harborClient;
     }
 
     @Override
@@ -44,7 +44,7 @@ public class VersionSetBuildCommand extends BaseCommand {
 
         VersionSet versionSet;
         try {
-            versionSet = versionSetServiceClient.getVersionSet(versionSetName);
+            versionSet = harborClient.getVersionSet(versionSetName);
         } catch (VersionSetDoseNotExistsException e) {
             out.error("Unable to find the Version-Set \"%s\"", versionSetName);
             return 1;

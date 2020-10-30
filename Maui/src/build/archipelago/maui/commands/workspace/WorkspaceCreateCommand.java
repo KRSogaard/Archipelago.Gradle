@@ -1,10 +1,13 @@
 package build.archipelago.maui.commands.workspace;
 
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.common.versionset.VersionSet;
+import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.BaseCommand;
+import build.archipelago.maui.common.serializer.WorkspaceSerializer;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.contexts.*;
+import build.archipelago.maui.common.contexts.*;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -16,6 +19,8 @@ import java.nio.file.*;
 @CommandLine.Command(name = "create", mixinStandardHelpOptions = true, description = "create a new workspace")
 public class WorkspaceCreateCommand extends BaseCommand {
 
+    private HarborClient harborClient;
+
     @CommandLine.Option(names = { "-n", "--name"}, required = true)
     private String name;
 
@@ -24,8 +29,10 @@ public class WorkspaceCreateCommand extends BaseCommand {
 
     public WorkspaceCreateCommand(WorkspaceContextFactory workspaceContextFactory,
                                   SystemPathProvider systemPathProvider,
-                                  OutputWrapper out) {
+                                  OutputWrapper out,
+                                  HarborClient harborClient) {
         super(workspaceContextFactory, systemPathProvider, out);
+        this.harborClient = harborClient;
     }
 
     @Override
@@ -42,17 +49,21 @@ public class WorkspaceCreateCommand extends BaseCommand {
         Files.createDirectory(wsRoot);
 
         if (!Strings.isNullOrEmpty(versionSet)) {
-            ws.setVersionSet(versionSet);
+            try {
+                // We need to ensure we have the right capitalization
+                VersionSet vs = harborClient.getVersionSet(versionSet);
+                ws.setVersionSet(vs.getName());
+            } catch (VersionSetDoseNotExistsException e) {
+                log.error("Was unable to created the workspace as the requested version-set \"{}\" did not exist",
+                        versionSet);
+                out.error("Was unable to created the workspace as the requested version-set " +
+                        "\"%s\" did not exist", versionSet);
+                return 2;
+            }
         }
 
         try {
-            ws.create();
-        } catch (VersionSetDoseNotExistsException e) {
-            log.error("Was unable to created the workspace as the requested version-set \"{}\" did not exist",
-                    versionSet);
-            out.error("Was unable to created the workspace as the requested version-set " +
-                    "\"%s\" did not exist", versionSet);
-            return 2;
+            WorkspaceSerializer.save(ws, wsRoot);
         } catch (IOException e) {
             log.error("Failed to create the workspace file in \"" + wsRoot + "\"", e);
             out.error("Was unable to create the workspace file");

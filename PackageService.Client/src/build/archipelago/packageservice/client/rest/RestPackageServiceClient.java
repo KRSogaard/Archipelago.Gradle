@@ -279,7 +279,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
     }
 
     @Override
-    public Path getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, IOException, UnauthorizedException {
+    public Path getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkNotNull(pkg, "Name and Version is required");
         Preconditions.checkNotNull(directory, "A save location is required");
 
@@ -289,7 +289,11 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
         if (!Files.isDirectory(directory)) {
             log.info("Creating directory \"%s\"", directory.toString());
-            Files.createDirectories(directory);
+            try {
+                Files.createDirectories(directory);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
         HttpResponse<Path> restResponse;
         try {

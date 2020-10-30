@@ -2,8 +2,8 @@ package build.archipelago.maui.commands;
 
 import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
-import build.archipelago.maui.core.workspace.path.MauiPath;
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.path.MauiPath;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;

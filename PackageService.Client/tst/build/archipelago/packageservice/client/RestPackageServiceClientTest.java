@@ -1,15 +1,10 @@
 package build.archipelago.packageservice.client;
 
-import build.archipelago.common.*;
 import build.archipelago.common.clients.rest.UnauthorizedException;
 import build.archipelago.common.exceptions.*;
-import build.archipelago.packageservice.client.models.*;
-import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import org.junit.*;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
 
 public class RestPackageServiceClientTest {
 
@@ -22,12 +17,12 @@ public class RestPackageServiceClientTest {
 //                "ImRTxga0z1WT6LSdNMRird9R29QQ8GBn",
 //                "3RjLmcYj1M6jZkEoG6AAMsvtfWkkmt6s3AJgem1xumxcDe_8FVvztwU66D4Maz2M");
 //
-//        client.createPackage(accountId, CreatePackageRequest.builder()
+//        client.createPackage(accountId, build.archipelago.packageservice.client.models.CreatePackageRequest.builder()
 //                .name("CopyBuildSystem")
 //                .description("The copy build system")
 //                .build());
 //
-//        String hash = client.uploadBuiltArtifact(accountId, UploadPackageRequest.builder()
+//        String hash = client.uploadBuiltArtifact(accountId, build.archipelago.packageservice.client.models.UploadPackageRequest.builder()
 //                .pkg(new ArchipelagoPackage("CopyBuildSystem", "1.0"))
 //                .gitBranch("master")
 //                .gitCommit("5d3fd1ed75e99f36b92a6e1c9ebd3b21b9b85058")
@@ -59,7 +54,7 @@ public class RestPackageServiceClientTest {
 //    public void testCreate() throws PackageExistsException {
 //        String UUID = java.util.UUID.randomUUID().toString().split("-")[0];
 //
-//        client.createPackage(CreatePackageRequest.builder()
+//        client.createPackage(build.archipelago.packageservice.client.models.CreatePackageRequest.builder()
 //                .name("KasperTestPackage-" + UUID)
 //                .description("This is a description")
 //                .build());
@@ -70,12 +65,12 @@ public class RestPackageServiceClientTest {
 //        String UUID = java.util.UUID.randomUUID().toString().split("-")[0];
 //        String name = "KasperTestPackage-" + UUID;
 //
-////        client.createPackage(CreatePackageRequest.builder()
+////        client.createPackage(build.archipelago.packageservice.client.models.CreatePackageRequest.builder()
 ////                .name(name)
 ////                .description("This is a description")
 ////                .build());
 //
-//        GetPackageResponse response = client.getPackage("testpackage");
+//        build.archipelago.packageservice.client.models.GetPackageResponse response = client.getPackage("testpackage");
 //        Assert.assertEquals("testpackage", response.getName());
 //    }
 //
@@ -111,7 +106,7 @@ public class RestPackageServiceClientTest {
 //
 //    @Test
 //    public void testUploadBuild() throws PackageNotFoundException {
-//        var res = client.uploadBuiltArtifact(UploadPackageRequest.builder()
+//        var res = client.uploadBuiltArtifact(build.archipelago.packageservice.client.models.UploadPackageRequest.builder()
 //                .pkg(new ArchipelagoPackage("TestPackage", "1.1"))
 //                .config("this is a nice config").build(), Path.of("C:\\Users\\aoyin\\Downloads\\testZip.zip"));
 //        Assert.assertFalse(Strings.isNullOrEmpty(res));

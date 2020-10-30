@@ -4,19 +4,19 @@ import build.archipelago.account.common.AccountService;
 import build.archipelago.account.common.exceptions.AccountNotFoundException;
 import build.archipelago.account.common.models.AccountDetails;
 import build.archipelago.buildserver.builder.*;
+import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.common.services.build.*;
 import build.archipelago.buildserver.common.services.build.exceptions.BuildRequestNotFoundException;
 import build.archipelago.buildserver.common.services.build.models.*;
 import build.archipelago.common.*;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.maui.core.exceptions.*;
-import build.archipelago.maui.core.workspace.WorkspaceConstants;
-import build.archipelago.maui.core.workspace.cache.*;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContext;
-import build.archipelago.maui.core.workspace.models.BuildConfig;
-import build.archipelago.maui.core.workspace.path.DependencyTransversalType;
-import build.archipelago.maui.core.workspace.path.graph.*;
+import build.archipelago.harbor.client.HarborClient;
+import build.archipelago.maui.common.WorkspaceConstants;
+import build.archipelago.maui.common.cache.*;
+import build.archipelago.maui.common.contexts.WorkspaceContext;
+import build.archipelago.maui.common.models.BuildConfig;
+import build.archipelago.maui.graph.*;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.*;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
@@ -33,13 +33,16 @@ import java.util.stream.*;
 
 @Slf4j
 public class VersionSetBuilder {
-    private VersionSetServiceClient vsClient;
+    private InternalHarborClientFactory internalHarborClientFactory;
     private PackageServiceClient packageServiceClient;
+    private VersionSetServiceClient versionSetServiceClient;
+    private HarborClient harborClient;
     private Path buildLocation;
     private BuildService buildService;
     private String buildId;
     private MauiWrapper maui;
     private AccountService accountService;
+    private DependencyGraphGenerator dependencyGraphGenerator;
 
     private Path workspaceLocation;
     private ArchipelagoBuild request;
@@ -54,10 +57,13 @@ public class VersionSetBuilder {
     private Queue<ArchipelagoPackage> buildQueue;
     private boolean failedBuild = false;
 
-    public VersionSetBuilder(VersionSetServiceClient vsClient, PackageServiceClient packageServiceClient,
+    public VersionSetBuilder(InternalHarborClientFactory internalHarborClientFactory,
+                             VersionSetServiceClient versionSetServiceClient,
+                             PackageServiceClient packageServiceClient,
                              Path buildLocation, BuildService buildService, MauiWrapper maui,
                              AccountService accountService, String buildId) {
-        this.vsClient = vsClient;
+        this.internalHarborClientFactory = internalHarborClientFactory;
+        this.versionSetServiceClient = versionSetServiceClient;
         this.packageServiceClient = packageServiceClient;
         this.buildLocation = buildLocation;
         this.buildService = buildService;
@@ -69,6 +75,7 @@ public class VersionSetBuilder {
         buildQueue = new ConcurrentLinkedDeque<>();
         buildDependicies = new HashMap<>();
         doneBuilding = new HashMap<>();
+        dependencyGraphGenerator = new DependencyGraphGenerator();
     }
 
     public void build() throws TemporaryMessageProcessingException, PermanentMessageProcessingException {
@@ -84,13 +91,16 @@ public class VersionSetBuilder {
             } catch (BuildRequestNotFoundException e) {
                 throw new PermanentMessageProcessingException("The build request was not found", e);
             }
+
             try {
-                accountDetails = accountService.getAccountDetails(request.getAccount());
+                accountDetails = accountService.getAccountDetails(request.getAccountId());
             } catch (AccountNotFoundException e) {
                 throw new PermanentMessageProcessingException("The build account was not found", e);
             }
+
+            harborClient = internalHarborClientFactory.create(request.getAccountId());
             try {
-                vs = vsClient.getVersionSet(request.getVersionSet());
+                vs = harborClient.getVersionSet(request.getVersionSet());
             } catch (VersionSetDoseNotExistsException e) {
                 throw new PermanentMessageProcessingException("Version-set dose not exists", e);
             }
@@ -224,7 +234,7 @@ public class VersionSetBuilder {
                         }
 
                         Path zip = prepareBuildZip(builtPackage);
-                        buildHash = packageServiceClient.uploadBuiltArtifact(UploadPackageRequest.builder()
+                        buildHash = packageServiceClient.uploadBuiltArtifact(accountDetails.getId(), UploadPackageRequest.builder()
                                 .config(configContent)
                                 .pkg(builtPackage)
                                 .gitBranch(gitInfo.getFirst())
@@ -255,7 +265,7 @@ public class VersionSetBuilder {
             }
 
             try {
-                vsClient.createVersionRevision(wsContext.getVersionSet(), newRevision);
+                versionSetServiceClient.createVersionRevision(accountDetails.getId(), wsContext.getVersionSet(), newRevision);
             } catch (Exception e) {
                 throw new ArchipelagoException("Was unable to create the new version-set revision", e);
             }
@@ -291,7 +301,7 @@ public class VersionSetBuilder {
 
     private ArchipelagoBuiltPackage getPreviousBuild(String name, String branch, String commit) {
         try {
-            return packageServiceClient.getPackageByGit(name, branch, commit);
+            return packageServiceClient.getPackageByGit(accountDetails.getId(), name, branch, commit);
         } catch (PackageNotFoundException e) {
             log.debug("This is a new build of package \"{}\" for git branch \"{}\" commit \"{}\"",
                     name, branch, commit);
@@ -389,7 +399,7 @@ public class VersionSetBuilder {
             }
             GetPackageBuildResponse response;
             try {
-                response = packageServiceClient.getPackageBuild(builtPackage);
+                response = packageServiceClient.getPackageBuild(accountDetails.getId(), builtPackage);
             } catch (PackageNotFoundException e) {
                 throw new IOException("The package " + builtPackage + " was not found on the package server", e);
             }
@@ -471,7 +481,6 @@ public class VersionSetBuilder {
     }
 
     private void generateGraphs() throws Exception {
-        DependencyGraphGenerator.clearCache();
         for (ArchipelagoPackage target : vs.getTargets()) {
             graphs.put(target, generateGraph(wsContext, target));
         }
@@ -503,14 +512,13 @@ public class VersionSetBuilder {
         return graph.vertexSet().stream().anyMatch(v -> v.equals(pkg));
     }
 
-    private ArchipelagoDependencyGraph generateGraph(WorkspaceContext wsContext, ArchipelagoPackage pkg)
-            throws Exception {
+    private ArchipelagoDependencyGraph generateGraph(WorkspaceContext wsContext, ArchipelagoPackage pkg) {
         try {
-            return DependencyGraphGenerator.generateGraph(wsContext, pkg, DependencyTransversalType.ALL);
+            return dependencyGraphGenerator.generateGraph(wsContext, pkg, DependencyTransversalType.ALL);
         } catch (Exception e) {
             String message = String.format("Error while generating graph for %s", pkg.getNameVersion());
             log.error(message, e);
-            throw new Exception(message, e);
+            throw new RuntimeException(message, e);
         }
     }
 
@@ -519,12 +527,12 @@ public class VersionSetBuilder {
         Path tempPath = workspaceLocation.resolve(".archipelago").resolve("temp");
         PackageCacher packageCacher = null;
         try {
-            packageCacher = new LocalPackageCacher(cachePath, tempPath, packageServiceClient);
+            packageCacher = new LocalPackageCacher(cachePath, tempPath, harborClient);
         } catch (IOException e) {
             log.error("Failed to create the cache or temp dir");
             throw e;
         }
-        WorkspaceContext ws = new WorkspaceContext(workspaceLocation, vsClient, packageCacher);
+        WorkspaceContext ws = new WorkspaceContext(workspaceLocation, packageCacher);
         try {
             ws.load();
         } catch (IOException e) {

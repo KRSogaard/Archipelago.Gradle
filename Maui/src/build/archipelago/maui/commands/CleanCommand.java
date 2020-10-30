@@ -1,9 +1,9 @@
 package build.archipelago.maui.commands;
 
 import build.archipelago.maui.Output.OutputWrapper;
+import build.archipelago.maui.common.WorkspaceConstants;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.WorkspaceConstants;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 

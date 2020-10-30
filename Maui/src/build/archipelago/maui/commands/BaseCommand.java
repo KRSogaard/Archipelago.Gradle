@@ -3,8 +3,8 @@ package build.archipelago.maui.commands;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.contexts.*;
-import build.archipelago.maui.core.workspace.models.BuildConfig;
+import build.archipelago.maui.common.contexts.*;
+import build.archipelago.maui.common.models.BuildConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;

@@ -2,13 +2,13 @@ package build.archipelago.maui.commands.packages;
 
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.*;
+import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.maui.Output.OutputWrapper;
 import build.archipelago.maui.commands.BaseCommand;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
-import build.archipelago.maui.core.workspace.models.BuildConfig;
-import build.archipelago.maui.core.workspace.serializer.BuildConfigSerializer;
-import build.archipelago.packageservice.client.PackageServiceClient;
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.common.models.BuildConfig;
+import build.archipelago.maui.common.serializer.BuildConfigSerializer;
 import build.archipelago.packageservice.client.models.CreatePackageRequest;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -21,19 +21,19 @@ import java.util.List;
 @CommandLine.Command(name = "create", mixinStandardHelpOptions = true, description = "create a new package")
 public class PackageCreateCommand extends BaseCommand {
 
-    private PackageServiceClient packageClient;
+    private HarborClient harborClient;
 
     @CommandLine.Option(names = { "-n", "--name"}, required = true)
     private String name;
     @CommandLine.Option(names = { "-d", "--desc"})
     private String description;
 
-    public PackageCreateCommand(PackageServiceClient packageClient,
-                                WorkspaceContextFactory workspaceContextFactory,
+    public PackageCreateCommand(WorkspaceContextFactory workspaceContextFactory,
                                 SystemPathProvider systemPathProvider,
-                                OutputWrapper out) {
+                                OutputWrapper out,
+                                HarborClient harborClient) {
         super(workspaceContextFactory, systemPathProvider, out);
-        this.packageClient = packageClient;
+        this.harborClient = harborClient;
     }
 
     @Override
@@ -67,7 +67,7 @@ public class PackageCreateCommand extends BaseCommand {
         }
 
         try {
-            packageClient.createPackage(CreatePackageRequest.builder()
+            harborClient.createPackage(CreatePackageRequest.builder()
                     .name(name)
                     .description(description)
                     .build());
@@ -91,7 +91,7 @@ public class PackageCreateCommand extends BaseCommand {
 
     private boolean packageNameExists(String name) {
         try {
-            packageClient.getPackage(name);
+            harborClient.getPackage(name);
             return true;
         } catch (PackageNotFoundException e) {
             return false;

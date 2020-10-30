@@ -3,7 +3,7 @@ package build.archipelago.versionsetservice.client;
 import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.*;
-import build.archipelago.versionsetservice.client.model.CreateVersionSetRequest;
+import build.archipelago.versionsetservice.client.models.CreateVersionSetRequest;
 
 import java.util.List;
 
