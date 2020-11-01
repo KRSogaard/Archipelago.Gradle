@@ -1,18 +1,17 @@
-package build.archipelago.maui.commands;
+package build.archipelago.maui.core.actions;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.maui.Output.OutputWrapper;
-import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.common.contexts.*;
 import build.archipelago.maui.common.models.BuildConfig;
+import build.archipelago.maui.core.output.OutputWrapper;
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.Callable;
 
 @Slf4j
-public abstract class BaseCommand implements Callable<Integer> {
+public abstract class BaseAction {
     protected WorkspaceContext workspaceContext;
     protected ArchipelagoPackage commandPKG;
     protected BuildConfig buildConfig;
@@ -23,7 +22,7 @@ public abstract class BaseCommand implements Callable<Integer> {
     protected SystemPathProvider systemPathProvider;
     protected OutputWrapper out;
 
-    public BaseCommand(WorkspaceContextFactory workspaceContextFactory,
+    public BaseAction(WorkspaceContextFactory workspaceContextFactory,
                        SystemPathProvider systemPathProvider,
                        OutputWrapper out) {
         this.workspaceContextFactory = workspaceContextFactory;
@@ -31,7 +30,7 @@ public abstract class BaseCommand implements Callable<Integer> {
         this.out = out;
     }
 
-    protected boolean requireWorkspace() {
+    protected boolean setupWorkspaceContext() {
         wsDir = systemPathProvider.getWorkspaceDir();
         if (wsDir == null) {
             return false;
@@ -46,7 +45,7 @@ public abstract class BaseCommand implements Callable<Integer> {
         return true;
     }
 
-    protected boolean requirePackage() {
+    protected boolean setupPackage() {
         if (workspaceContext == null) {
             throw new RuntimeException("Workspace is not loaded");
         }

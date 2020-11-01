@@ -1,6 +1,5 @@
 package build.archipelago.maui.common;
 
-import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
@@ -8,14 +7,11 @@ import java.nio.file.Path;
 @Slf4j
 public class GitPackageSourceProvider implements PackageSourceProvider {
 
-    private VersionSetServiceClient vsClient;
     private String gitBase;
     private String gitGroup;
 
-    public GitPackageSourceProvider(VersionSetServiceClient vsClient,
-                                    String gitBase,
+    public GitPackageSourceProvider(String gitBase,
                                     String gitGroup) {
-        this.vsClient = vsClient;
         this.gitBase = gitBase;
         this.gitGroup = gitGroup;
     }

@@ -1,4 +1,4 @@
-package build.archipelago.maui.Output;
+package build.archipelago.maui.core.output;
 
 public class ConsoleOutputWrapper implements OutputWrapper {
     @Override

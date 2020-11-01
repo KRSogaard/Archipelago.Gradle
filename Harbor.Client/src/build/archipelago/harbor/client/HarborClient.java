@@ -12,9 +12,9 @@ public interface HarborClient {
     VersionSetRevision getVersionSetRevision(String versionSetName, String revisionId)
             throws VersionSetDoseNotExistsException;
 
-    Path getBuildArtifact(ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, UnauthorizedException;
+    Path getBuildArtifact(ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException;
 
-    void createPackage(CreatePackageRequest request) throws PackageExistsException, UnauthorizedException;
+    void createPackage(CreatePackageRequest request) throws PackageExistsException;
     String getConfig(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException;
     GetPackageResponse getPackage(String pkg) throws PackageNotFoundException;
 }

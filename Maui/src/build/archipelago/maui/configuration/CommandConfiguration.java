@@ -1,18 +1,16 @@
 package build.archipelago.maui.configuration;
 
-import build.archipelago.harbor.client.HarborClient;
-import build.archipelago.maui.Output.OutputWrapper;
+import build.archipelago.maui.core.actions.*;
+import build.archipelago.maui.core.output.OutputWrapper;
 import build.archipelago.maui.commands.*;
 import build.archipelago.maui.commands.packages.*;
 import build.archipelago.maui.commands.workspace.*;
-import build.archipelago.maui.common.PackageSourceProvider;
-import build.archipelago.maui.common.cache.PackageCacher;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.graph.DependencyGraphGenerator;
 import build.archipelago.maui.path.MauiPath;
 import com.google.inject.*;
-
-import java.util.concurrent.ExecutorService;
+import com.google.inject.name.Named;
 
 public class CommandConfiguration extends AbstractModule {
 
@@ -29,31 +27,20 @@ public class CommandConfiguration extends AbstractModule {
 
     @Provides
     @Singleton
-    public WorkspaceSyncCommand workspaceSyncCommand(WorkspaceContextFactory workspaceContextFactory,
-                                                     SystemPathProvider systemPathProvider,
-                                                     OutputWrapper out,
-                                                     HarborClient harborClient,
-                                                     PackageCacher packageCacher,
-                                                     ExecutorService executorr) {
-        return new WorkspaceSyncCommand(workspaceContextFactory, systemPathProvider, out, harborClient, packageCacher, executorr);
+    public WorkspaceSyncCommand workspaceSyncCommand(WorkspaceSyncAction workspaceSyncAction) {
+        return new WorkspaceSyncCommand(workspaceSyncAction);
     }
 
     @Provides
     @Singleton
-    public WorkspaceCreateCommand workspaceCreateCommand(WorkspaceContextFactory workspaceContextFactory,
-                                                         SystemPathProvider systemPathProvider,
-                                                         OutputWrapper out,
-                                                         HarborClient harborClient) {
-        return new WorkspaceCreateCommand(workspaceContextFactory, systemPathProvider, out, harborClient);
+    public WorkspaceCreateCommand workspaceCreateCommand(WorkspaceCreateAction workspaceCreateAction) {
+        return new WorkspaceCreateCommand(workspaceCreateAction);
     }
 
     @Provides
     @Singleton
-    public BuildCommand buildCommand(WorkspaceContextFactory workspaceContextFactory,
-                                     SystemPathProvider systemPathProvider,
-                                     OutputWrapper outputWrapper,
-                                     MauiPath mauiPath) {
-        return new BuildCommand(mauiPath, workspaceContextFactory, systemPathProvider, outputWrapper);
+    public BuildCommand buildCommand(BuildAction buildAction) {
+        return new BuildCommand(buildAction);
     }
 
     @Provides
@@ -73,50 +60,50 @@ public class CommandConfiguration extends AbstractModule {
 
     @Provides
     @Singleton
-    public PackageCreateCommand packageCreateCommand(WorkspaceContextFactory workspaceContextFactory,
-                                                     SystemPathProvider systemPathProvider,
-                                                     OutputWrapper outputWrapper,
-                                                     HarborClient harborClient) {
-        return new PackageCreateCommand(workspaceContextFactory, systemPathProvider, outputWrapper, harborClient);
+    public PackageCreateCommand packageCreateCommand(PackageCreateAction packageCreateAction) {
+        return new PackageCreateCommand(packageCreateAction);
     }
 
     @Provides
     @Singleton
-    public WorkspaceUseCommand workspaceUseCommand(WorkspaceContextFactory workspaceContextFactory,
-                                                   SystemPathProvider systemPathProvider,
-                                                   OutputWrapper out,
-                                                   HarborClient harborClient,
-                                                   PackageSourceProvider packageSourceProvider) {
-        return new WorkspaceUseCommand(workspaceContextFactory, systemPathProvider, out, harborClient, packageSourceProvider);
+    public WorkspaceUseCommand workspaceUseCommand(WorkspaceUseAction workspaceUseAction) {
+        return new WorkspaceUseCommand(workspaceUseAction);
     }
 
     @Provides
     @Singleton
-    public WorkspaceRemoveCommand WorkspaceRemoveCommand(WorkspaceContextFactory workspaceContextFactory,
-                                                         SystemPathProvider systemPathProvider,
-                                                         OutputWrapper outputWrapper) {
-        return new WorkspaceRemoveCommand(workspaceContextFactory, systemPathProvider, outputWrapper);
+    public WorkspaceRemoveCommand WorkspaceRemoveCommand(WorkspaceRemoveAction workspaceRemoveAction) {
+        return new WorkspaceRemoveCommand(workspaceRemoveAction);
     }
 
     @Provides
     @Singleton
     public RecursiveCommand RecursiveCommand(WorkspaceContextFactory workspaceContextFactory,
                                              SystemPathProvider systemPathProvider,
-                                             OutputWrapper outputWrapper) {
-        return new RecursiveCommand(workspaceContextFactory, systemPathProvider, outputWrapper);
+                                             OutputWrapper outputWrapper,
+                                             DependencyGraphGenerator dependencyGraphGenerator) {
+        return new RecursiveCommand(workspaceContextFactory, systemPathProvider, outputWrapper, dependencyGraphGenerator);
     }
 
     @Provides
     @Singleton
-    public CleanCommand cleanCommand(WorkspaceContextFactory workspaceContextFactory,
-                                     SystemPathProvider systemPathProvider,
-                                     OutputWrapper outputWrapper) {
-        return new CleanCommand(workspaceContextFactory, systemPathProvider, outputWrapper);
+    public CleanCommand cleanCommand(CleanAction cleanAction) {
+        return new CleanCommand(cleanAction);
     }
 
     @Provides
     @Singleton
     public VersionCommand versionCommand(OutputWrapper outputWrapper) {
         return new VersionCommand(outputWrapper);
+    }
+
+    @Provides
+    @Singleton
+    public AuthCommand authCommand(WorkspaceContextFactory workspaceContextFactory,
+                                   SystemPathProvider systemPathProvider,
+                                   OutputWrapper output,
+                                   @Named("oauth.endpoint") String oAuthEndpoint,
+                                   @Named("oauth.clientid") String clientid) {
+        return new AuthCommand(workspaceContextFactory, systemPathProvider, output, oAuthEndpoint, clientid);
     }
 }

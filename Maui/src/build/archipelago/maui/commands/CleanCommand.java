@@ -1,6 +1,7 @@
 package build.archipelago.maui.commands;
 
-import build.archipelago.maui.Output.OutputWrapper;
+import build.archipelago.maui.core.actions.CleanAction;
+import build.archipelago.maui.core.output.OutputWrapper;
 import build.archipelago.maui.common.WorkspaceConstants;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
@@ -10,39 +11,24 @@ import picocli.CommandLine;
 import java.io.File;
 import java.nio.file.*;
 import java.util.Comparator;
+import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 @Slf4j
 @CommandLine.Command(name = "clean", mixinStandardHelpOptions = true, description = "Build a package")
-public class CleanCommand extends BaseCommand {
+public class CleanCommand implements Callable<Integer> {
 
-    public CleanCommand(WorkspaceContextFactory workspaceContextFactory,
-                        SystemPathProvider systemPathProvider,
-                        OutputWrapper out) {
-        super(workspaceContextFactory, systemPathProvider, out);
+    private final CleanAction cleanAction;
+
+    public CleanCommand(CleanAction cleanAction) {
+        this.cleanAction = cleanAction;
     }
 
     @Override
     public Integer call() throws Exception {
-        if (!requireWorkspace()) {
-            out.error("Was unable to locate the workspace");
-            return 1;
+        if (cleanAction.clean()) {
+            return 0;
         }
-        if (!requirePackage()) {
-            out.error("Was unable to locate the package");
-            return 1;
-        }
-
-        Path buildDir = pkgDir.resolve(WorkspaceConstants.BUILD_DIR);
-        if (Files.exists(buildDir) && Files.isDirectory(buildDir)) {
-            try (Stream<Path> walk = Files.walk(buildDir)) {
-                walk.sorted(Comparator.reverseOrder())
-                        .map(Path::toFile)
-                        .forEach(File::delete);
-            }
-        }
-
-        out.write("Clean successful");
-        return 0;
+        return 1;
     }
 }

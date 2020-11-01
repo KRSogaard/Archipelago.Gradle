@@ -1,6 +1,6 @@
 package build.archipelago.maui.commands;
 
-import build.archipelago.maui.Output.OutputWrapper;
+import build.archipelago.maui.core.output.OutputWrapper;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 

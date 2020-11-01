@@ -3,18 +3,19 @@ package build.archipelago.maui.commands.versionset;
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.harbor.client.HarborClient;
-import build.archipelago.maui.Output.OutputWrapper;
-import build.archipelago.maui.commands.BaseCommand;
+import build.archipelago.maui.core.actions.BaseAction;
+import build.archipelago.maui.core.output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
+import java.util.concurrent.Callable;
 
 @Slf4j
 @CommandLine.Command(name = "build", mixinStandardHelpOptions = true, description = "")
-public class VersionSetBuildCommand extends BaseCommand {
+public class VersionSetBuildCommand extends BaseAction implements Callable<Integer> {
 
     @CommandLine.Option(names = { "-vs", "--versionset"})
     private String versionSetName;
@@ -34,7 +35,7 @@ public class VersionSetBuildCommand extends BaseCommand {
 
     @Override
     public Integer call() throws Exception {
-        if (requireWorkspace()) {
+        if (setupWorkspaceContext()) {
             out.error("A Version-Set can not be build inside a workspace");
             return 1;
         }

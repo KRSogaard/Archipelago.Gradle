@@ -1,11 +1,18 @@
 package build.archipelago.maui.configuration;
 
-import build.archipelago.common.concurrent.BlockingExecutorServiceFactory;
+import build.archipelago.harbor.client.*;
 import build.archipelago.maui.MauiConstants;
-import build.archipelago.maui.Output.*;
+import build.archipelago.maui.core.output.*;
+import build.archipelago.maui.clients.UnauthorizedHarborClient;
+import build.archipelago.maui.common.*;
+import build.archipelago.maui.common.cache.*;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.graph.DependencyGraphGenerator;
+import build.archipelago.maui.models.OAuthTokenResponse;
+import build.archipelago.maui.path.MauiPath;
 import build.archipelago.maui.path.recipies.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 
@@ -23,26 +30,29 @@ public class ServiceConfiguration extends AbstractModule {
 
     @Provides
     @Singleton
-    public VersionSetServiceClient versionServiceClient(@Named("services.versionset.url") String vsEndpoint) {
-        return new RestVersionSetSetServiceClient(vsEndpoint);
+    public HarborClient versionServiceClient(SystemPathProvider systemPathProvider,
+                                             @Named("oauth.endpoint") String oAuthEndpoint,
+                                             @Named("oauth.audience") String audience,
+                                             @Named("services.harbor.url") String harborEndpoint) throws IOException {
+        Path authFile = systemPathProvider.getMauiPath().resolve(".auth");
+        if (!Files.exists(authFile)) {
+            return new UnauthorizedHarborClient();
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        OAuthTokenResponse oauth = objectMapper.readValue(Files.readString(authFile), OAuthTokenResponse.class);
+        return new RestHarborClient(harborEndpoint, oAuthEndpoint + "/oauth/token", oauth.getAccessToken(), audience);
     }
 
     @Provides
     @Singleton
-    public PackageServiceClient packageServiceClient(@Named("services.packages.url") String pkgEndpoint) {
-        return new RestPackageServiceClient(pkgEndpoint);
+    public WorkspaceContextFactory workspaceContextFactory(PackageCacher packageCacher) {
+        return new WorkspaceContextFactory(packageCacher);
     }
 
     @Provides
     @Singleton
-    public WorkspaceContextFactory workspaceContextFactory(VersionSetServiceClient versionSetServiceClient,
-                                                           PackageCacher packageCacher) {
-        return new WorkspaceContextFactory(versionSetServiceClient, packageCacher);
-    }
-
-    @Provides
-    @Singleton
-    public PackageCacher packageCacher(PackageServiceClient packageServiceClient,
+    public PackageCacher packageCacher(HarborClient harborClient,
                                        SystemPathProvider systemPathProvider) throws IOException {
         Path basePath = systemPathProvider.getMauiPath();
         if ("true".equalsIgnoreCase(System.getenv(MauiConstants.ENV_USE_LOCAL_WORKSPACE_CACHE))) {
@@ -63,34 +73,30 @@ public class ServiceConfiguration extends AbstractModule {
         if (!Files.exists(tempPath)) {
             Files.createDirectory(tempPath);
         }
-        return new LocalPackageCacher(cachePath, tempPath, packageServiceClient);
+        return new LocalPackageCacher(cachePath, tempPath, harborClient);
     }
 
     @Provides
     @Singleton
-    public WorkspaceSyncer workspaceSyncer(PackageCacher packageCacher,
-                                           VersionSetServiceClient versionSetServiceClient) {
-        BlockingExecutorServiceFactory executorServiceFactory = new BlockingExecutorServiceFactory();
-        executorServiceFactory.setMaximumPoolSize(4);
-        return new WorkspaceSyncer(packageCacher, versionSetServiceClient, executorServiceFactory);
+    public DependencyGraphGenerator dependencyGraphGenerator() {
+        return new DependencyGraphGenerator();
     }
 
     @Provides
     @Singleton
-    public MauiPath mauiPath() {
+    public MauiPath mauiPath(DependencyGraphGenerator dependencyGraphGenerator) {
         return new MauiPath(List.of(
                 new BinRecipe(),
                 new PackageRecipe()
-        ));
+        ), dependencyGraphGenerator);
     }
 
     @Provides
     @Singleton
-    public PackageSourceProvider packageSourceProvider(VersionSetServiceClient versionSetServiceClient,
-                                                       @Named("sourceprovider") String serviceProvider,
+    public PackageSourceProvider packageSourceProvider(@Named("sourceprovider") String serviceProvider,
                                                        @Named("sourceprovider.git.base") String gitBase,
                                                        @Named("sourceprovider.git.group") String gitGroup) {
-        return new GitPackageSourceProvider(versionSetServiceClient, gitBase, gitGroup);
+        return new GitPackageSourceProvider(gitBase, gitGroup);
     }
 
     @Provides

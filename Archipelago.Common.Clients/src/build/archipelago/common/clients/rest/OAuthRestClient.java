@@ -26,12 +26,27 @@ public abstract class OAuthRestClient {
     protected com.fasterxml.jackson.databind.ObjectMapper objectMapper
             = new com.fasterxml.jackson.databind.ObjectMapper();
 
-    protected OAuthRestClient(String baseUrl, String tokenUrl, String clientId, String clientSecret, String audience) {
+    public OAuthRestClient(String baseUrl, String tokenUrl, String clientId, String clientSecret, String audience) {
         this.tokenUrl = tokenUrl;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.audience = audience;
         this.grantType = "client_credentials";
+
+        if (baseUrl.endsWith("/")) {
+            this.baseUrl = baseUrl.substring(0, baseUrl.length() - 2);
+        } else {
+            this.baseUrl = baseUrl;
+        }
+        client = HttpClient
+                .newBuilder()
+                .build();
+    }
+    public OAuthRestClient(String baseUrl, String tokenUrl, String oauthToken, String audience) {
+        this.tokenUrl = tokenUrl;
+        this.oauthToken = oauthToken;
+        this.expires = Instant.MAX;
+        this.audience = audience;
 
         if (baseUrl.endsWith("/")) {
             this.baseUrl = baseUrl.substring(0, baseUrl.length() - 2);
@@ -62,6 +77,9 @@ public abstract class OAuthRestClient {
     }
 
     protected void renewToken() throws UnauthorizedException {
+        if (clientId == null) {
+            throw new RuntimeException("Can only renew token with client id and secret credentials");
+        }
         String body = String.format("{\"client_id\":\"%s\"," +
                 "\"client_secret\":\"%s\"," +
                 "\"audience\":\"%s\"," +

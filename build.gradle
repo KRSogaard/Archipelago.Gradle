@@ -92,6 +92,7 @@ project(':Maui') {
         implementation project(':Maui.Path')
         implementation project(':Maui.Graph')
         implementation project(':Harbor.Client')
+        implementation project(':Archipelago.Common.Clients')
         implementation project(':PackageService.Client.Models')
         implementation project(':VersionSetService.Client.Models')
 
@@ -103,6 +104,7 @@ project(':Maui') {
         implementation 'info.picocli:picocli:4.1.4'
         annotationProcessor 'info.picocli:picocli-codegen:4.1.4'
         implementation 'org.jgrapht:jgrapht-core:1.5.0'
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 
     compileJava {
@@ -131,6 +133,8 @@ project(':Maui.Core') {
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
         implementation project(':Harbor.Client')
+        implementation project(':PackageService.Client.Models')
+        implementation project(':VersionSetService.Client.Models')
 
         implementation 'org.slf4j:slf4j-api:1.7.30'
     }
@@ -464,6 +468,7 @@ project(':Harbor.Client') {
         implementation project(':PackageService.Client')
         implementation project(':PackageService.Client.Models')
         implementation project(':VersionSetService.Client.Models')
+        implementation project(':Archipelago.Common.Clients')
 
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
