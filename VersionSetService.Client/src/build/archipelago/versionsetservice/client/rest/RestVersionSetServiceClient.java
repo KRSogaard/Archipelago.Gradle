@@ -16,13 +16,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class RestVersionSetSetServiceClient extends OAuthRestClient implements VersionSetServiceClient {
+public class RestVersionSetServiceClient extends OAuthRestClient implements VersionSetServiceClient {
 
     private static final String OAUTH2_AUDIENCE = "http://versionsetservice.archipelago.build";
     private static final String OAUTH2_TOKENURL = "https://dev-1nl95fdx.us.auth0.com/oauth/token";
     private String endpoint;
 
-    public RestVersionSetSetServiceClient(String endpoint, String clientId, String clientSecret) {
+    public RestVersionSetServiceClient(String endpoint, String clientId, String clientSecret) {
         super(endpoint, OAUTH2_TOKENURL, clientId, clientSecret, OAUTH2_AUDIENCE);
     }
 

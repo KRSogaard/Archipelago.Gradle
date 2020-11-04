@@ -189,6 +189,7 @@ project(':PackageService') {
     dependencies {
         implementation project(':Archipelago.Common')
         implementation project(':PackageService.Core')
+        implementation project(':PackageService.Models')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -219,11 +220,11 @@ project(':PackageService') {
     }
     runlocal.finalizedBy run
 }
-
 project(':PackageService.Core') {
     dependencies {
         implementation project(':Archipelago.Common')
         implementation project(':Archipelago.Common.DynamoDB')
+        implementation project(':PackageService.Models')
 
         implementation 'com.amazonaws:aws-java-sdk-s3:1.11.880'
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
@@ -231,6 +232,12 @@ project(':PackageService.Core') {
         // Needed for DynamoDBLocal
         testImplementation 'com.amazonaws:DynamoDBLocal:1.12.0'
         testImplementation 'com.almworks.sqlite4java:sqlite4java:1.0.392'
+    }
+}
+project(':PackageService.Models') {
+    dependencies {
+        implementation project(':Archipelago.Common')
+        implementation 'org.springframework.boot:spring-boot-starter-web:2.2.6.RELEASE'
     }
 }
 
@@ -270,6 +277,7 @@ project(':VersionSetService') {
         implementation project(':PackageService.Client')
         implementation project(':PackageService.Core')
         implementation project(':Archipelago.Common.Clients')
+        implementation project(':VersionSetService.Models')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -310,6 +318,7 @@ project(':VersionSetService.Core') {
         implementation project(':Archipelago.Common.DynamoDB')
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
+        implementation project(':PackageService.Client.Models')
         implementation project(':Archipelago.Common.Clients')
 
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
@@ -319,6 +328,11 @@ project(':VersionSetService.Core') {
         testImplementation 'com.almworks.sqlite4java:sqlite4java:1.0.392'
     }
     
+}
+project(':VersionSetService.Models') {
+    dependencies {
+        implementation project(':Archipelago.Common')
+    }
 }
 
 project(':VersionSetService.Client') {
@@ -472,4 +486,56 @@ project(':Harbor.Client') {
 
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
+}
+project(':HarborService') {
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'application'
+
+    mainClassName = 'build.archipelago.versionsetservice.Application'
+
+    configurations {
+        all {
+            exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        }
+    }
+
+    dependencies {
+        implementation project(':Archipelago.Common')
+        implementation project(':VersionSetService.Client')
+        implementation project(':VersionSetService.Core')
+        implementation project(':PackageService.Client')
+        implementation project(':PackageService.Core')
+        implementation project(':Archipelago.Common.Clients')
+        implementation project(':PackageService.Client.Models')
+        implementation project(':VersionSetService.Client.Models')
+        implementation project(':PackageService.Models')
+        implementation project(':VersionSetService.Models')
+
+        implementation 'org.springframework.boot:spring-boot-starter-jersey'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+        implementation 'org.springframework.security:spring-security-oauth2-jose'
+        implementation 'org.springframework.security:spring-security-config'
+        implementation 'io.springfox:springfox-swagger2:2.9.2'
+        implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+
+        testImplementation 'com.google.code.gson:gson:2.8.6'
+        testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
+        testImplementation('org.springframework.boot:spring-boot-starter-test') {
+            exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+        }
+    }
+
+    task runlocal {
+        run.configure {
+            project.logger.lifecycle("======================================")
+            project.logger.lifecycle("= Running application in alpha stage =")
+            project.logger.lifecycle("======================================")
+            systemProperty "spring.profiles.active", 'alpha'
+        }
+    }
+    runlocal.finalizedBy run
 }

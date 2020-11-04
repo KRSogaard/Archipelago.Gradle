@@ -1,5 +1,5 @@
 server:
-  port: 8091
+  port: 8092
   error:
     include-stacktrace: never
 
@@ -13,25 +13,9 @@ spring:
         jwt:
           issuer-uri: https://dev-1nl95fdx.us.auth0.com/
 
-s3:
-  packages:
-    name: "alpha-archipelago-packages"
-
-
-dynamodb:
-  versionsets:
-    name: "versionsets.alpha"
-    revisions:
-      name: "versionsets.revisions.alpha"
-
-aws:
-  region: "us-west-2"
-  access:
-    id: "AKIARDAF5R4ODZ2LMPNZ"
-    key: "MS7flruyxp3QPlEVEd41NZVDG7WTkkZYBfZjfWEM"
-
 endpoints:
   package-service: "http://localhost:8090"
+  versionset-service: "http://localhost:8091"
 
 oauth:
   client-id: "ImRTxga0z1WT6LSdNMRird9R29QQ8GBn"

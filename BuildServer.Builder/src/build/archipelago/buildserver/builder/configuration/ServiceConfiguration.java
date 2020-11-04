@@ -7,7 +7,7 @@ import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import build.archipelago.versionsetservice.client.rest.RestVersionSetSetServiceClient;
+import build.archipelago.versionsetservice.client.rest.RestVersionSetServiceClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -25,7 +25,7 @@ public class ServiceConfiguration {
 
     @Bean
     public VersionSetServiceClient versionServiceClient(@Value("${services.versionset.url}") String vsEndpoint) {
-        return new RestVersionSetSetServiceClient(vsEndpoint);
+        return new RestVersionSetServiceClient(vsEndpoint);
     }
 
     @Bean
