@@ -1,16 +1,19 @@
 package build.archipelago.maui.commands;
 
-import build.archipelago.maui.Output.OutputWrapper;
+import build.archipelago.maui.core.actions.BaseAction;
+import build.archipelago.maui.core.output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.core.workspace.contexts.WorkspaceContextFactory;
-import build.archipelago.maui.core.workspace.path.MauiPath;
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.path.MauiPath;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
+import java.util.concurrent.Callable;
+
 @Slf4j
 @CommandLine.Command(name = "path", mixinStandardHelpOptions = true, description = "Path")
-public class PathCommand extends BaseCommand {
+public class PathCommand extends BaseAction implements Callable<Integer> {
 
     private MauiPath path;
 
@@ -27,11 +30,11 @@ public class PathCommand extends BaseCommand {
 
     @Override
     public Integer call() throws Exception {
-        if (!requireWorkspace()) {
+        if (!setupWorkspaceContext()) {
             out.error("Was unable to locate the workspace");
             return 1;
         }
-        if (!requirePackage()) {
+        if (!setupPackage()) {
             out.error("Was unable to locate the package");
             return 1;
         }

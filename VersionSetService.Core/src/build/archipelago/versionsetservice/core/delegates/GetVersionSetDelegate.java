@@ -15,10 +15,11 @@ public class GetVersionSetDelegate {
         this.versionSetService = versionSetService;
     }
 
-    public VersionSet getVersionSet(String versionSetName) throws VersionSetDoseNotExistsException {
+    public VersionSet getVersionSet(String accountId, String versionSetName) throws VersionSetDoseNotExistsException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "An account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version Set Name is required");
         Preconditions.checkArgument(NameUtil.validateVersionSetName(versionSetName), "Version set name was invalid");
-        VersionSet vs = versionSetService.get(versionSetName);
+        VersionSet vs = versionSetService.get(accountId, versionSetName);
         if (vs == null) {
             throw new VersionSetDoseNotExistsException(versionSetName);
         }

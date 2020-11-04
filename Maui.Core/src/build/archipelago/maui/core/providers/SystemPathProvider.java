@@ -1,6 +1,6 @@
 package build.archipelago.maui.core.providers;
 
-import build.archipelago.maui.core.workspace.WorkspaceConstants;
+import build.archipelago.maui.common.WorkspaceConstants;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,7 +56,7 @@ public class SystemPathProvider {
     public Path getPackageDir(Path workspaceDir) {
         Preconditions.checkNotNull(workspaceDir);
         Path currentFolder = getCurrentDir();
-        log.trace("Trying to find the package dir startring at \"{}\" with the workspace root being at \"{}\"",
+        log.trace("Trying to find the package dir starting at \"{}\" with the workspace root being at \"{}\"",
                 currentFolder, workspaceDir);
 
         if (!currentFolder.toString().toLowerCase().startsWith(workspaceDir.toString().toLowerCase())) {

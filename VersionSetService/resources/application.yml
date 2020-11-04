@@ -7,6 +7,11 @@ spring:
   jackson:
     mapper:
       accept_case_insensitive_properties: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-1nl95fdx.us.auth0.com/
 
 s3:
   packages:
@@ -19,7 +24,6 @@ dynamodb:
     revisions:
       name: "versionsets.revisions.alpha"
 
-
 aws:
   region: "us-west-2"
   access:
@@ -28,3 +32,8 @@ aws:
 
 endpoints:
   package-service: "http://localhost:8080"
+
+oauth:
+  client-id: "ImRTxga0z1WT6LSdNMRird9R29QQ8GBn"
+  client-secret: "3RjLmcYj1M6jZkEoG6AAMsvtfWkkmt6s3AJgem1xumxcDe_8FVvztwU66D4Maz2M"
+  audience: "http://versionsetservice.archipelago.build"

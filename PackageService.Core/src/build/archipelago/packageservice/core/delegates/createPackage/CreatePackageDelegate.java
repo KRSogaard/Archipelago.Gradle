@@ -15,7 +15,7 @@ public class CreatePackageDelegate {
     public void create(CreatePackageDelegateRequest request) throws PackageExistsException {
         request.validate();
 
-        packageData.createPackage(CreatePackageModel.builder()
+        packageData.createPackage(request.getAccountId(), CreatePackageModel.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .build());

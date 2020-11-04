@@ -15,8 +15,8 @@ public class GetPackageBuildsDelegate {
         this.packageData = packageData;
     }
 
-    public ImmutableList<VersionBuildDetails> get(ArchipelagoPackage pkg) {
-        log.info("Get builds for package: {}", pkg);
-        return packageData.getPackageVersionBuilds(pkg);
+    public ImmutableList<VersionBuildDetails> get(String accountId, ArchipelagoPackage pkg) {
+        log.info("Get builds for package: {}, account: {}", pkg, accountId);
+        return packageData.getPackageVersionBuilds(accountId, pkg);
     }
 }

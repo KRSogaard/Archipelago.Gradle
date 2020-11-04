@@ -1,145 +1,206 @@
 package build.archipelago.versionsetservice.client.rest;
 
 import build.archipelago.common.*;
+import build.archipelago.common.clients.rest.*;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.*;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import build.archipelago.versionsetservice.client.model.CreateVersionSetRequest;
+import build.archipelago.versionsetservice.client.models.CreateVersionSetRequest;
 import build.archipelago.versionsetservice.client.rest.models.*;
 import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
-import org.springframework.web.client.*;
-
+import java.io.IOException;
+import java.net.http.*;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class RestVersionSetSetServiceClient implements VersionSetServiceClient {
+public class RestVersionSetSetServiceClient extends OAuthRestClient implements VersionSetServiceClient {
 
-    private RestTemplate restTemplate;
+    private static final String OAUTH2_AUDIENCE = "http://versionsetservice.archipelago.build";
+    private static final String OAUTH2_TOKENURL = "https://dev-1nl95fdx.us.auth0.com/oauth/token";
     private String endpoint;
 
-    public RestVersionSetSetServiceClient(String endpoint) {
-        restTemplate = new RestTemplate();
-        if (endpoint.endsWith("/")) {
-            this.endpoint = endpoint.substring(0, endpoint.length() - 2);
-        } else {
-            this.endpoint = endpoint;
-        }
+    public RestVersionSetSetServiceClient(String endpoint, String clientId, String clientSecret) {
+        super(endpoint, OAUTH2_TOKENURL, clientId, clientSecret, OAUTH2_AUDIENCE);
     }
 
     @Override
-    public void createVersionSet(CreateVersionSetRequest request)
+    public void createVersionSet(String accountId, CreateVersionSetRequest request)
             throws VersionSetExistsException, VersionSetDoseNotExistsException, PackageNotFoundException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkNotNull(request);
         request.validate();
 
-        RestCreateVersionSetRequest restRequset = new RestCreateVersionSetRequest(
+        RestCreateVersionSetRequest restRequest = new RestCreateVersionSetRequest(
                 request.getName(),
                 request.getTargets().stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()),
                 request.getParent() != null && request.getParent().isPresent() ? request.getParent().get() : null
         );
 
+        HttpResponse<Void> httpResponse;
         try {
-            restTemplate.postForEntity(endpoint + "/version-sets", restRequset, ResponseEntity.class);
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.CONFLICT.equals(exp.getStatusCode())) {
+            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-sets")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
+                    .build();
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.discarding());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                break;
+            case 409: // Conflict
                 throw new VersionSetExistsException(request.getName());
-            } else if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
+            case 404: // Not found
                 if (request.getParent() == null || request.getParent().isEmpty()) {
                     log.error("Create version set returned version set not found status code, " +
-                            "but no parent this should not happen.", exp);
-                    throw new RuntimeException(exp);
+                            "but no parent this should not happen.");
+                    throw new RuntimeException("Create version set returned version set not found status code, " +
+                            "but no parent this should not happen.");
                 }
                 throw new VersionSetDoseNotExistsException(request.getParent().get());
-            } else if (HttpStatus.NOT_ACCEPTABLE.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(exp.getMessage());
-            }
-            throw new RuntimeException("Was unable to create the version set", exp);
+            case 406: // Not acceptable
+                if (request.getParent() != null && request.getParent().isPresent()) {
+                    throw new PackageNotFoundException(request.getParent().get());
+                }
+                throw new RuntimeException("Got not acceptable, but not parent was requested");
+            default:
+                throw new RuntimeException("Was unable to create the version set with status code " + httpResponse.statusCode());
         }
     }
 
     @Override
-    public String createVersionRevision(String versionSetName, List<ArchipelagoBuiltPackage> packages)
+    public String createVersionRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages)
             throws VersionSetDoseNotExistsException, MissingTargetPackageException, PackageNotFoundException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
         Preconditions.checkArgument(packages != null && packages.size() > 0, "Packages are required");
 
-        RestCreateVersionSetRevisionRequest restRequset = new RestCreateVersionSetRevisionRequest(
+        RestCreateVersionSetRevisionRequest restRequest = new RestCreateVersionSetRevisionRequest(
                 packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList())
         );
 
+        HttpResponse<String> httpResponse;
         try {
-            RestCreateVersionSetRevisionResponse response = restTemplate.postForObject(
-                    endpoint + "/version-sets/" + versionSetName, restRequset,
-                    RestCreateVersionSetRevisionResponse.class);
-
-            return response.getRevisionId();
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
+            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-sets/" + versionSetName)
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
+                    .build();
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                try {
+                    RestCreateVersionSetRevisionResponse response = objectMapper.readValue(httpResponse.body(), RestCreateVersionSetRevisionResponse.class);
+                    return response.getRevisionId();
+                } catch (IOException e) {
+                    log.error(String.format("Was unable to parse the string \"%s\" as a RestCreateVersionSetRevisionResponse object", httpResponse.body()), e);
+                    throw new RuntimeException("Was unable to parse the object as RestCreateVersionSetRevisionResponse", e);
+                }
+            case 404: // Not found
                 throw new VersionSetDoseNotExistsException(versionSetName);
-            } else if (HttpStatus.NOT_ACCEPTABLE.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(exp.getMessage());
-            } else if (HttpStatus.PRECONDITION_FAILED.equals(exp.getStatusCode())) {
+            case 406: // Not acceptable
+                throw new PackageNotFoundException(httpResponse.body());
+            case 412: // PRECONDITION FAILED
                 throw new MissingTargetPackageException();
-            }
-            throw new RuntimeException("Was unable to create the version set revision", exp);
+            default:
+                throw new RuntimeException("Was unable to create the version set revision with status code " + httpResponse.statusCode());
         }
     }
 
     @Override
-    public VersionSet getVersionSet(String versionSetName) throws VersionSetDoseNotExistsException {
+    public VersionSet getVersionSet(String accountId, String versionSetName) throws VersionSetDoseNotExistsException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
 
+        RestVersionSetResponse response;
+        HttpResponse<String> httpResponse;
         try {
-            String url = String.format("%s//version-sets/%s", endpoint, versionSetName);
-            RestVersionSetResponse response = restTemplate.getForObject(url, RestVersionSetResponse.class);
-
-            return VersionSet.builder()
-                    .name(response.getName())
-                    .created(Instant.ofEpochMilli(response.getCreated()))
-                    .parent(response.getParent())
-                    .targets(response.getTargets().stream().map(ArchipelagoPackage::parse).collect(Collectors.toList()))
-                    .revisions(response.getRevisions().stream().map(x ->
-                            Revision.builder()
-                            .revisionId(x.getRevisionId())
-                            .created(Instant.ofEpochMilli(x.getCreated()))
-                            .build()).collect(Collectors.toList()))
-                    .latestRevision(response.getLatestRevision())
-                    .latestRevisionCreated(response.getLatestRevisionCreated() != null ?
-                            Instant.ofEpochMilli(response.getLatestRevisionCreated()) :
-                            null)
+            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-sets/" + versionSetName)
+                    .GET()
                     .build();
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new VersionSetDoseNotExistsException(versionSetName);
-            }
-            throw new RuntimeException("Was unable to fetch version set " + versionSetName, exp);
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-    }
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                try {
+                    response = objectMapper.readValue(httpResponse.body(), RestVersionSetResponse.class);
+                } catch (IOException e) {
+                    log.error(String.format("Failed to parse the string \"%s\" as a RestVersionSetResponse object", httpResponse.body()), e);
+                    throw new RuntimeException("Failed to parse RestVersionSetResponse", e);
+                }
+                break;
+            case 404: // Not found
+                throw new VersionSetDoseNotExistsException(versionSetName);
+            default:
+                throw new RuntimeException("Was unable to create the version set revision with status code " + httpResponse.statusCode());
+        }
+
+        return VersionSet.builder()
+                .name(response.getName())
+                .created(Instant.ofEpochMilli(response.getCreated()))
+                .parent(response.getParent())
+                .targets(response.getTargets().stream().map(ArchipelagoPackage::parse).collect(Collectors.toList()))
+                .revisions(response.getRevisions().stream().map(x ->
+                        Revision.builder()
+                        .revisionId(x.getRevisionId())
+                        .created(Instant.ofEpochMilli(x.getCreated()))
+                        .build()).collect(Collectors.toList()))
+                .latestRevision(response.getLatestRevision())
+                .latestRevisionCreated(response.getLatestRevisionCreated() != null ?
+                        Instant.ofEpochMilli(response.getLatestRevisionCreated()) :
+                        null)
+                .build();
+}
 
     @Override
-    public VersionSetRevision getVersionSetPackages(String versionSetName, String revisionId) throws VersionSetDoseNotExistsException {
+    public VersionSetRevision getVersionSetPackages(String accountId, String versionSetName, String revisionId) throws VersionSetDoseNotExistsException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(revisionId), "Version set revision is required");
 
-
+        RestVersionSetRevisionResponse response;
+        HttpResponse<String> httpResponse;
         try {
-            String url = String.format("%s//version-sets/%s/%s", endpoint, versionSetName, revisionId);
-            RestVersionSetRevisionResponse response = restTemplate.getForObject(url, RestVersionSetRevisionResponse.class);
-
-            return VersionSetRevision.builder()
-                    .created(Instant.ofEpochMilli(response.getCreated()))
-                    .packages(response.getPackages().stream().map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList()))
+            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-sets/" + versionSetName + "/" + revisionId)
+                    .GET()
                     .build();
-
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new VersionSetDoseNotExistsException(versionSetName);
-            }
-            throw new RuntimeException("Was unable to fetch version set " + versionSetName, exp);
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                try {
+                    response = objectMapper.readValue(httpResponse.body(), RestVersionSetRevisionResponse.class);
+                } catch (IOException e) {
+                    log.error(String.format("Failed to parse the string \"%s\" as a RestVersionSetRevisionResponse object", httpResponse.body()), e);
+                    throw new RuntimeException("Failed to parse RestVersionSetRevisionResponse", e);
+                }
+                break;
+            case 404: // Not found
+                throw new VersionSetDoseNotExistsException(versionSetName);
+            default:
+                throw new RuntimeException("Was unable to create the version set revision with status code " + httpResponse.statusCode());
+        }
+
+        return VersionSetRevision.builder()
+                .created(Instant.ofEpochMilli(response.getCreated()))
+                .packages(response.getPackages().stream().map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList()))
+                .build();
     }
 }

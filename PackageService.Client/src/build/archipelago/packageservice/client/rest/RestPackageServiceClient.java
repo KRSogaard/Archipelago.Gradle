@@ -1,40 +1,34 @@
 package build.archipelago.packageservice.client.rest;
 
 import build.archipelago.common.*;
+import build.archipelago.common.clients.rest.*;
 import build.archipelago.common.exceptions.*;
-import build.archipelago.packageservice.client.PackageServiceClient;
+import build.archipelago.packageservice.client.*;
 import build.archipelago.packageservice.client.models.*;
 import build.archipelago.packageservice.client.rest.models.*;
 import com.google.common.base.*;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.*;
-import org.springframework.util.*;
-import org.springframework.web.client.*;
 import java.io.IOException;
+import java.net.*;
+import java.net.http.*;
 import java.nio.file.*;
 import java.time.Instant;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class RestPackageServiceClient implements PackageServiceClient {
+public class RestPackageServiceClient extends OAuthRestClient implements PackageServiceClient {
 
-    private RestTemplate restTemplate;
-    private String endpoint;
+    private static final String OAUTH2_AUDIENCE = "http://packageservice.archipelago.build";
+    private static final String OAUTH2_TOKENURL = "https://dev-1nl95fdx.us.auth0.com/oauth/token";
 
-    public RestPackageServiceClient(String endpoint) {
-        restTemplate = new RestTemplate();
-        if (endpoint.endsWith("/")) {
-            this.endpoint = endpoint.substring(0, endpoint.length() - 2);
-        } else {
-            this.endpoint = endpoint;
-        }
+    public RestPackageServiceClient(String endpoint, String clientId, String clientSecret) {
+        super(endpoint, OAUTH2_TOKENURL, clientId, clientSecret, OAUTH2_AUDIENCE);
     }
 
     @Override
-    public void createPackage(CreatePackageRequest request) throws PackageExistsException {
+    public void createPackage(String accountId, CreatePackageRequest request) throws PackageExistsException, UnauthorizedException {
         Preconditions.checkNotNull(request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getDescription()));
@@ -44,214 +38,302 @@ public class RestPackageServiceClient implements PackageServiceClient {
                 request.getDescription()
         );
 
+        HttpResponse<String> response;
         try {
-            restTemplate.postForEntity(endpoint + "/package", restRequest, ResponseEntity.class);
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.CONFLICT.equals(exp.getStatusCode())) {
+            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/package")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
+                    .header("accept", "application/json")
+                    .build();
+            response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        switch (response.statusCode()) {
+            case 409: // Conflict
                 throw new PackageExistsException(request.getName());
-            }
-            throw new RuntimeException("Was unable to create the package", exp);
+            case 200: // Ok
+                return;
+            default:
+                throw new RuntimeException("Unknown response " + response.statusCode());
         }
     }
 
     @Override
-    public GetPackageResponse getPackage(String name) throws PackageNotFoundException {
+    public GetPackageResponse getPackage(String accountId, String name) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
+        RestGetPackageResponse response;
+        HttpResponse<String> restResponse;
         try {
-            RestGetPackageResponse response = restTemplate.getForObject(endpoint + "/package/" + name,
-                    RestGetPackageResponse.class);
-
-            ImmutableList.Builder<GetPackageResponse.Version> versions = ImmutableList.builder();
-            response.getVersions().forEach(x -> versions.add(new GetPackageResponse.Version(
-                    x.getVersion(), x.getLatestBuildHash(), Instant.ofEpochMilli(x.getLatestBuildTime())
-            )));
-
-            return GetPackageResponse.builder()
-                    .name(response.getName())
-                    .description(response.getDescription())
-                    .created(Instant.ofEpochMilli(response.getCreated()))
-                    .versions(versions.build())
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + name)
+                    .GET()
                     .build();
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(name);
-            }
-            throw new RuntimeException("Was unable to fetch package " + name, exp);
+
+            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        response = validateResponse(restResponse, name, RestGetPackageResponse.class);
+
+        ImmutableList.Builder<GetPackageResponse.Version> versions = ImmutableList.builder();
+        response.getVersions().forEach(x -> versions.add(new GetPackageResponse.Version(
+                x.getVersion(), x.getLatestBuildHash(), Instant.ofEpochMilli(x.getLatestBuildTime())
+        )));
+
+        return GetPackageResponse.builder()
+                .name(response.getName())
+                .description(response.getDescription())
+                .created(Instant.ofEpochMilli(response.getCreated()))
+                .versions(versions.build())
+                .build();
     }
 
     @Override
-    public PackageBuildsResponse getPackageBuilds(ArchipelagoPackage pkg) throws PackageNotFoundException {
+    public PackageBuildsResponse getPackageBuilds(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkNotNull(pkg);
 
+        RestPackageBuildsResponse response;
+        HttpResponse<String> restResponse;
         try {
-            RestPackageBuildsResponse response = restTemplate.getForObject(endpoint +
-                            "/package/" + pkg.getName() + "/" + pkg.getVersion(),
-                    RestPackageBuildsResponse.class);
-
-            ImmutableList.Builder<PackageBuildsResponse.Build> builds = ImmutableList.builder();
-            response.getBuilds().forEach(x -> builds.add(new PackageBuildsResponse.Build(
-                    x.getHash(), Instant.ofEpochMilli(x.getCreated())
-            )));
-
-            return PackageBuildsResponse.builder()
-                    .builds(builds.build())
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + pkg.getName() + "/" + pkg.getVersion())
+                    .GET()
                     .build();
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(pkg);
-            }
-            throw new RuntimeException("Was unable to fetch package " + pkg.getNameVersion(), exp);
+            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        response = validateResponse(restResponse, pkg.toString(), RestPackageBuildsResponse.class);
+
+        ImmutableList.Builder<PackageBuildsResponse.Build> builds = ImmutableList.builder();
+        response.getBuilds().forEach(x -> builds.add(new PackageBuildsResponse.Build(
+                x.getHash(), Instant.ofEpochMilli(x.getCreated())
+        )));
+
+        return PackageBuildsResponse.builder()
+                .builds(builds.build())
+                .build();
     }
 
     @Override
-    public GetPackageBuildResponse getPackageBuild(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
+    public GetPackageBuildResponse getPackageBuild(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkNotNull(pkg);
 
+        RestGetPackageBuildResponse response;
+        HttpResponse<String> restResponse;
         try {
-            log.info("Calling Url: " + endpoint +
-                    "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash());
-            RestGetPackageBuildResponse response = restTemplate.getForObject(endpoint +
-                            "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash(),
-                    RestGetPackageBuildResponse.class);
-
-            return GetPackageBuildResponse.builder()
-                    .hash(response.getHash())
-                    .created(Instant.ofEpochMilli(response.getCreated()))
-                    .config(response.getConfig())
-                    .gitCommit(response.getGitCommit())
-                    .gitBranch(response.getGitBranch())
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
+                    .GET()
                     .build();
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(pkg);
-            }
-            throw new RuntimeException("Was unable to fetch package " + pkg.toString(), exp);
+            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        response = validateResponse(restResponse, pkg.toString(), RestGetPackageBuildResponse.class);
+
+        return GetPackageBuildResponse.builder()
+                .hash(response.getHash())
+                .created(Instant.ofEpochMilli(response.getCreated()))
+                .config(response.getConfig())
+                .gitCommit(response.getGitCommit())
+                .gitBranch(response.getGitBranch())
+                .build();
     }
 
     @Override
-    public ArchipelagoBuiltPackage getPackageByGit(String packageName, String branch, String commit) throws PackageNotFoundException {
+    public ArchipelagoBuiltPackage getPackageByGit(String accountId, String packageName, String branch, String commit) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageName));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(branch));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(commit));
 
+        ArchipelagoBuiltPackageResponse response;
+        HttpResponse<String> restResponse;
         try {
-            String url = endpoint +
-                    "/package/" + packageName + "/git/" + branch + "/" + commit;
-            log.info("Calling Url: " + url);
-            ArchipelagoBuiltPackageResponse response = restTemplate.getForObject(url,
-                    ArchipelagoBuiltPackageResponse.class);
-
-            return new ArchipelagoBuiltPackage(response.getName(), response.getVersion(), response.getHash());
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(packageName);
-            }
-            throw new RuntimeException("Was unable to fetch package " + packageName + " from git " + branch + "/" + commit, exp);
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + packageName + "/git/" + branch + "/" + commit)
+                    .GET()
+                    .build();
+            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        response = validateResponse(restResponse, packageName + " (B: " + branch +", C:" + commit + ")",
+                ArchipelagoBuiltPackageResponse.class);
+
+        return new ArchipelagoBuiltPackage(response.getName(), response.getVersion(), response.getHash());
     }
 
     @Override
-    public PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(List<ArchipelagoPackage> packages) {
+    public PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(String accountId, List<ArchipelagoPackage> packages) throws UnauthorizedException {
         Preconditions.checkNotNull(packages);
         Preconditions.checkArgument(packages.size() > 0);
 
+        RestVerificationResponse response;
         RestVerificationRequest restRequest = new RestVerificationRequest(
                 packages.stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()));
-
+        HttpResponse<String> restResponse;
         try {
-            RestVerificationResponse res = restTemplate.postForObject(endpoint + "/package/verify-packages",
-                    restRequest, RestVerificationResponse.class);
-
-            return PackageVerificationResult.<ArchipelagoPackage>builder()
-                    .missingPackages(ImmutableList.copyOf(
-                            res.getMissing().stream().map(ArchipelagoPackage::parse).collect(Collectors.toList())))
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/verify-packages")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
-        } catch (HttpClientErrorException exp) {
-            throw new RuntimeException("Was unable to verify packages", exp);
+            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        switch (restResponse.statusCode()) {
+            case 200: // Ok
+                try {
+                    response = objectMapper.readValue(restResponse.body(), RestVerificationResponse.class);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
+            default:
+                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+        }
+
+        return PackageVerificationResult.<ArchipelagoPackage>builder()
+                .missingPackages(ImmutableList.copyOf(
+                        response.getMissing().stream().map(ArchipelagoPackage::parse).collect(Collectors.toList())))
+                .build();
     }
 
     @Override
-    public PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(List<ArchipelagoBuiltPackage> packages) {
+    public PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(String accountId, List<ArchipelagoBuiltPackage> packages) throws UnauthorizedException {
         Preconditions.checkNotNull(packages);
         Preconditions.checkArgument(packages.size() > 0);
 
+        RestVerificationResponse response;
         RestVerificationRequest restRequest = new RestVerificationRequest(
                 packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList()));
-
+        HttpResponse<String> restResponse;
         try {
-            RestVerificationResponse res = restTemplate.postForObject(endpoint + "/package/verify-builds",
-                    restRequest, RestVerificationResponse.class);
-
-            return PackageVerificationResult.<ArchipelagoBuiltPackage>builder()
-                    .missingPackages(ImmutableList.copyOf(
-                            res.getMissing().stream().map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList())))
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/verify-builds")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
-        } catch (HttpClientErrorException exp) {
-            throw new RuntimeException("Was unable to verify packages", exp);
+            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        switch (restResponse.statusCode()) {
+            case 200: // Ok
+                try {
+                    response = objectMapper.readValue(restResponse.body(), RestVerificationResponse.class);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
+            default:
+                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+        }
+
+        return PackageVerificationResult.<ArchipelagoBuiltPackage>builder()
+                .missingPackages(ImmutableList.copyOf(
+                        response.getMissing().stream().map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList())))
+                .build();
     }
 
     @Override
-    public String uploadBuiltArtifact(UploadPackageRequest request, Path file) throws PackageNotFoundException {
+    public String uploadBuiltArtifact(String accountId, UploadPackageRequest request, Path file) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkNotNull(request);
         Preconditions.checkNotNull(request.getPkg());
         Preconditions.checkNotNull(file);
         Preconditions.checkArgument(Files.exists(file), "File did not exists");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        MultiPartBodyPublisher publisher = new MultiPartBodyPublisher()
+                .addPart("buildArtifact", file)
+                .addPart("config", request.getConfig())
+                .addPart("gitCommit", request.getGitCommit())
+                .addPart("gitBranch", request.getGitBranch());
 
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("buildArtifact", new FileSystemResource(file));
-        body.add("config", request.getConfig());
-        body.add("gitCommit", request.getGitCommit());
-        body.add("gitBranch", request.getGitBranch());
-
-        String url = String.format("%s/artifact/%s/%s",
-                endpoint, request.getPkg().getName(), request.getPkg().getVersion());
+        RestArtifactUploadResponse response;
+        HttpResponse<String> restResponse;
         try {
-            RestArtifactUploadResponse response = restTemplate.postForObject(url,
-                    new HttpEntity<>(body, headers), RestArtifactUploadResponse.class);
-            return response.getHash();
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(request.getPkg());
-            }
-            throw new RuntimeException("Was unable to upload package " + request.getPkg(), exp);
+            String url = baseUrl + "/account/" + accountId + "/artifact/" + request.getPkg().getName() + "/" + request.getPkg().getVersion();
+            HttpRequest restTequest = addOauth(HttpRequest.newBuilder(new URI(url)))
+                    .header("content-type", "multipart/form-data; boundary=" + publisher.getBoundary())
+                    .header("accept", "application/json")
+                    .POST(publisher.build())
+                    .build();
+            restResponse = client.send(restTequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        response = validateResponse(restResponse, request.getPkg().toString(), RestArtifactUploadResponse.class);
+        return response.getHash();
     }
 
     @Override
-    public Path getBuildArtifact(ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, IOException {
+    public Path getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkNotNull(pkg, "Name and Version is required");
         Preconditions.checkNotNull(directory, "A save location is required");
 
+        Path filePath = Paths.get(
+                directory.toString(),
+                String.format("%s.zip", java.util.UUID.randomUUID().toString()));
+
         if (!Files.isDirectory(directory)) {
             log.info("Creating directory \"%s\"", directory.toString());
-            Files.createDirectories(directory);
-        }
-
-        String url = String.format("%s/artifact/%s/%s/%s",
-                endpoint, pkg.getName(), pkg.getVersion(), pkg.getHash());
-        try {
-            byte[] data = restTemplate.getForObject(url, byte[].class);
-            Path filePath = Paths.get(
-                    directory.toString(),
-                    String.format("%s.zip", java.util.UUID.randomUUID().toString()));
-            log.debug("writing {} byes to \"{}\"", data.length, filePath);
-            Files.write(filePath, data);
-            return filePath;
-        } catch (HttpClientErrorException exp) {
-            if (HttpStatus.NOT_FOUND.equals(exp.getStatusCode())) {
-                throw new PackageNotFoundException(pkg);
+            try {
+                Files.createDirectories(directory);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            throw new RuntimeException("Was unable to fetch artifact for package " + pkg, exp);
         }
+        HttpResponse<Path> restResponse;
+        try {
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/artifact/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
+                    .GET()
+                    .build();
+            restResponse = client.send(request, HttpResponse.BodyHandlers.ofFile(filePath));
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        switch (restResponse.statusCode()) {
+            case 404: // Not found
+                throw new PackageNotFoundException(pkg);
+            case 200: // Ok
+                return restResponse.body();
+            default:
+                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+        }
+    }
 
+    private <T> T validateResponse(HttpResponse<String> response, String packageName, Function<String, T> onOk) throws PackageNotFoundException {
+
+        switch (response.statusCode()) {
+            case 404: // Not found
+                throw new PackageNotFoundException(packageName);
+            case 200: // Ok
+                return onOk.apply(response.body());
+            default:
+                throw new RuntimeException("Unknown response " + response.statusCode());
+        }
+    }
+    private <T> T validateResponse(HttpResponse<String> response, String packageName, Class<T> outputCalls) throws PackageNotFoundException {
+        return validateResponse(response, packageName, s -> {
+            try {
+                return objectMapper.readValue(response.body(), outputCalls);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

@@ -15,7 +15,8 @@ import java.util.concurrent.Callable;
         PathCommand.class,
         RecursiveCommand.class,
         CleanCommand.class,
-        VersionCommand.class})
+        VersionCommand.class,
+        AuthCommand.class})
 public class MauiCommand  implements Callable<Integer> {
 
     @Override

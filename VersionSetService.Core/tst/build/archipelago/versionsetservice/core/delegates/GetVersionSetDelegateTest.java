@@ -47,7 +47,7 @@ public class GetVersionSetDelegateTest {
                 .latestRevisionCreated(revisionDate)
                 .latestRevision(revisionId)
                 .build();
-        when(versionSetService.get(eq(vsName))).thenReturn(vs);
+        when(versionSetService.get(accountId, eq(vsName))).thenReturn(vs);
         VersionSet r = delegate.getVersionSet(vsName);
         // We validate the data instead of the VS ref as we want to allow the delegate to create a new object
 
@@ -73,7 +73,7 @@ public class GetVersionSetDelegateTest {
     @Test(expected = VersionSetDoseNotExistsException.class)
     public void getVersionSetThatDoseNotExists() throws VersionSetDoseNotExistsException {
         String vsName = "TestVS-master";
-        when(versionSetService.get(eq(vsName))).thenReturn(null);
+        when(versionSetService.get(accountId, eq(vsName))).thenReturn(null);
         delegate.getVersionSet(vsName);
     }
 }

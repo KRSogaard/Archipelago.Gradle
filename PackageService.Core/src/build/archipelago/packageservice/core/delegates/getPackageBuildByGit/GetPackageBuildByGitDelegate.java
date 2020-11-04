@@ -13,7 +13,7 @@ public class GetPackageBuildByGitDelegate {
         this.packageData = packageData;
     }
 
-    public ArchipelagoBuiltPackage get(String packageName, String branch, String gitCommit) throws PackageNotFoundException {
-        return packageData.getBuildPackageByGit(packageName, branch, gitCommit);
+    public ArchipelagoBuiltPackage get(String accountId, String packageName, String branch, String gitCommit) throws PackageNotFoundException {
+        return packageData.getBuildPackageByGit(accountId, packageName, branch, gitCommit);
     }
 }

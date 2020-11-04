@@ -34,6 +34,7 @@ public class ApplicationModule extends AbstractModule {
         }
 
         install(new ServiceConfiguration());
+        install(new ActionConfiguration());
         install(new CommandConfiguration());
     }
 

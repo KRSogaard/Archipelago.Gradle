@@ -2,7 +2,7 @@ package build.archipelago.versionsetservice.core.delegates;
 
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.*;
-import build.archipelago.packageservice.client.PackageServiceClient;
+import build.archipelago.packageservice.client.*;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
 import build.archipelago.versionsetservice.core.utils.NameUtil;
@@ -22,18 +22,19 @@ public class CreateVersionSetDelegate {
         this.packageServiceClient = packageServiceClient;
     }
 
-    public void create(String name, List<ArchipelagoPackage> targets, Optional<String> parent)
-            throws VersionSetExistsException, VersionSetDoseNotExistsException, PackageNotFoundException {
+    public void create(String accountId, String name, List<ArchipelagoPackage> targets, Optional<String> parent)
+            throws VersionSetExistsException, PackageNotFoundException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "An account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
         Preconditions.checkArgument(NameUtil.validateVersionSetName(name), "Version set name was invalid");
         Preconditions.checkNotNull(targets, "At least 1 target is required");
         Preconditions.checkArgument(targets.size() > 0, "At least 1 target is required");
 
-        if (versionSetService.get(name) != null) {
+        if (versionSetService.get(accountId, name) != null) {
             throw new VersionSetExistsException(name);
         }
 
-        PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(targets);
+        PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(accountId, targets);
         if (!targetsVerified.isValid()) {
             throw new PackageNotFoundException(targets);
         }
@@ -45,9 +46,9 @@ public class CreateVersionSetDelegate {
                     "Parent name was not valid");
 
             // If the parent version set dose not exists this will throw an exception
-            versionSetService.get(parent.get());
+            versionSetService.get(accountId, parent.get());
         }
 
-        versionSetService.create(name, targets, parent);
+        versionSetService.create(accountId, name, targets, parent);
     }
 }

@@ -27,8 +27,8 @@ public class UploadBuildArtifactDelegate {
         String hash = UUID.randomUUID().toString().split("-")[0];
 
         ArchipelagoBuiltPackage pkg = new ArchipelagoBuiltPackage(request.getPkg(), hash);
-        packageData.createBuild(pkg, request.getConfig(), request.getGitCommit(), request.getGitBranch());
-        packageStorage.upload(pkg, request.getBuildArtifact());
+        packageData.createBuild(request.getAccountId(), pkg, request.getConfig(), request.getGitCommit(), request.getGitBranch());
+        packageStorage.upload(request.getAccountId(), pkg, request.getBuildArtifact());
 
         return hash;
     }
