@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/account/{accountId}/version-sets")
+@RequestMapping("/account/{accountId}/version-set")
 @Slf4j
 public class VersionSetController {
 

@@ -53,6 +53,8 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
         switch (httpResponse.statusCode()) {
             case 200: // Ok
                 break;
+            case 401:
+                throw new UnauthorizedException();
             case 409: // Conflict
                 throw new VersionSetExistsException(request.getName());
             case 404: // Not found
@@ -86,7 +88,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
 
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-sets/" + versionSetName)
+            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName)
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -104,6 +106,8 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     log.error(String.format("Was unable to parse the string \"%s\" as a RestCreateVersionSetRevisionResponse object", httpResponse.body()), e);
                     throw new RuntimeException("Was unable to parse the object as RestCreateVersionSetRevisionResponse", e);
                 }
+            case 401:
+                throw new UnauthorizedException();
             case 404: // Not found
                 throw new VersionSetDoseNotExistsException(versionSetName);
             case 406: // Not acceptable
@@ -123,7 +127,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
         RestVersionSetResponse response;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-sets/" + versionSetName)
+            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName)
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -164,7 +168,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                         Instant.ofEpochMilli(response.getLatestRevisionCreated()) :
                         null)
                 .build();
-}
+    }
 
     @Override
     public VersionSetRevision getVersionSetPackages(String accountId, String versionSetName, String revisionId) throws VersionSetDoseNotExistsException {
@@ -175,7 +179,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
         RestVersionSetRevisionResponse response;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-sets/" + versionSetName + "/" + revisionId)
+            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName + "/" + revisionId)
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -194,6 +198,8 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     throw new RuntimeException("Failed to parse RestVersionSetRevisionResponse", e);
                 }
                 break;
+            case 401:
+                throw new UnauthorizedException();
             case 404: // Not found
                 throw new VersionSetDoseNotExistsException(versionSetName);
             default:

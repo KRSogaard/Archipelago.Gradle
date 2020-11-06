@@ -29,6 +29,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
     @Override
     public void createPackage(String accountId, CreatePackageRequest request) throws PackageExistsException, UnauthorizedException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getDescription()));
@@ -52,6 +53,8 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         }
 
         switch (response.statusCode()) {
+            case 401:
+                throw new UnauthorizedException();
             case 409: // Conflict
                 throw new PackageExistsException(request.getName());
             case 200: // Ok
@@ -192,6 +195,8 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             throw new RuntimeException(e);
         }
         switch (restResponse.statusCode()) {
+            case 401:
+                throw new UnauthorizedException();
             case 200: // Ok
                 try {
                     response = objectMapper.readValue(restResponse.body(), RestVerificationResponse.class);
@@ -236,6 +241,8 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     throw new RuntimeException(e);
                 }
                 break;
+            case 401:
+                throw new UnauthorizedException();
             default:
                 throw new RuntimeException("Unknown response " + restResponse.statusCode());
         }
@@ -307,6 +314,8 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             throw new RuntimeException(e);
         }
         switch (restResponse.statusCode()) {
+            case 401:
+                throw new UnauthorizedException();
             case 404: // Not found
                 throw new PackageNotFoundException(pkg);
             case 200: // Ok
@@ -319,6 +328,8 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
     private <T> T validateResponse(HttpResponse<String> response, String packageName, Function<String, T> onOk) throws PackageNotFoundException {
 
         switch (response.statusCode()) {
+            case 401:
+                throw new UnauthorizedException();
             case 404: // Not found
                 throw new PackageNotFoundException(packageName);
             case 200: // Ok
