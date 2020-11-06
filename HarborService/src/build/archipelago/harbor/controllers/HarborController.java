@@ -10,7 +10,6 @@ import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.GetPackageBuildResponse;
 import build.archipelago.packageservice.client.models.GetPackageResponse;
-import build.archipelago.packageservice.core.delegates.getBuildArtifact.GetBuildArtifactResponse;
 import build.archipelago.packageservice.models.CreatePackageRequest;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.models.RevisionIdResponse;
@@ -19,22 +18,17 @@ import build.archipelago.versionsetservice.models.VersionSetRevisionResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -50,7 +44,7 @@ public class HarborController {
 
     public HarborController(VersionSetServiceClient versionSetServiceClient,
                             PackageServiceClient packageServiceClient,
-                            Path tempdir) {
+                            @Qualifier("tempDir") Path tempdir) {
         Preconditions.checkNotNull(versionSetServiceClient);
         this.versionSetServiceClient = versionSetServiceClient;
         Preconditions.checkNotNull(packageServiceClient);
@@ -127,7 +121,7 @@ public class HarborController {
     }
 
     @PostMapping("package/")
-    public void createPackage(CreatePackageRequest request) throws PackageExistsException {
+    public void createPackage(@RequestBody CreatePackageRequest request) throws PackageExistsException {
         log.info("Request to create package {} for account {}", request.getName(), accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(request);
@@ -151,7 +145,7 @@ public class HarborController {
     }
 
     @GetMapping("package/{name}")
-    public GetPackageResponse getPackage(String packageName) throws PackageNotFoundException {
+    public GetPackageResponse getPackage(@PathVariable("name") String packageName) throws PackageNotFoundException {
         return packageServiceClient.getPackage(accountId, packageName);
     }
 

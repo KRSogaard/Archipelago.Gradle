@@ -1,5 +1,5 @@
 server:
-  port: 8092
+  port: 8093
   error:
     include-stacktrace: never
 
@@ -18,6 +18,5 @@ endpoints:
   versionset-service: "http://localhost:8091"
 
 oauth:
-  client-id: "ImRTxga0z1WT6LSdNMRird9R29QQ8GBn"
-  client-secret: "3RjLmcYj1M6jZkEoG6AAMsvtfWkkmt6s3AJgem1xumxcDe_8FVvztwU66D4Maz2M"
-  audience: "http://versionsetservice.archipelago.build"
+  client-id: "iijvIrTcYH7CTeBAAA1tycFKjvFvQ7n3"
+  client-secret: "Kvdi9nLapjGVQ4Zt84gVKRNIA0c6Dm7xUpZNNPnCLHaiC-3Cre0tYPizTUX6G7Mf"

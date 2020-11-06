@@ -141,10 +141,12 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     throw new RuntimeException("Failed to parse RestVersionSetResponse", e);
                 }
                 break;
+            case 401:
+                throw new UnauthorizedException();
             case 404: // Not found
                 throw new VersionSetDoseNotExistsException(versionSetName);
             default:
-                throw new RuntimeException("Was unable to create the version set revision with status code " + httpResponse.statusCode());
+                throw new RuntimeException("Was unable to get the version set revision with status code " + httpResponse.statusCode());
         }
 
         return VersionSet.builder()

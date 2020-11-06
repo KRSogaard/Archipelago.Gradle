@@ -11,6 +11,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
+import java.io.IOException;
+import java.nio.file.*;
+
 @Configuration
 @Slf4j
 public class ServiceConfiguration {
@@ -28,9 +31,24 @@ public class ServiceConfiguration {
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public VersionSetServiceClient versionSetService(
-            @Value("${endpoints.package-service}") String vsServiceEndpoint,
+            @Value("${endpoints.versionset-service}") String vsServiceEndpoint,
             @Value("${oauth.client-id}") String clientId,
             @Value("${oauth.client-secret}") String clientSecret) {
         return new RestVersionSetServiceClient(vsServiceEndpoint, clientId, clientSecret);
+    }
+
+    @Bean("tempDir")
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public Path getTempDir() throws IOException {
+        Path buildDir = Paths.get(System.getProperty("user.dir")).resolve("build");
+        if (!Files.exists(buildDir)) {
+            Files.createDirectory(buildDir);
+        }
+        Path tempDir = buildDir.resolve("temp");
+        if (!Files.exists(tempDir)) {
+            Files.createDirectory(tempDir);
+        }
+
+        return tempDir;
     }
 }
