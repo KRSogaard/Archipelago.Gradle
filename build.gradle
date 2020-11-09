@@ -492,7 +492,7 @@ project(':HarborService') {
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
 
-    mainClassName = 'build.archipelago.versionsetservice.Application'
+    mainClassName = 'build.archipelago.harbor.Application'
 
     configurations {
         all {

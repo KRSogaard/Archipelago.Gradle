@@ -14,20 +14,26 @@ public enum DependencyTransversalType {
             DependencyType.getTransitive(),
             DependencyType.getTransitive()),
     LIBRARY("library",
-            true,
+            false,
             ImmutableList.of(DependencyType.LIBRARY),
             ImmutableList.of(DependencyType.LIBRARY, DependencyType.RUNTIME)),
-    BUILD_TOOLS("build-tools",
+    BUILD("build",
             false,
             ImmutableList.of(DependencyType.LIBRARY, DependencyType.BUILD),
             ImmutableList.of(DependencyType.LIBRARY, DependencyType.RUNTIME)),
     TEST("test",
-            true,
+            false,
             ImmutableList.of(DependencyType.LIBRARY, DependencyType.TEST),
             ImmutableList.of(DependencyType.LIBRARY, DependencyType.RUNTIME)),
     RUNTIME("runtime",
-            true,
+            false,
             ImmutableList.of(DependencyType.LIBRARY, DependencyType.RUNTIME),
+            ImmutableList.of(DependencyType.LIBRARY, DependencyType.RUNTIME)),
+
+
+    BUILD_TOOLS("build-tools",
+            false,
+            ImmutableList.of(DependencyType.LIBRARY, DependencyType.BUILD, DependencyType.TEST),
             ImmutableList.of(DependencyType.LIBRARY, DependencyType.RUNTIME));
 
     private String name;

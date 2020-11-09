@@ -5,6 +5,7 @@ import lombok.*;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class OAuthDeviceCodeResponse {
     @JsonProperty("device_code")
     private String deviceCode;
@@ -13,8 +14,8 @@ public class OAuthDeviceCodeResponse {
     @JsonProperty("verification_uri")
     private String verificationUri;
     @JsonProperty("expires_in")
-    private int expiresIn;
-    private int interval;
+    private Integer expiresIn;
+    private Integer interval;
     @JsonProperty("verification_uri_complete")
-    private int verificationUriComplete;
+    private String verificationUriComplete;
 }

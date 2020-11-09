@@ -34,7 +34,7 @@ public class BuildAction extends BaseAction {
             return false;
         }
 
-        List<Path> paths = path.getPaths(workspaceContext, commandPKG, DependencyTransversalType.BUILD_TOOLS, BinRecipe.class).stream()
+        List<Path> paths = path.getPaths(workspaceContext, commandPKG, DependencyTransversalType.BUILD, BinRecipe.class).stream()
                 .map(sp -> Paths.get(sp))
                 .collect(Collectors.toList());
 

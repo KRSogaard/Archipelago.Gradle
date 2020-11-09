@@ -15,14 +15,14 @@
         </Console>
         <RollingFile
                 name="File"
-                fileName="${LOG_DIR}/application.log"
-                filePattern="${LOG_DIR}/archive/application.%d{yyyy-MM-dd-HH}.log.gz"
+                fileName="${LOG_DIR}/harborservice.log"
+                filePattern="${LOG_DIR}/archive/harborservice.%d{yyyy-MM-dd-HH}.log.gz"
                 ignoreExceptions="false">
             <PatternLayout>
                 <Pattern>${LOG_PATTERN}</Pattern>
             </PatternLayout>
             <Policies>
-                <TimeBasedTriggeringPolicy filePattern="${LOG_DIR}/archive/application.%d{yyyy-MM-dd-HH}.log.gz" />
+                <TimeBasedTriggeringPolicy filePattern="${LOG_DIR}/archive/harborservice.%d{yyyy-MM-dd-HH}.log.gz" />
             </Policies>
             <!-- This will store 1 weeks of logs if not removed by other means 24 hours * 7 days -->
             <DefaultRolloverStrategy max="168"/>

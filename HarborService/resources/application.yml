@@ -20,3 +20,4 @@ endpoints:
 oauth:
   client-id: "iijvIrTcYH7CTeBAAA1tycFKjvFvQ7n3"
   client-secret: "Kvdi9nLapjGVQ4Zt84gVKRNIA0c6Dm7xUpZNNPnCLHaiC-3Cre0tYPizTUX6G7Mf"
+  audience: "http://harbor.archipelago.build"

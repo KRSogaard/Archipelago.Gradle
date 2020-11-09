@@ -15,11 +15,13 @@ import build.archipelago.maui.path.recipies.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.*;
 import com.google.inject.name.Named;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
 
+@Slf4j
 public class ServiceConfiguration extends AbstractModule {
 
     @Provides
@@ -40,7 +42,18 @@ public class ServiceConfiguration extends AbstractModule {
         }
 
         ObjectMapper objectMapper = new ObjectMapper();
-        OAuthTokenResponse oauth = objectMapper.readValue(Files.readString(authFile), OAuthTokenResponse.class);
+        OAuthTokenResponse oauth;
+        try {
+            String authFileContent = Files.readString(authFile);
+            oauth = objectMapper.readValue(authFileContent, OAuthTokenResponse.class);
+        } catch (Exception exp) {
+            log.error("The auth file is corrupt: " + Files.readString(authFile));
+            return new UnauthorizedHarborClient();
+        }
+        if (oauth == null) {
+            log.error("The auth file is corrupt: " + Files.readString(authFile));
+            return new UnauthorizedHarborClient();
+        }
         return new RestHarborClient(harborEndpoint, oAuthEndpoint + "/oauth/token", oauth.getAccessToken(), audience);
     }
 

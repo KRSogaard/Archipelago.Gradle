@@ -5,6 +5,7 @@ import lombok.*;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class OAuthTokenResponse {
     @JsonProperty("access_token")
     private String accessToken;

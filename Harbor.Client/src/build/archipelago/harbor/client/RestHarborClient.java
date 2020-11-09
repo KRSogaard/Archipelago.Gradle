@@ -209,12 +209,7 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
 
         switch (restResponse.statusCode()) {
             case 200:
-                try {
-                    return objectMapper.readValue(restResponse.body(), RestGetPackageBuildResponse.class)
-                            .getConfig();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                return restResponse.body();
             case 401:
                 throw new UnauthorizedException();
             case 404: // Conflict

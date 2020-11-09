@@ -51,7 +51,8 @@ public class AuthCommand extends BaseAction implements Callable<Integer> {
 
         out.write("\n");
         out.write("Please login at " + deviceCodeResponse.getVerificationUri());
-        out.write("Your device code is: " + deviceCodeResponse.getDeviceCode());
+        out.write("Your code is: " + deviceCodeResponse.getUserCode());
+        out.write("Or use this link: " + deviceCodeResponse.getVerificationUriComplete());
 
         OAuthTokenResponse tokenResponse = getToken(deviceCodeResponse);
         if (deviceCodeResponse == null) {
@@ -97,6 +98,7 @@ public class AuthCommand extends BaseAction implements Callable<Integer> {
 
         OAuthDeviceCodeResponse response;
         try {
+
             response = objectMapper.readValue(httpResponse.body(), OAuthDeviceCodeResponse.class);
         } catch (IOException e) {
             log.error(String.format("The device key response was not the expected format \"%s\"", httpResponse.body()), e);
