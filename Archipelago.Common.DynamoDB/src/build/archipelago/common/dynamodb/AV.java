@@ -37,6 +37,12 @@ public class AV {
         }
         return parse.apply(map.get(key));
     }
+    public static <T extends Enum<T>> T getEnumOrNull(Map<String, AttributeValue> map, String key, Function<AttributeValue, T> parse) {
+        if (!map.containsKey(key)) {
+            return null;
+        }
+        return parse.apply(map.get(key));
+    }
     public static String getStringOrNull(Map<String, AttributeValue> map, String key) {
         if (!map.containsKey(key)) {
             return null;

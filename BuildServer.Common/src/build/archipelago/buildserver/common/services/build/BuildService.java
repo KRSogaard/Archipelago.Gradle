@@ -10,6 +10,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.google.common.base.*;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.time.Instant;
 import java.util.*;
@@ -42,11 +43,12 @@ public class BuildService {
         this.amazonS3 = amazonS3;
     }
 
-    public String addNewBuildRequest(String versionSet, boolean dryRun, List<BuildPackageDetails> buildPackages) {
+    public String addNewBuildRequest(String accountId, String versionSet, boolean dryRun, List<BuildPackageDetails> buildPackages) {
         String buildId = UUID.randomUUID().toString();
 
         dynamoDB.putItem(new PutItemRequest(buildTable, ImmutableMap.<String, AttributeValue>builder()
                 .put(Constants.ATTRIBUTE_ID, AV.of(buildId))
+                .put(Constants.ATTRIBUTE_ACCOUNT, AV.of(accountId))
                 .put(Constants.ATTRIBUTE_CREATED, AV.of(Instant.now()))
                 .put(Constants.ATTRIBUTE_VERSION_SET, AV.of(versionSet))
                 .put(Constants.ATTRIBUTE_DRY_RUN, AV.of(dryRun))
@@ -75,7 +77,7 @@ public class BuildService {
 
         return ArchipelagoBuild.builder()
                 .buildId(result.getItem().get(Constants.ATTRIBUTE_ID).getS())
-                .account(result.getItem().get(Constants.ATTRIBUTE_ACCOUNT).getS())
+                .accountId(result.getItem().get(Constants.ATTRIBUTE_ACCOUNT).getS())
                 .versionSet(result.getItem().get(Constants.ATTRIBUTE_VERSION_SET).getS())
                 .dryRun(result.getItem().get(Constants.ATTRIBUTE_DRY_RUN).getBOOL())
                 .buildPackages(result.getItem().get(Constants.ATTRIBUTE_BUILD_PACKAGES).getL().stream()
@@ -84,10 +86,14 @@ public class BuildService {
                         .collect(Collectors.toList()))
                 .created(AV.toInstant(result.getItem().get(Constants.ATTRIBUTE_CREATED)))
                 .updated(AV.getOrNull(result.getItem(), Constants.ATTRIBUTE_UPDATED, AV::toInstant))
-                .buildStatus(AV.getOrNull(result.getItem(), Constants.ATTRIBUTE_BUILD_STATUS, av -> BuildStatus.getEnum(av.getS())))
-                .stagePrepare(AV.getOrNull(result.getItem(), Constants.ATTRIBUTE_STAGE_PREPARE, av -> BuildStatus.getEnum(av.getS())))
-                .stagePackages(AV.getOrNull(result.getItem(), Constants.ATTRIBUTE_STAGE_PACKAGES, av -> BuildStatus.getEnum(av.getS())))
-                .stagePublish(AV.getOrNull(result.getItem(), Constants.ATTRIBUTE_STAGE_PUBLISH, av -> BuildStatus.getEnum(av.getS())))
+                .buildStatus(AV.getEnumOrNull(result.getItem(), Constants.ATTRIBUTE_BUILD_STATUS,
+                        (Function<AttributeValue, BuildStatus>) av -> BuildStatus.getEnum(av.getS())))
+                .stagePrepare(AV.getEnumOrNull(result.getItem(), Constants.ATTRIBUTE_STAGE_PREPARE,
+                        (Function<AttributeValue, BuildStatus>) av -> BuildStatus.getEnum(av.getS())))
+                .stagePackages(AV.getEnumOrNull(result.getItem(), Constants.ATTRIBUTE_STAGE_PACKAGES,
+                        (Function<AttributeValue, BuildStatus>) av -> BuildStatus.getEnum(av.getS())))
+                .stagePublish(AV.getEnumOrNull(result.getItem(), Constants.ATTRIBUTE_STAGE_PUBLISH,
+                        (Function<AttributeValue, BuildStatus>) av -> BuildStatus.getEnum(av.getS())))
                 .build();
     }
 
