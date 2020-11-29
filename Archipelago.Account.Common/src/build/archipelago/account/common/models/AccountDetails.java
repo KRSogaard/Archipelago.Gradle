@@ -6,11 +6,7 @@ import lombok.*;
 @Data
 public class AccountDetails {
     private String id;
-    private String name;
     private String codeSource;
-    private String gitHubApi;
-    private String gitHubClientId;
-    private String gitHubClientSecret;
-    private String githubCode;
-    private String gitHubRepo;
+    private String gitHubAccessToken;
+    private String githubAccount;
 }

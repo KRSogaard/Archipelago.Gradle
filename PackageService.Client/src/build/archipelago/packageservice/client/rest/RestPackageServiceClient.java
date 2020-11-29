@@ -66,6 +66,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
     @Override
     public GetPackageResponse getPackage(String accountId, String name) throws PackageNotFoundException, UnauthorizedException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
         RestGetPackageResponse response;
@@ -98,6 +99,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
     @Override
     public PackageBuildsResponse getPackageBuilds(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException, UnauthorizedException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(pkg);
 
         RestPackageBuildsResponse response;
@@ -126,6 +128,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
     @Override
     public GetPackageBuildResponse getPackageBuild(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException, UnauthorizedException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(pkg);
 
         RestGetPackageBuildResponse response;
@@ -153,6 +156,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
     @Override
     public ArchipelagoBuiltPackage getPackageByGit(String accountId, String packageName, String branch, String commit) throws PackageNotFoundException, UnauthorizedException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageName));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(branch));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(commit));
@@ -177,7 +181,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
     @Override
     public PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(String accountId, List<ArchipelagoPackage> packages) throws UnauthorizedException {
-        Preconditions.checkNotNull(packages);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(packages.size() > 0);
 
         RestVerificationResponse response;
@@ -216,6 +220,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
     @Override
     public PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(String accountId, List<ArchipelagoBuiltPackage> packages) throws UnauthorizedException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(packages);
         Preconditions.checkArgument(packages.size() > 0);
 
@@ -255,6 +260,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
     @Override
     public String uploadBuiltArtifact(String accountId, UploadPackageRequest request, Path file) throws PackageNotFoundException, UnauthorizedException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(request);
         Preconditions.checkNotNull(request.getPkg());
         Preconditions.checkNotNull(file);
@@ -287,6 +293,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
     @Override
     public Path getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException, UnauthorizedException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(pkg, "Name and Version is required");
         Preconditions.checkNotNull(directory, "A save location is required");
 

@@ -113,10 +113,18 @@ public class DynamoDbVersionSetService implements VersionSetService {
             throw new VersionSetDoseNotExistsException(versionSetName, revision);
         }
 
+        List<ArchipelagoBuiltPackage> packages = new ArrayList<>();
+        // TODO: This is a bit hacky, clean this up
+        if (result.getItem().get(Keys.PACKAGES) != null &&
+            result.getItem().get(Keys.PACKAGES).getSS() != null &&
+            result.getItem().get(Keys.PACKAGES).getSS().size() > 0) {
+            packages.addAll(result.getItem().get(Keys.PACKAGES).getSS().stream()
+                    .map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList()));
+        }
+
         return VersionSetRevision.builder()
                 .created(AV.toInstant(result.getItem().get(Keys.CREATED)))
-                .packages(result.getItem().get(Keys.PACKAGES).getSS().stream()
-                        .map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList()))
+                .packages(packages)
                 .build();
     }
 

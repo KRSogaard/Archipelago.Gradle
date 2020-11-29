@@ -1,9 +1,13 @@
 package build.archipelago.buildserver.builder.configuration;
 
 import build.archipelago.account.common.AccountService;
-import build.archipelago.buildserver.builder.MauiWrapper;
+import build.archipelago.buildserver.builder.builder.BuilderFactory;
+import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.builder.handlers.*;
 import build.archipelago.buildserver.common.services.build.BuildService;
+import build.archipelago.maui.graph.DependencyGraphGenerator;
+import build.archipelago.maui.path.MauiPath;
+import build.archipelago.maui.path.recipies.*;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
@@ -19,18 +23,23 @@ import org.springframework.context.annotation.*;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.List;
 
 @Configuration
 public class ServiceConfiguration {
 
     @Bean
-    public VersionSetServiceClient versionServiceClient(@Value("${services.versionset.url}") String vsEndpoint) {
-        return new RestVersionSetServiceClient(vsEndpoint);
+    public VersionSetServiceClient versionServiceClient(@Value("${services.versionset.url}") String vsEndpoint,
+                                                        @Value("${oauth.client-id}") String clientId,
+                                                        @Value("${oauth.client-secret}") String clientSecret) {
+        return new RestVersionSetServiceClient(vsEndpoint, clientId, clientSecret);
     }
 
     @Bean
-    public PackageServiceClient packageServiceClient(@Value("${services.packages.url}") String pkgEndpoint) {
-        return new RestPackageServiceClient(pkgEndpoint);
+    public PackageServiceClient packageServiceClient(@Value("${services.packages.url}") String pkgEndpoint,
+                                                     @Value("${oauth.client-id}") String clientId,
+                                                     @Value("${oauth.client-secret}") String clientSecret) {
+        return new RestPackageServiceClient(pkgEndpoint, clientId, clientSecret);
     }
 
     @Bean
@@ -56,27 +65,26 @@ public class ServiceConfiguration {
     }
 
     @Bean
-    public MauiWrapper mauiWrapper(@Value("${workspace.maui}") String mauiPath,
-                                   @Value("${workspace.path}") String workspacePath) throws IOException {
-        Path cachePath = Path.of(workspacePath).resolve("temp");
-        if (!Files.exists(cachePath)) {
-            Files.createDirectory(cachePath);
-        }
-        return new MauiWrapper(mauiPath, cachePath);
-    }
-
-    @Bean
-    public BuildRequestHandler buildRequestHandler(VersionSetServiceClient versionSetServiceClient,
-                                                   PackageServiceClient packageServiceClient,
-                                                   @Value("${workspace.path}") String workspacePath,
-                                                   MauiWrapper mauiWrapper,
-                                                   BuildService buildService,
-                                                   AccountService accountService) throws IOException {
+    public BuilderFactory builderFactory(InternalHarborClientFactory internalHarborClientFactory,
+                                         VersionSetServiceClient versionSetServiceClient,
+                                         PackageServiceClient packageServiceClient,
+                                         BuildService buildService,
+                                         AccountService accountService,
+                                         MauiPath mauiPath,
+                                         @Value("${workspace.path}") String workspacePath) throws IOException {
         Path wsPath = Path.of(workspacePath);
         if (!Files.exists(wsPath) || !Files.isDirectory(wsPath)) {
             Files.createDirectory(wsPath);
         }
-        return new BuildRequestHandler(versionSetServiceClient, packageServiceClient, wsPath, mauiWrapper, buildService, accountService);
+        return new BuilderFactory(internalHarborClientFactory, versionSetServiceClient,
+                packageServiceClient, wsPath,
+                buildService, accountService,
+                mauiPath);
+    }
+
+    @Bean
+    public BuildRequestHandler buildRequestHandler(BuilderFactory builderFactory) {
+        return new BuildRequestHandler(builderFactory);
     }
 
     @Bean
@@ -99,5 +107,25 @@ public class ServiceConfiguration {
         config.setPollers(1);
         config.setMessageFetchSize(1);
         return new SQSConsumer(sqsFactory, config, sqsMessageProcessorFactory, executorServiceFactory);
+    }
+
+    @Bean
+    public InternalHarborClientFactory internalHarborClientFactory(
+            VersionSetServiceClient versionSetServiceClient,
+            PackageServiceClient packageServiceClient) {
+        return new InternalHarborClientFactory(versionSetServiceClient, packageServiceClient);
+    }
+
+    @Bean
+    public DependencyGraphGenerator dependencyGraphGenerator() {
+        return new DependencyGraphGenerator();
+    }
+
+    @Bean
+    public MauiPath mauiPath(DependencyGraphGenerator dependencyGraphGenerator) {
+        return new MauiPath(List.of(
+                new BinRecipe(),
+                new PackageRecipe()
+        ), dependencyGraphGenerator);
     }
 }

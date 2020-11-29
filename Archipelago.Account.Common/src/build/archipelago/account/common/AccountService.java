@@ -28,13 +28,10 @@ public class AccountService {
 
         Map<String, AttributeValue> item = result.getItem();
         return AccountDetails.builder()
-                .name(AV.getStringOrNull(item, DynamoDBKeys.NAME))
+                .id(AV.getStringOrNull(item, DynamoDBKeys.ACCOUNT_ID))
                 .codeSource(AV.getStringOrNull(item, DynamoDBKeys.CODE_SOURCE))
-                .gitHubApi(AV.getStringOrNull(item, DynamoDBKeys.GITHUB_API))
-                .gitHubClientId(AV.getStringOrNull(item, DynamoDBKeys.GITHUB_CLIENT_ID))
-                .gitHubClientSecret(AV.getStringOrNull(item, DynamoDBKeys.GITHUB_CLIENT_SECRET))
-                .githubCode(AV.getStringOrNull(item, DynamoDBKeys.GITHUB_CODE))
-                .gitHubRepo(AV.getStringOrNull(item, DynamoDBKeys.GITHUB_REPO))
+                .gitHubAccessToken(AV.getStringOrNull(item, DynamoDBKeys.GITHUB_ACCESS_TOKEN))
+                .githubAccount(AV.getStringOrNull(item, DynamoDBKeys.GITHUB_ACCOUNT))
                 .build();
 
     }

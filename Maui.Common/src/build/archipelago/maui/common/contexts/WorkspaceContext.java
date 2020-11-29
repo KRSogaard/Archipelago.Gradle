@@ -9,6 +9,7 @@ import build.archipelago.maui.common.cache.PackageCacher;
 import build.archipelago.maui.common.models.*;
 import build.archipelago.maui.common.serializer.*;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
+import com.github.benmanes.caffeine.cache.*;
 import com.google.common.base.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +25,7 @@ public class WorkspaceContext extends Workspace {
 
     @Getter
     private Path root;
-    private Map<String, BuildConfig> configCache;
+    private Cache<String, BuildConfig> configCache;
     private VersionSetRevision versionSetRevision;
     private List<ArchipelagoPackage> localArchipelagoPackages;
 
@@ -33,7 +34,10 @@ public class WorkspaceContext extends Workspace {
         super();
         this.root = root;
         this.packageCacher = packageCacher;
-        configCache = new HashMap<>();
+
+        configCache = Caffeine.newBuilder()
+                .maximumSize(10000)
+                .build();
     }
 
     public void load() throws IOException {
@@ -104,11 +108,11 @@ public class WorkspaceContext extends Workspace {
             PackageNotFoundException, VersionSetNotSyncedException, PackageNotInVersionSetException, LocalPackageMalformedException {
         Preconditions.checkNotNull(pkg);
 
-        if (configCache.containsKey(pkg.getNameVersion())) {
-            return configCache.get(pkg.getNameVersion());
+        BuildConfig buildConfig = configCache.getIfPresent(pkg.getNameVersion());
+        if (buildConfig != null) {
+            return buildConfig;
         }
 
-        BuildConfig buildConfig;
         // The Load archipelago packages command will load the configs to get the version number
         if (getLocalArchipelagoPackages().stream().anyMatch(lPKG -> lPKG.equals(pkg))) {
             buildConfig = provideLocalConfig(pkg);

@@ -40,7 +40,7 @@
 
         <Root level="DEBUG">
             <AppenderRef ref="File" level="DEBUG" />
-            <AppenderRef ref="ConsoleAppender" level="INFO" />
+            <AppenderRef ref="ConsoleAppender" level="TRACE" />
         </Root>
     </Loggers>
 </Configuration>

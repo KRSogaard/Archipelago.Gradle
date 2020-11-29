@@ -86,7 +86,7 @@ public class WorkspaceUseAction extends BaseAction {
                     continue;
                 }
 
-                if (!packageSourceProvider.checkOutSource(cleanPKGName, wsDir)) {
+                if (!packageSourceProvider.checkOutSource(wsDir, cleanPKGName)) {
                     out.error("Failed to checkout the source for the package \"%s\"", pkg);
                     continue;
                 }

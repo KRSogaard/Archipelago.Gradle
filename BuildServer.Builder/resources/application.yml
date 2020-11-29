@@ -11,13 +11,14 @@ aws:
 
 services:
   versionset:
-    url: "http://localhost:8090"
+    url: "http://localhost:8091"
   packages:
-    url: "http://localhost:8080"
+    url: "http://localhost:8090"
 
 dynamodb:
   build: "builds.alpha"
   build-packages: "builds-packages.alpha"
+  accounts: "accounts.alpha"
 s3:
   logs: "alpha-archipelago-build-log"
 
@@ -26,3 +27,7 @@ sqs:
 workspace:
   path: "C:\\Users\\accou\\Downloads\\BuildServer"
   maui: "C:\\Users\\accou\\bin\\maui.cmd"
+
+oauth:
+  client-id: "mMw0iPmtdeMnNQn55mmzi0r85x9m8xy5"
+  client-secret: "6Qjmwm2cEFu7CFMVO9-9z84_OmJuAMN0lL2z462WbEe-KI7Jw9zDWHlqYonLMLwO"

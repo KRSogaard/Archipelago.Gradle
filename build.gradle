@@ -48,6 +48,7 @@ subprojects {
         implementation 'org.apache.commons:commons-lang3:3.0'
 
         testImplementation 'commons-io:commons-io:2.6'
+        testImplementation "org.assertj:assertj-core:3.18.1"
 
         // Lombok
         implementation 'org.projectlombok:lombok:1.18.12'  // utilities for POJOs
@@ -170,6 +171,7 @@ project(':Maui.Common') {
         implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
         implementation 'net.lingala.zip4j:zip4j:2.6.2'
+        implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
     }
 }
 
@@ -414,6 +416,7 @@ project(':BuildServer.Builder') {
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
         implementation project(':Archipelago.Common')
+        implementation project(':Archipelago.Common.Clients')
         implementation project(':Archipelago.Common.Concurrent')
         implementation project(':BuildServer.Common')
         implementation project(':Archipelago.Account.Common')
@@ -432,6 +435,7 @@ project(':BuildServer.Builder') {
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
         implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
         implementation 'net.lingala.zip4j:zip4j:2.6.2'
+        implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
     }
     configurations {
         all {

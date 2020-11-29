@@ -35,7 +35,7 @@ public class BuildAction extends BaseAction {
         }
 
         List<Path> paths = path.getPaths(workspaceContext, commandPKG, DependencyTransversalType.BUILD, BinRecipe.class).stream()
-                .map(sp -> Paths.get(sp))
+                .map(Paths::get)
                 .collect(Collectors.toList());
 
         Path buildSystemFilePath = null;

@@ -12,6 +12,7 @@ import build.archipelago.maui.core.providers.SystemPathProvider;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
@@ -24,7 +25,9 @@ public class WorkspaceSyncAction extends BaseAction {
     private HarborClient harborClient;
     private ExecutorService executor;
 
-    public WorkspaceSyncAction(WorkspaceContextFactory workspaceContextFactory, SystemPathProvider systemPathProvider, OutputWrapper out,
+    public WorkspaceSyncAction(WorkspaceContextFactory workspaceContextFactory,
+                               SystemPathProvider systemPathProvider,
+                               OutputWrapper out,
                                HarborClient harborClient,
                                PackageCacher packageCacher,
                                ExecutorService executor) {
@@ -35,7 +38,7 @@ public class WorkspaceSyncAction extends BaseAction {
     }
 
 
-    public boolean syncWorkspace(String revision) throws Exception {
+    public boolean syncWorkspace(String revision) {
         if (!setupWorkspaceContext()) {
             out.error("Was unable to locate the workspace");
             return false;
@@ -72,13 +75,19 @@ public class WorkspaceSyncAction extends BaseAction {
             return false;
         }
 
-        syncVersionSet(vs, versionSetRevision);
-        workspaceContext.saveRevisionCache(versionSetRevision);
+        if (!syncVersionSet(vs, versionSetRevision)) {
+            return false;
+        }
+        try {
+            workspaceContext.saveRevisionCache(versionSetRevision);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         return true;
     }
 
-    private boolean syncVersionSet(VersionSet vs, VersionSetRevision vsRevision) throws VersionSetDoseNotExistsException {
+    private boolean syncVersionSet(VersionSet vs, VersionSetRevision vsRevision) {
         Preconditions.checkNotNull(vs);
         Preconditions.checkNotNull(vsRevision);
 

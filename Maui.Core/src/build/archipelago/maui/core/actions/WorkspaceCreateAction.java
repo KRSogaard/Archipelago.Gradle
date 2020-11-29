@@ -25,7 +25,7 @@ public class WorkspaceCreateAction extends BaseAction {
         this.harborClient = harborClient;
     }
 
-    public boolean createWorkspace(String name, String versionSet) throws Exception {
+    public boolean createWorkspace(String name, String versionSet) {
         Path dir = systemPathProvider.getCurrentDir();
         out.write("Creating workspace %s", name);
         Path wsRoot = dir.resolve(name);
@@ -35,7 +35,11 @@ public class WorkspaceCreateAction extends BaseAction {
             out.error("The workspace \"%s\" already exists in this folder", name);
             return false;
         }
-        Files.createDirectory(wsRoot);
+        try {
+            Files.createDirectory(wsRoot);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         if (!Strings.isNullOrEmpty(versionSet)) {
             try {
