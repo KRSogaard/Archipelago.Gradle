@@ -8,10 +8,32 @@ gradle/
 .settings/
 bin/
 
-!**/src/build*
-!**/tst/build*
-*/build/
-!*.java
+Archipelago.Account.Common/build/
+Archipelago.Common.DynamoDB/build/
+Harbor.Client/build/
+Maui.Core/build/
+PackageService.Client/build/
+VersionSetService.Core/build/
+Archipelago.Common/build/
+BuildServer.API/build/
+HarborService/build/
+Maui.Graph/build/
+PackageService.Client.Models/build/
+VersionSetService/build/
+VersionSetService.Models/build/
+Archipelago.Common.Clients/build/
+BuildServer.Builder/build/
+Maui/build/
+Maui.Path/build/
+PackageService.Core/build/
+VersionSetService.Client/build/
+Archipelago.Common.Concurrent/build/
+BuildServer.Common/build/
+Maui.Common/build/
+PackageService/build/
+PackageService.Models/build/
+VersionSetService.Client.Models/build/
+/build/
 
 # Ignore Gradle GUI config
 gradle-app.setting
