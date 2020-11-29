@@ -8,11 +8,10 @@ gradle/
 .settings/
 bin/
 
-!*.java
 !**/src/build*
 !**/tst/build*
-**/build/
-build/
+*/build/
+!*.java
 
 # Ignore Gradle GUI config
 gradle-app.setting
