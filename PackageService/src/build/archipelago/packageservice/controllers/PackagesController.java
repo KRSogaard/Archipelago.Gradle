@@ -15,6 +15,8 @@ import com.google.common.base.*;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.stream.Collectors;
@@ -76,6 +78,7 @@ public class PackagesController {
 
     @GetMapping(value = "{name}")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("#oauth2.hasScope('http://packageservice.archipelago.build/package.write22')")
     public GetPackageResponse getPackage(
             @PathVariable("accountId") String accountId,
             @PathVariable("name") String name
@@ -99,6 +102,7 @@ public class PackagesController {
 
     @GetMapping(value = "{name}/{version}")
     @ResponseStatus(HttpStatus.OK)
+//    @PreAuthorize("#oauth2.hasScope('package.read')")
     public GetPackageBuildsResponse getPackageBuilds(
             @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
@@ -122,6 +126,7 @@ public class PackagesController {
 
     @GetMapping(value = "{name}/{version}/{hash}")
     @ResponseStatus(HttpStatus.OK)
+//    @PreAuthorize("#oauth2.hasScope('package.read')")
     public GetPackageBuildResponse getPackageBuild(
             @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
@@ -149,6 +154,7 @@ public class PackagesController {
 
     @GetMapping(value = "{name}/git/{branch}/{commit}")
     @ResponseStatus(HttpStatus.OK)
+//    @PreAuthorize("#oauth2.hasScope('package.read')")
     public ArchipelagoBuiltPackageResponse getPackageByGit(
             @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
@@ -171,6 +177,7 @@ public class PackagesController {
 
     @PostMapping(value = "verify-packages")
     @ResponseStatus(HttpStatus.OK)
+//    @PreAuthorize("#oauth2.hasScope('package.read')")
     public VerificationResponse verifyPackages(
             @PathVariable("accountId") String accountId,
             @RequestBody VerificationRequest request) {
@@ -191,6 +198,7 @@ public class PackagesController {
 
     @PostMapping(value = "verify-builds")
     @ResponseStatus(HttpStatus.OK)
+//    @PreAuthorize("#oauth2.hasScope('package.read')")
     public VerificationResponse verifyBuilds(
             @PathVariable("accountId") String accountId,
             @RequestBody VerificationRequest request) {
