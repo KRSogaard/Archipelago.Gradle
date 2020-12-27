@@ -11,7 +11,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://dev-1nl95fdx.us.auth0.com/
+          issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
 
 s3:
   packages:

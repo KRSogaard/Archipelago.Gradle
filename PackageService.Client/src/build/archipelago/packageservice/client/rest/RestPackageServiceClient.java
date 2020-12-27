@@ -20,11 +20,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RestPackageServiceClient extends OAuthRestClient implements PackageServiceClient {
 
-    private static final String OAUTH2_AUDIENCE = "http://packageservice.archipelago.build";
-    private static final String OAUTH2_TOKENURL = "https://dev-1nl95fdx.us.auth0.com/oauth/token";
+    private static final String OAUTH2_SCOPES = "http://packageservice.archipelago.build/read http://packageservice.archipelago.build/write";
+    private static final String OAUTH2_TOKENURL = "https://archipelago.auth.us-west-2.amazoncognito.com/oauth2/token";
 
     public RestPackageServiceClient(String endpoint, String clientId, String clientSecret) {
-        super(endpoint, OAUTH2_TOKENURL, clientId, clientSecret, OAUTH2_AUDIENCE);
+        super(endpoint, OAUTH2_TOKENURL, clientId, clientSecret, OAUTH2_SCOPES);
     }
 
     @Override
@@ -54,6 +54,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
         switch (response.statusCode()) {
             case 401:
+            case 403:
                 throw new UnauthorizedException();
             case 409: // Conflict
                 throw new PackageExistsException(request.getName());

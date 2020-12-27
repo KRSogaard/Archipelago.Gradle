@@ -6,7 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.*;
 import java.net.http.*;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class OAuthRestClient {
@@ -17,7 +21,7 @@ public abstract class OAuthRestClient {
     private String tokenUrl;
     private String clientId;
     private String clientSecret;
-    private String audience;
+    private String scopes;
     private String grantType;
 
 
@@ -26,11 +30,11 @@ public abstract class OAuthRestClient {
     protected com.fasterxml.jackson.databind.ObjectMapper objectMapper
             = new com.fasterxml.jackson.databind.ObjectMapper();
 
-    public OAuthRestClient(String baseUrl, String tokenUrl, String clientId, String clientSecret, String audience) {
+    public OAuthRestClient(String baseUrl, String tokenUrl, String clientId, String clientSecret, String scopes) {
         this.tokenUrl = tokenUrl;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.audience = audience;
+        this.scopes = scopes;
         this.grantType = "client_credentials";
 
         if (baseUrl.endsWith("/")) {
@@ -42,11 +46,11 @@ public abstract class OAuthRestClient {
                 .newBuilder()
                 .build();
     }
-    public OAuthRestClient(String baseUrl, String tokenUrl, String oauthToken, String audience) {
+    public OAuthRestClient(String baseUrl, String tokenUrl, String oauthToken, String scopes) {
         this.tokenUrl = tokenUrl;
         this.oauthToken = oauthToken;
         this.expires = Instant.MAX;
-        this.audience = audience;
+        this.scopes = scopes;
 
         if (baseUrl.endsWith("/")) {
             this.baseUrl = baseUrl.substring(0, baseUrl.length() - 2);
@@ -80,13 +84,21 @@ public abstract class OAuthRestClient {
         if (clientId == null) {
             throw new RuntimeException("Can only renew token with client id and secret credentials");
         }
-        String body = String.format("{\"client_id\":\"%s\"," +
-                "\"client_secret\":\"%s\"," +
-                "\"audience\":\"%s\"," +
-                "\"grant_type\":\"%s\"}", clientId, clientSecret, audience, grantType);
+
+        HashMap<String, String> parameters = new HashMap<>();
+        parameters.put("client_id", clientId);
+        parameters.put("scope", scopes);
+        parameters.put("grant_type", grantType);
+        String form = parameters.keySet().stream()
+                .map(key -> key + "=" + URLEncoder.encode(parameters.get(key), StandardCharsets.UTF_8))
+                .collect(Collectors.joining("&"));
+
         try {
-            HttpRequest request = getBaseJSONRequest(tokenUrl)
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
+            HttpRequest request = HttpRequest.newBuilder(new URI(tokenUrl))
+                    .header("content-type", "application/x-www-form-urlencoded")
+                    .header("accept", "*/*")
+                    .POST(HttpRequest.BodyPublishers.ofString(form))
+                    .setHeader("Authorization", basicAuth(clientId, clientSecret))
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
@@ -100,5 +112,9 @@ public abstract class OAuthRestClient {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static String basicAuth(String username, String password) {
+        return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
     }
 }
