@@ -9,14 +9,14 @@ oauth:
   audience: http://packageservice.archipelago.build
 
 spring:
+  jackson:
+    mapper:
+      accept_case_insensitive_properties: true
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://dev-1nl95fdx.us.auth0.com/
-  jackson:
-    mapper:
-      accept_case_insensitive_properties: true
+          issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
 
 s3:
   packages:

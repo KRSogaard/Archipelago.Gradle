@@ -19,6 +19,9 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class RestHarborClient extends OAuthRestClient implements HarborClient {
+    private static final String OAUTH2_SCOPES = "http://harbor.archipelago.build/versionsets http://harbor.archipelago.build/packages http://harbor.archipelago.build/builds";
+    private static final String OAUTH2_TOKENURL = "https://archipelago.auth.us-west-2.amazoncognito.com/oauth2/token";
+
     public RestHarborClient(String baseUrl, String tokenUrl, String oauthToken, String audience) {
         super(baseUrl, tokenUrl, oauthToken, audience);
     }

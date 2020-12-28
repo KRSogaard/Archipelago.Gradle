@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("build")
+@RequestMapping("account/{accountId}/build")
 @Slf4j
 public class BuildController {
 
@@ -24,10 +24,12 @@ public class BuildController {
 
     @PostMapping("request")
     @ResponseStatus(HttpStatus.OK)
-    public String newBuildRequest(NewBuildRequest request) throws VersionSetDoseNotExistsException {
-        VersionSet versionSet = versionSetServiceClient.getVersionSet(request.getVersionSet());
+    public String newBuildRequest(
+            @PathVariable("accountId") String accountId,
+            @RequestBody NewBuildRequest request) throws VersionSetDoseNotExistsException {
+        VersionSet versionSet = versionSetServiceClient.getVersionSet(accountId, request.getVersionSet());
 
-        String buildId = buildService.addNewBuildRequest(versionSet.getName(), request.isDryRun(),
+        String buildId = buildService.addNewBuildRequest(accountId, versionSet.getName(), request.isDryRun(),
                 request.getBuildPackages().stream().map(bp -> BuildPackageDetails.builder()
                         .packageName(bp.getPackageName())
                         .branch(bp.getBranch())
