@@ -18,12 +18,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RestVersionSetServiceClient extends OAuthRestClient implements VersionSetServiceClient {
 
-    private static final String OAUTH2_AUDIENCE = "http://versionsetservice.archipelago.build";
-    private static final String OAUTH2_TOKENURL = "https://dev-1nl95fdx.us.auth0.com/oauth/token";
-    private String endpoint;
+    private static final String OAUTH2_SCOPES = "http://versionsetservice.archipelago.build/write http://versionsetservice.archipelago.build/read";
+    private static final String OAUTH2_TOKENURL = "https://archipelago.auth.us-west-2.amazoncognito.com/oauth2/token";
 
     public RestVersionSetServiceClient(String endpoint, String clientId, String clientSecret) {
-        super(endpoint, OAUTH2_TOKENURL, clientId, clientSecret, OAUTH2_AUDIENCE);
+        super(endpoint, OAUTH2_TOKENURL, clientId, clientSecret, OAUTH2_SCOPES);
     }
 
     @Override
