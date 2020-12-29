@@ -3,6 +3,8 @@ package build.archipelago.buildserver.configuration;
 import com.amazonaws.auth.*;
 import com.amazonaws.services.dynamodbv2.*;
 import com.amazonaws.services.s3.*;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.*;
@@ -39,4 +41,14 @@ public class AWSConfiguration {
                 .withCredentials(credentialsProvider)
                 .build();
     }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public AmazonSQS amazonSQS(AWSCredentialsProvider credentialsProvider,
+                               @Value("${aws.region}") String awsRegion) {
+        return AmazonSQSClientBuilder.standard()
+                .withCredentials(credentialsProvider)
+                .withRegion(awsRegion).build();
+    }
+
 }

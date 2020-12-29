@@ -30,6 +30,7 @@ public class CreateVersionSetRevisionDelegateTest {
 
     private String testVSName;
     private String testRevisionId;
+    private String testAccountId;
 
     @Before
     public void setUp() throws VersionSetDoseNotExistsException {
@@ -38,9 +39,10 @@ public class CreateVersionSetRevisionDelegateTest {
         delegate = new CreateVersionSetRevisionDelegate(versionSetService, packageServiceClient);
 
         testVSName = UUID.randomUUID().toString().split("-", 2)[0];
+        testAccountId = UUID.randomUUID().toString().split("-", 2)[0];
         List<ArchipelagoPackage> targets = List.of(pA, pB);
         VersionSet vs = createVS(testVSName, targets);
-        when(versionSetService.get(accountId, eq(testVSName))).thenReturn(vs);
+        when(versionSetService.get(eq(testAccountId), eq(testVSName))).thenReturn(vs);
     }
 
     @Test
@@ -52,12 +54,12 @@ public class CreateVersionSetRevisionDelegateTest {
 
         VersionSet vs = createVS(vsName, targets);
 
-        when(versionSetService.get(accountId, eq(vsName))).thenReturn(vs);
-        when(versionSetService.createRevision(eq(vsName), any())).thenReturn(revisionId);
-        when(packageServiceClient.verifyBuildsExists(accountId, any())).thenReturn(
+        when(versionSetService.get(eq(testAccountId), eq(vsName))).thenReturn(vs);
+        when(versionSetService.createRevision(eq(testAccountId), eq(vsName), any())).thenReturn(revisionId);
+        when(packageServiceClient.verifyBuildsExists(eq(testAccountId), any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoBuiltPackage>builder().missingPackages(ImmutableList.of()).build());
 
-        String result = delegate.createRevision(vsName, List.of(pbA, pbB, pbC));
+        String result = delegate.createRevision(testAccountId, vsName, List.of(pbA, pbB, pbC));
         Assert.assertNotNull(result);
         Assert.assertEquals(revisionId, result);
     }
@@ -65,33 +67,33 @@ public class CreateVersionSetRevisionDelegateTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCreateRevisionWithEmptyVSName() throws MissingTargetPackageException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
-        delegate.createRevision("", List.of(pbA, pbB));
+        delegate.createRevision(testAccountId, "", List.of(pbA, pbB));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateRevisionWithNullVSName() throws MissingTargetPackageException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
-        delegate.createRevision(null, List.of(pbA, pbB));
+        delegate.createRevision(testAccountId, null, List.of(pbA, pbB));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateRevisionWithoutPackages() throws MissingTargetPackageException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
-        delegate.createRevision(testVSName, new ArrayList<>());
+        delegate.createRevision(testAccountId, testVSName, new ArrayList<>());
     }
 
     @Test(expected = MissingTargetPackageException.class)
     public void testCreateRevisionWithMissingTarget() throws MissingTargetPackageException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
-        delegate.createRevision(testVSName, List.of(pbC));
+        delegate.createRevision(testAccountId, testVSName, List.of(pbC));
     }
 
     @Test(expected = PackageNotFoundException.class)
     public void testCreateRevisionWithPackageThatDoseNotExits() throws MissingTargetPackageException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
-        when(packageServiceClient.verifyBuildsExists(accountId, any())).thenReturn(
+        when(packageServiceClient.verifyBuildsExists(eq(testAccountId), any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoBuiltPackage>builder().missingPackages(ImmutableList.of(pbC)).build());
-        delegate.createRevision(testVSName, List.of(pbA, pbB, pbC));
+        delegate.createRevision(testAccountId, testVSName, List.of(pbA, pbB, pbC));
 
     }
 

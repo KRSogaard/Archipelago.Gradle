@@ -36,4 +36,3 @@ endpoints:
 oauth:
   client-id: "ImRTxga0z1WT6LSdNMRird9R29QQ8GBn"
   client-secret: "3RjLmcYj1M6jZkEoG6AAMsvtfWkkmt6s3AJgem1xumxcDe_8FVvztwU66D4Maz2M"
-  audience: "http://versionsetservice.archipelago.build"

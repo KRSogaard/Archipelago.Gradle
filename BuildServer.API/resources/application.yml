@@ -3,6 +3,12 @@ server:
   error:
     include-stacktrace: never
 
+aws:
+  region: "us-west-2"
+  access:
+    id: "AKIARDAF5R4ODZ2LMPNZ"
+    key: "MS7flruyxp3QPlEVEd41NZVDG7WTkkZYBfZjfWEM"
+
 spring:
   jackson:
     mapper:
@@ -13,18 +19,22 @@ spring:
         jwt:
           issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
 
-aws:
-  region: "us-west-2"
-  access:
-    id: "AKIARDAF5R4ODZ2LMPNZ"
-    key: "MS7flruyxp3QPlEVEd41NZVDG7WTkkZYBfZjfWEM"
+oauth:
+  client-id: "3e7d5fgp0bekt1o8k29rn6vleh"
+  client-secret: "19qso7avuot68i69jl9j6d9qr49datlrrajbf4u7bq6kndmipqj6"
+
+dynamodb:
+  build: "builds.alpha"
+  build-packages: "builds-packages.alpha"
+  accounts: "accounts.alpha"
+s3:
+  logs: "alpha-archipelago-build-log"
+sqs:
+  build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-queue-alpha"
+
 
 services:
   versionset:
     url: "http://localhost:8090"
   packages:
     url: "http://localhost:8080"
-
-dynamodb:
-  build:
-    tableName: "builds.alpha"

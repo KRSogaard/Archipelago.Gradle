@@ -370,6 +370,7 @@ project(':BuildServer.API') {
     dependencies {
         implementation project(':Archipelago.Common')
         implementation project(':Archipelago.Common.DynamoDB')
+        implementation project(':Archipelago.Common.Clients')
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
         implementation project(':Maui.Core')
