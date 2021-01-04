@@ -68,6 +68,8 @@ project(':Archipelago.Common') {
 }
 project(':Archipelago.Common.Concurrent') {
 }
+project(':Archipelago.Common.Github') {
+}
 
 project(':Archipelago.Common.DynamoDB') {
     apply plugin: 'maven-publish'

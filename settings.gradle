@@ -1,5 +1,6 @@
 include 'Archipelago.Common'
 include 'Archipelago.Common.Concurrent'
+include 'Archipelago.Common.Github'
 include 'Archipelago.Common.DynamoDB'
 include 'Archipelago.Common.Clients'
 include 'Archipelago.Account.Common'
