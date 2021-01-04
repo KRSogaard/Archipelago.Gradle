@@ -1,6 +1,7 @@
 package build.archipelago.common.concurrent;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A blocking queue implementation that turns also the offer() method

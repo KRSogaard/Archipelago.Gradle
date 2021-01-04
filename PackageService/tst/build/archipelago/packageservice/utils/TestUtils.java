@@ -3,7 +3,9 @@ package build.archipelago.packageservice.utils;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.IOUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 

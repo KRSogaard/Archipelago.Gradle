@@ -19,6 +19,7 @@ dynamodb:
   build: "builds.alpha"
   build-packages: "builds-packages.alpha"
   accounts: "accounts.alpha"
+  account-mapping: "account-mapping.alpha"
 s3:
   logs: "alpha-archipelago-build-log"
 

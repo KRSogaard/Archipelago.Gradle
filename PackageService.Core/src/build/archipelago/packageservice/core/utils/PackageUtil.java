@@ -1,6 +1,7 @@
 package build.archipelago.packageservice.core.utils;
 
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PackageUtil {
     private final static Pattern re = Pattern.compile("[^A-Za-z0-9]+");

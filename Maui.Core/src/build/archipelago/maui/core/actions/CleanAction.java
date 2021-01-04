@@ -6,7 +6,8 @@ import build.archipelago.maui.core.output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 
 import java.io.File;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.stream.Stream;
 

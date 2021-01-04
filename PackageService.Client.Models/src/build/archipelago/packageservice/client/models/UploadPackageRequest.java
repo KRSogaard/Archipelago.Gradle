@@ -1,7 +1,8 @@
 package build.archipelago.packageservice.client.models;
 
 import build.archipelago.common.ArchipelagoPackage;
-import lombok.*;
+import lombok.Builder;
+import lombok.Value;
 
 @Builder
 @Value

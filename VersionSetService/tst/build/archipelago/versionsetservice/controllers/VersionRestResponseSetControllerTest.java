@@ -1,40 +1,28 @@
 package build.archipelago.versionsetservice.controllers;
 
-import build.archipelago.common.*;
-import build.archipelago.common.exceptions.*;
-import build.archipelago.common.versionset.*;
-import build.archipelago.versionsetservice.core.delegates.*;
-import build.archipelago.versionsetservice.core.utils.RevisionUtil;
-import build.archipelago.versionsetservice.models.*;
-import build.archipelago.versionsetservice.utils.TestConstants;
-import com.google.common.base.Strings;
-import com.google.gson.*;
+import build.archipelago.versionsetservice.core.delegates.CreateVersionSetDelegate;
+import build.archipelago.versionsetservice.core.delegates.CreateVersionSetRevisionDelegate;
+import build.archipelago.versionsetservice.core.delegates.GetVersionSetDelegate;
+import build.archipelago.versionsetservice.core.delegates.GetVersionSetPackagesDelegate;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import net.dongliu.gson.GsonJava8TypeAdapterFactory;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.*;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
-import java.util.*;
-
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class VersionSetControllerTest {
+public class VersionRestResponseSetControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

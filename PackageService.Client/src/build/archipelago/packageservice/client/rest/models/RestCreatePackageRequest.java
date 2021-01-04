@@ -1,6 +1,7 @@
 package build.archipelago.packageservice.client.rest.models;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 
 @AllArgsConstructor
 @Value

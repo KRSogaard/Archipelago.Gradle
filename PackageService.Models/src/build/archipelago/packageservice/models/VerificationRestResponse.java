@@ -1,11 +1,12 @@
 package build.archipelago.packageservice.models;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Value;
 
 import java.util.List;
 
 @Builder
 @Value
-public class VerificationResponse {
+public class VerificationRestResponse {
     private List<String> missing;
 }

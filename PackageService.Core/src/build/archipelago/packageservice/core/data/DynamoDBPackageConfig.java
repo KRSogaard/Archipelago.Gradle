@@ -1,6 +1,7 @@
 package build.archipelago.packageservice.core.data;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 @Data
 @Builder

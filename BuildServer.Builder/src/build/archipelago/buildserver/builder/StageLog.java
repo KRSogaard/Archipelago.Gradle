@@ -1,7 +1,6 @@
 package build.archipelago.buildserver.builder;
 
 import java.time.Instant;
-import java.util.List;
 
 public class StageLog {
     private final StringBuilder logs;

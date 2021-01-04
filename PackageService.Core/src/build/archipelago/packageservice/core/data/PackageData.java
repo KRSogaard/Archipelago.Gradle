@@ -1,8 +1,13 @@
 package build.archipelago.packageservice.core.data;
 
-import build.archipelago.common.*;
-import build.archipelago.common.exceptions.*;
-import build.archipelago.packageservice.core.data.models.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.exceptions.PackageExistsException;
+import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.packageservice.core.data.models.BuiltPackageDetails;
+import build.archipelago.packageservice.core.data.models.CreatePackageModel;
+import build.archipelago.packageservice.core.data.models.PackageDetails;
+import build.archipelago.packageservice.core.data.models.VersionBuildDetails;
 import com.google.common.collect.ImmutableList;
 
 public interface PackageData {
@@ -18,4 +23,6 @@ public interface PackageData {
 
     void createBuild(String accountId, ArchipelagoBuiltPackage pkg, String config, String gitCommit, String gitBranch) throws PackageNotFoundException, PackageExistsException;
     void createPackage(String accountId, CreatePackageModel model) throws PackageExistsException;
+
+    ImmutableList<PackageDetails> getAllPackages(String accountId);
 }

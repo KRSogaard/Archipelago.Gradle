@@ -1,8 +1,10 @@
 package build.archipelago.packageservice.core.data.models;
 
 import build.archipelago.common.ArchipelagoPackage;
-import com.google.common.base.*;
-import lombok.*;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import lombok.Builder;
+import lombok.Data;
 
 @Data
 @Builder

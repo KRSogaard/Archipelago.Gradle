@@ -1,16 +1,32 @@
 package build.archipelago.packageservice.core.data;
 
-import build.archipelago.common.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.dynamodb.AV;
-import build.archipelago.common.exceptions.*;
-import build.archipelago.packageservice.core.data.models.*;
+import build.archipelago.common.exceptions.PackageExistsException;
+import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.packageservice.core.data.models.BuiltPackageDetails;
+import build.archipelago.packageservice.core.data.models.CreatePackageModel;
+import build.archipelago.packageservice.core.data.models.PackageDetails;
+import build.archipelago.packageservice.core.data.models.PackageDetailsVersion;
+import build.archipelago.packageservice.core.data.models.VersionBuildDetails;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
+import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import com.amazonaws.services.dynamodbv2.model.QueryRequest;
+import com.amazonaws.services.dynamodbv2.model.QueryResult;
+import com.amazonaws.services.dynamodbv2.model.ReturnItemCollectionMetrics;
+import com.amazonaws.services.dynamodbv2.model.UpdateItemRequest;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -190,14 +206,14 @@ public class DynamoDBPackageData implements PackageData {
         }
 
         return new ArchipelagoBuiltPackage(
-                item.get(DynamoDBKeys.PACKAGE_NAME).getS(),
+                item.get(DynamoDBKeys.DISPLAY_PACKAGE_NAME).getS(),
                 item.get(DynamoDBKeys.VERSION).getS(),
                 item.get(DynamoDBKeys.HASH).getS());
     }
 
     @Override
     public BuiltPackageDetails getLatestBuildPackage(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException {
-        log.debug("Findind the latest build of \"{}\"", pkg.getNameVersion());
+        log.debug("Finding the latest build of \"{}\"", pkg.getNameVersion());
         GetItemRequest getItemRequest = new GetItemRequest(settings.getPackagesVersionsTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
                         .put(DynamoDBKeys.PACKAGE_NAME, AV.of(mergeAccountPackage(accountId, pkg.getName())))
@@ -325,5 +341,39 @@ public class DynamoDBPackageData implements PackageData {
                 .put(DynamoDBKeys.DESCRIPTION, AV.of(model.getDescription()));
 
         dynamoDB.putItem(new PutItemRequest(settings.getPackagesTableName(), map.build()));
+    }
+
+    public ImmutableList<PackageDetails> getAllPackages(String accountId) {
+        QueryRequest queryRequest = new QueryRequest()
+                .withTableName(settings.getPackagesTableName())
+                .withKeyConditionExpression("#accountId = :accountId")
+                .withExpressionAttributeNames(ImmutableMap.of(
+                        "#accountId", DynamoDBKeys.ACCOUNT_ID
+                ))
+                .withExpressionAttributeValues(ImmutableMap.of(
+                        ":accountId", AV.of(accountId)));
+
+        QueryResult result = dynamoDB.query(queryRequest);
+        ImmutableList.Builder<PackageDetails> packageDetailsList = ImmutableList.<PackageDetails>builder();
+        for (Map<String, AttributeValue> item : result.getItems()) {
+            ImmutableList.Builder<PackageDetailsVersion> latestVersion =
+                    ImmutableList.<PackageDetailsVersion>builder();
+
+            if (item.containsKey(DynamoDBKeys.LATEST_BUILD)) {
+                latestVersion.add(PackageDetailsVersion.builder()
+                        .version(item.get(DynamoDBKeys.LATEST_VERSION).getS())
+                        .latestBuildHash(item.get(DynamoDBKeys.LATEST_BUILD).getS())
+                        .latestBuildTime(AV.toInstant(item.get(DynamoDBKeys.LATEST_BUILD_TIME)))
+                        .build());
+            }
+
+            packageDetailsList.add(PackageDetails.builder()
+                    .name(item.get(DynamoDBKeys.DISPLAY_PACKAGE_NAME).getS())
+                    .description(AV.getStringOrNull(item, DynamoDBKeys.DESCRIPTION))
+                    .created(AV.toInstant(item.get(DynamoDBKeys.CREATED)))
+                    .versions(latestVersion.build())
+                    .build());
+        }
+        return packageDetailsList.build();
     }
 }

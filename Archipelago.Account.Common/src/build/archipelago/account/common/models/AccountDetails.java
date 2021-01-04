@@ -1,6 +1,7 @@
 package build.archipelago.account.common.models;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 @Builder
 @Data

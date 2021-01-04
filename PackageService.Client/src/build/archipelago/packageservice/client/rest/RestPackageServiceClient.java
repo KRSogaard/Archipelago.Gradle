@@ -1,20 +1,44 @@
 package build.archipelago.packageservice.client.rest;
 
-import build.archipelago.common.*;
-import build.archipelago.common.clients.rest.*;
-import build.archipelago.common.exceptions.*;
-import build.archipelago.packageservice.client.*;
-import build.archipelago.packageservice.client.models.*;
-import build.archipelago.packageservice.client.rest.models.*;
-import com.google.common.base.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.clients.rest.MultiPartBodyPublisher;
+import build.archipelago.common.clients.rest.OAuthRestClient;
+import build.archipelago.common.exceptions.PackageExistsException;
+import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.common.exceptions.UnauthorizedException;
+import build.archipelago.packageservice.client.PackageServiceClient;
+import build.archipelago.packageservice.client.models.CreatePackageRequest;
+import build.archipelago.packageservice.client.models.GetPackageBuildResponse;
+import build.archipelago.packageservice.client.models.GetPackageResponse;
+import build.archipelago.packageservice.client.models.GetPackagesResponse;
+import build.archipelago.packageservice.client.models.PackageBuildsResponse;
+import build.archipelago.packageservice.client.models.PackageVerificationResult;
+import build.archipelago.packageservice.client.models.UploadPackageRequest;
+import build.archipelago.packageservice.client.rest.models.ArchipelagoBuiltPackageResponse;
+import build.archipelago.packageservice.client.rest.models.RestArtifactUploadResponse;
+import build.archipelago.packageservice.client.rest.models.RestCreatePackageRequest;
+import build.archipelago.packageservice.client.rest.models.RestGetPackageBuildResponse;
+import build.archipelago.packageservice.client.rest.models.RestGetPackageResponse;
+import build.archipelago.packageservice.client.rest.models.RestGetPackagesResponse;
+import build.archipelago.packageservice.client.rest.models.RestPackageBuildsResponse;
+import build.archipelago.packageservice.client.rest.models.RestVerificationRequest;
+import build.archipelago.packageservice.client.rest.models.RestVerificationResponse;
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
-import java.net.*;
-import java.net.http.*;
-import java.nio.file.*;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -84,18 +108,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             throw new RuntimeException(e);
         }
         response = validateResponse(restResponse, name, RestGetPackageResponse.class);
-
-        ImmutableList.Builder<GetPackageResponse.Version> versions = ImmutableList.builder();
-        response.getVersions().forEach(x -> versions.add(new GetPackageResponse.Version(
-                x.getVersion(), x.getLatestBuildHash(), Instant.ofEpochMilli(x.getLatestBuildTime())
-        )));
-
-        return GetPackageResponse.builder()
-                .name(response.getName())
-                .description(response.getDescription())
-                .created(Instant.ofEpochMilli(response.getCreated()))
-                .versions(versions.build())
-                .build();
+        return response.toInternal();
     }
 
     @Override
@@ -328,6 +341,39 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                 throw new PackageNotFoundException(pkg);
             case 200: // Ok
                 return restResponse.body();
+            default:
+                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+        }
+    }
+
+    @Override
+    public GetPackagesResponse getAllPackages(String accountId) throws UnauthorizedException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
+
+        HttpResponse<String> restResponse;
+        try {
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/all")
+                    .GET()
+                    .build();
+            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        switch (restResponse.statusCode()) {
+            case 401:
+                throw new UnauthorizedException();
+            case 200: // Ok
+                try {
+                    RestGetPackagesResponse restObj = objectMapper.readValue(restResponse.body(),
+                            RestGetPackagesResponse.class);
+                    ImmutableList.Builder<GetPackageResponse> pkgs = ImmutableList.builder();
+                    restObj.getPackages().forEach(x -> pkgs.add(x.toInternal()));
+                    return GetPackagesResponse.builder().packages(pkgs.build()).build();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             default:
                 throw new RuntimeException("Unknown response " + restResponse.statusCode());
         }

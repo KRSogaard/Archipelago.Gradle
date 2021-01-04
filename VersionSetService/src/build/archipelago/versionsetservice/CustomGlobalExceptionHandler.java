@@ -1,12 +1,16 @@
 package build.archipelago.versionsetservice;
 
-import build.archipelago.common.exceptions.*;
+import build.archipelago.common.exceptions.MissingTargetPackageException;
+import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.common.exceptions.VersionSetExistsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import javax.servlet.http.HttpServletResponse;
 
 @ControllerAdvice
 @Slf4j

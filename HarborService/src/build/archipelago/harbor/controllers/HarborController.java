@@ -2,15 +2,10 @@ package build.archipelago.harbor.controllers;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.PackageExistsException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.packageservice.client.PackageServiceClient;
-import build.archipelago.packageservice.client.models.GetPackageBuildResponse;
-import build.archipelago.packageservice.client.models.GetPackageResponse;
-import build.archipelago.packageservice.models.CreatePackageRequest;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.models.RevisionIdResponse;
 import build.archipelago.versionsetservice.models.VersionSetResponse;
@@ -18,16 +13,13 @@ import build.archipelago.versionsetservice.models.VersionSetRevisionResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.*;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 

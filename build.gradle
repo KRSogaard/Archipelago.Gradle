@@ -51,7 +51,7 @@ subprojects {
         testImplementation "org.assertj:assertj-core:3.18.1"
 
         // Lombok
-        implementation 'org.projectlombok:lombok:1.18.12'  // utilities for POJOs
+        compile 'org.projectlombok:lombok:1.18.12'  // utilities for POJOs
         annotationProcessor 'org.projectlombok:lombok:1.18.12'
         testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
     }
@@ -520,6 +520,7 @@ project(':HarborService') {
         implementation project(':VersionSetService.Client.Models')
         implementation project(':PackageService.Models')
         implementation project(':VersionSetService.Models')
+        implementation project(':Archipelago.Account.Common')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -530,6 +531,9 @@ project(':HarborService') {
         implementation 'org.springframework.security:spring-security-config'
         implementation 'io.springfox:springfox-swagger2:2.9.2'
         implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+        implementation 'com.amazonaws:aws-java-sdk-cognitoidp:1.11.928'
+        implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+        implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
 
         testImplementation 'com.google.code.gson:gson:2.8.6'
         testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'

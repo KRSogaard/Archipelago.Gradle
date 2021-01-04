@@ -1,23 +1,25 @@
 package build.archipelago.packageservice.models;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
-public class GetPackageResponse {
+public class GetPackageRestResponse {
     private String name;
     private String description;
     private long created;
-    private List<Version> versions;
+    private List<VersionRestResponse> versions;
 
-    public static class Version {
+    public static class VersionRestResponse {
         private String version;
         private String latestBuildHash;
         private long latestBuildTime;
 
-        public Version(String version, String latestBuildHash, long latestBuildTime) {
+        public VersionRestResponse(String version, String latestBuildHash, long latestBuildTime) {
             this.version = version;
             this.latestBuildHash = latestBuildHash;
             this.latestBuildTime = latestBuildTime;

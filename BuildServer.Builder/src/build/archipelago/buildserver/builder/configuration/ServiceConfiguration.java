@@ -3,11 +3,13 @@ package build.archipelago.buildserver.builder.configuration;
 import build.archipelago.account.common.AccountService;
 import build.archipelago.buildserver.builder.builder.BuilderFactory;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
-import build.archipelago.buildserver.builder.handlers.*;
+import build.archipelago.buildserver.builder.handlers.BuildRequestFailureHandler;
+import build.archipelago.buildserver.builder.handlers.BuildRequestHandler;
 import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.maui.graph.DependencyGraphGenerator;
 import build.archipelago.maui.path.MauiPath;
-import build.archipelago.maui.path.recipies.*;
+import build.archipelago.maui.path.recipies.BinRecipe;
+import build.archipelago.maui.path.recipies.PackageRecipe;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
@@ -15,20 +17,28 @@ import build.archipelago.versionsetservice.client.rest.RestVersionSetServiceClie
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.wewelo.sqsconsumer.*;
+import com.wewelo.sqsconsumer.AmazonSQSFactory;
+import com.wewelo.sqsconsumer.SQSConsumer;
+import com.wewelo.sqsconsumer.SqsMessageProcessorFactory;
 import com.wewelo.sqsconsumer.models.SQSConsumerConfig;
-import com.wewelo.sqsconsumer.threading.*;
+import com.wewelo.sqsconsumer.threading.BlockingExecutorServiceFactory;
+import com.wewelo.sqsconsumer.threading.ExecutorServiceFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 @Configuration
 public class ServiceConfiguration {
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public VersionSetServiceClient versionServiceClient(@Value("${services.versionset.url}") String vsEndpoint,
                                                         @Value("${oauth.client-id}") String clientId,
                                                         @Value("${oauth.client-secret}") String clientSecret) {
@@ -36,6 +46,7 @@ public class ServiceConfiguration {
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public PackageServiceClient packageServiceClient(@Value("${services.packages.url}") String pkgEndpoint,
                                                      @Value("${oauth.client-id}") String clientId,
                                                      @Value("${oauth.client-secret}") String clientSecret) {
@@ -43,12 +54,15 @@ public class ServiceConfiguration {
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public AccountService accountService(AmazonDynamoDB amazonDynamoDB,
-                                         @Value("${dynamodb.accounts}") String accountsTableName) {
-        return new AccountService(amazonDynamoDB, accountsTableName);
+                                         @Value("${dynamodb.accounts}") String accountsTableName,
+                                         @Value("${dynamodb.account-mapping}") String accountsMappingTableName) {
+        return new AccountService(amazonDynamoDB, accountsTableName, accountsMappingTableName);
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public BuildService buildService(AmazonSQS amazonSQS,
                                      AmazonDynamoDB amazonDynamoDB,
                                      AmazonS3 amazonS3,
@@ -60,11 +74,13 @@ public class ServiceConfiguration {
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public ExecutorServiceFactory executorServiceFactory() {
         return new BlockingExecutorServiceFactory();
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public BuilderFactory builderFactory(InternalHarborClientFactory internalHarborClientFactory,
                                          VersionSetServiceClient versionSetServiceClient,
                                          PackageServiceClient packageServiceClient,
@@ -83,22 +99,26 @@ public class ServiceConfiguration {
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public BuildRequestHandler buildRequestHandler(BuilderFactory builderFactory) {
         return new BuildRequestHandler(builderFactory);
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public BuildRequestFailureHandler buildRequestFailureHandler(@Value("${sqs.build-queue}") String buildQueue) {
         return new BuildRequestFailureHandler(buildQueue);
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public SqsMessageProcessorFactory sqsMessageProcessorFactory(BuildRequestHandler buildRequestHandler,
                                                                  BuildRequestFailureHandler buildRequestFailureHandler) {
         return new SqsMessageProcessorFactory(buildRequestHandler, buildRequestFailureHandler);
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public SQSConsumer sqsConsumer(AmazonSQSFactory sqsFactory,
                                    ExecutorServiceFactory executorServiceFactory,
                                    SqsMessageProcessorFactory sqsMessageProcessorFactory,
@@ -110,6 +130,7 @@ public class ServiceConfiguration {
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public InternalHarborClientFactory internalHarborClientFactory(
             VersionSetServiceClient versionSetServiceClient,
             PackageServiceClient packageServiceClient) {
@@ -117,11 +138,13 @@ public class ServiceConfiguration {
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public DependencyGraphGenerator dependencyGraphGenerator() {
         return new DependencyGraphGenerator();
     }
 
     @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public MauiPath mauiPath(DependencyGraphGenerator dependencyGraphGenerator) {
         return new MauiPath(List.of(
                 new BinRecipe(),

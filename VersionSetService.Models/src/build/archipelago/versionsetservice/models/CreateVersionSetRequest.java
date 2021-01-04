@@ -1,7 +1,11 @@
 package build.archipelago.versionsetservice.models;
 
-import com.google.common.base.*;
-import lombok.*;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 

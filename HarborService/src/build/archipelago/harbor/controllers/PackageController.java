@@ -1,20 +1,41 @@
 package build.archipelago.harbor.controllers;
 
-import build.archipelago.common.*;
-import build.archipelago.common.exceptions.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.exceptions.PackageExistsException;
+import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.harbor.filters.AccountIdFilter;
 import build.archipelago.packageservice.client.PackageServiceClient;
-import build.archipelago.packageservice.client.models.*;
-import build.archipelago.packageservice.models.CreatePackageRequest;
-import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import com.google.common.base.*;
+import build.archipelago.packageservice.client.models.GetPackageBuildResponse;
+import build.archipelago.packageservice.client.models.GetPackageResponse;
+import build.archipelago.packageservice.client.models.GetPackagesResponse;
+import build.archipelago.packageservice.models.CreatePackageRestRequest;
+import build.archipelago.packageservice.models.GetPackageRestResponse;
+import build.archipelago.packageservice.models.GetPackagesRestResponse;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.io.*;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
@@ -58,7 +79,7 @@ public class PackageController {
     }
 
     @PostMapping()
-    public void createPackage(@RequestBody CreatePackageRequest request) throws PackageExistsException {
+    public void createPackage(@RequestBody CreatePackageRestRequest request) throws PackageExistsException {
         log.info("Request to create package {} for account {}", request.getName(), accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(request);
@@ -82,18 +103,42 @@ public class PackageController {
     }
 
     @GetMapping("{name}")
-    public build.archipelago.packageservice.models.GetPackageResponse getPackage(@PathVariable("name") String packageName) throws PackageNotFoundException {
+    public GetPackageRestResponse getPackage(@PathVariable("name") String packageName,
+                                             @RequestAttribute(AccountIdFilter.Key) String accountId) throws PackageNotFoundException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
+
         GetPackageResponse pkg = packageServiceClient.getPackage(accountId, packageName);
 
-
-        return build.archipelago.packageservice.models.GetPackageResponse.builder()
+        return GetPackageRestResponse.builder()
                 .name(pkg.getName())
                 .description(pkg.getDescription())
                 .created(pkg.getCreated().toEpochMilli())
-                .versions(pkg.getVersions().stream().map(x -> new build.archipelago.packageservice.models.GetPackageResponse.Version(
+                .versions(pkg.getVersions().stream().map(x -> new GetPackageRestResponse.VersionRestResponse(
                         x.getVersion(),
                         x.getLatestBuildHash(),
                         x.getLatestBuildTime().toEpochMilli())).collect(Collectors.toList()))
+                .build();
+    }
+
+    @GetMapping("all")
+    public GetPackagesRestResponse getAllPackages(@RequestAttribute(AccountIdFilter.Key) String accountId) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
+
+        GetPackagesResponse packages = packageServiceClient.getAllPackages(accountId);
+        List<GetPackageRestResponse> pkgList = new ArrayList<>();
+        for (GetPackageResponse pkg : packages.getPackages()) {
+            pkgList.add(GetPackageRestResponse.builder()
+                    .name(pkg.getName())
+                    .description(pkg.getDescription())
+                    .created(pkg.getCreated().toEpochMilli())
+                    .versions(pkg.getVersions().stream().map(x -> new GetPackageRestResponse.VersionRestResponse(
+                            x.getVersion(),
+                            x.getLatestBuildHash(),
+                            x.getLatestBuildTime().toEpochMilli())).collect(Collectors.toList()))
+                    .build());
+        }
+        return GetPackagesRestResponse.builder()
+                .packages(pkgList)
                 .build();
     }
 }

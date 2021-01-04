@@ -1,6 +1,7 @@
 package build.archipelago.common.exceptions;
 
-import build.archipelago.common.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.ArchipelagoPackage;
 
 public class PackageExistsException extends ArchipelagoException {
     public PackageExistsException(String name) {

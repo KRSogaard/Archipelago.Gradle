@@ -1,7 +1,12 @@
 package build.archipelago.packageservice.client.rest.models;
 
-import lombok.*;
+import build.archipelago.packageservice.client.models.GetPackageResponse;
+import com.google.common.collect.ImmutableList;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -50,5 +55,19 @@ public class RestGetPackageResponse {
         public void setLatestBuildTime(long latestBuildTime) {
             this.latestBuildTime = latestBuildTime;
         }
+    }
+
+    public GetPackageResponse toInternal() {
+        ImmutableList.Builder<GetPackageResponse.Version> versions = ImmutableList.builder();
+        getVersions().forEach(x -> versions.add(new GetPackageResponse.Version(
+                x.getVersion(), x.getLatestBuildHash(), Instant.ofEpochMilli(x.getLatestBuildTime())
+        )));
+
+        return GetPackageResponse.builder()
+                .name(getName())
+                .description(getDescription())
+                .created(Instant.ofEpochMilli(getCreated()))
+                .versions(versions.build())
+                .build();
     }
 }

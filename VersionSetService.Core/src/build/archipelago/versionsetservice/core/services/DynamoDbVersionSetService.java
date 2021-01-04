@@ -1,17 +1,31 @@
 package build.archipelago.versionsetservice.core.services;
 
-import build.archipelago.common.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.dynamodb.AV;
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.versionset.*;
+import build.archipelago.common.versionset.Revision;
+import build.archipelago.common.versionset.VersionSet;
+import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.versionsetservice.core.utils.RevisionUtil;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
+import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
+import com.amazonaws.services.dynamodbv2.model.GetItemResult;
+import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import com.amazonaws.services.dynamodbv2.model.QueryRequest;
+import com.amazonaws.services.dynamodbv2.model.QueryResult;
+import com.amazonaws.services.dynamodbv2.model.ReturnItemCollectionMetrics;
+import com.amazonaws.services.dynamodbv2.model.UpdateItemRequest;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DynamoDbVersionSetService implements VersionSetService {

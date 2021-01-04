@@ -1,9 +1,9 @@
 package build.archipelago.common.exceptions;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.ArchipelagoException;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
 public class PackageDependencyLoopDetectedException extends ArchipelagoException {
 

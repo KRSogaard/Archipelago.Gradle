@@ -1,7 +1,5 @@
 package build.archipelago.common.exceptions;
 
-import build.archipelago.common.exceptions.ArchipelagoException;
-
 public class PackageVersionConflictException extends ArchipelagoException {
 
     private String name;

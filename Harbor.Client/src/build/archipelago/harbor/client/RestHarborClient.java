@@ -1,19 +1,33 @@
 package build.archipelago.harbor.client;
 
-import build.archipelago.common.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.clients.rest.OAuthRestClient;
-import build.archipelago.common.exceptions.*;
-import build.archipelago.common.versionset.*;
-import build.archipelago.packageservice.client.models.*;
-import build.archipelago.packageservice.client.rest.models.*;
-import build.archipelago.versionsetservice.client.rest.models.*;
-import com.google.common.base.*;
+import build.archipelago.common.exceptions.PackageExistsException;
+import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.common.exceptions.UnauthorizedException;
+import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.common.versionset.Revision;
+import build.archipelago.common.versionset.VersionSet;
+import build.archipelago.common.versionset.VersionSetRevision;
+import build.archipelago.packageservice.client.models.CreatePackageRequest;
+import build.archipelago.packageservice.client.models.GetPackageResponse;
+import build.archipelago.packageservice.client.rest.models.RestCreatePackageRequest;
+import build.archipelago.packageservice.client.rest.models.RestGetPackageBuildResponse;
+import build.archipelago.packageservice.client.rest.models.RestGetPackageResponse;
+import build.archipelago.versionsetservice.client.rest.models.RestVersionSetResponse;
+import build.archipelago.versionsetservice.client.rest.models.RestVersionSetRevisionResponse;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.net.http.*;
-import java.nio.file.*;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.stream.Collectors;
 

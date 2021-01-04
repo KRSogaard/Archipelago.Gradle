@@ -1,18 +1,23 @@
 package build.archipelago.maui.commands;
 
+import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.actions.BaseAction;
 import build.archipelago.maui.core.output.OutputWrapper;
-import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.maui.models.*;
+import build.archipelago.maui.models.OAuthDeviceCodeResponse;
+import build.archipelago.maui.models.OAuthTokenResponse;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.net.*;
-import java.net.http.*;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.concurrent.Callable;

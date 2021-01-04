@@ -7,13 +7,16 @@ import build.archipelago.packageservice.core.delegates.getPackage.GetPackageDele
 import build.archipelago.packageservice.core.delegates.getPackageBuild.GetPackageBuildDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuildByGit.GetPackageBuildByGitDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuilds.GetPackageBuildsDelegate;
+import build.archipelago.packageservice.core.delegates.getPackages.GetPackagesDelegate;
 import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.UploadBuildArtifactDelegate;
 import build.archipelago.packageservice.core.delegates.verifyBuildsExists.VerifyBuildsExistsDelegate;
 import build.archipelago.packageservice.core.delegates.verifyPackageExists.VerifyPackageExistsDelegate;
 import build.archipelago.packageservice.core.storage.PackageStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 @Configuration
 @Slf4j
@@ -82,5 +85,12 @@ public class DelegateConfiguration {
     public GetPackageBuildByGitDelegate getPackageBuildByGitDelegate(
             PackageData packageData) {
         return new GetPackageBuildByGitDelegate(packageData);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public GetPackagesDelegate getPackagesDelegate(
+            PackageData packageData) {
+        return new GetPackagesDelegate(packageData);
     }
 }

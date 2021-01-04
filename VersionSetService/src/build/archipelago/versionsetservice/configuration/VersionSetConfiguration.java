@@ -1,12 +1,19 @@
 package build.archipelago.versionsetservice.configuration;
 
 import build.archipelago.packageservice.client.PackageServiceClient;
-import build.archipelago.versionsetservice.core.delegates.*;
-import build.archipelago.versionsetservice.core.services.*;
+import build.archipelago.versionsetservice.core.delegates.CreateVersionSetDelegate;
+import build.archipelago.versionsetservice.core.delegates.CreateVersionSetRevisionDelegate;
+import build.archipelago.versionsetservice.core.delegates.GetVersionSetDelegate;
+import build.archipelago.versionsetservice.core.delegates.GetVersionSetPackagesDelegate;
+import build.archipelago.versionsetservice.core.services.DynamoDbVersionSetService;
+import build.archipelago.versionsetservice.core.services.DynamoDbVersionSetServiceConfig;
+import build.archipelago.versionsetservice.core.services.VersionSetService;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 @Configuration
 public class VersionSetConfiguration {

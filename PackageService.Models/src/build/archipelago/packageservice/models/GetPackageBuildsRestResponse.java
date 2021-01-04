@@ -1,12 +1,13 @@
 package build.archipelago.packageservice.models;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 import java.util.List;
 
 @Data
 @Builder
-public class GetPackageBuildsResponse {
+public class GetPackageBuildsRestResponse {
     private List<Build> builds;
 
     public static class Build {

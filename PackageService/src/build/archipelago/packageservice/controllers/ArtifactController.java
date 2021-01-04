@@ -1,15 +1,31 @@
 package build.archipelago.packageservice.controllers;
 
-import build.archipelago.common.*;
-import build.archipelago.common.exceptions.*;
-import build.archipelago.packageservice.core.delegates.getBuildArtifact.*;
-import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.*;
-import build.archipelago.packageservice.models.*;
-import com.google.common.base.*;
+import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.exceptions.PackageExistsException;
+import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.packageservice.core.delegates.getBuildArtifact.GetBuildArtifactDelegate;
+import build.archipelago.packageservice.core.delegates.getBuildArtifact.GetBuildArtifactResponse;
+import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.UploadBuildArtifactDelegate;
+import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.UploadBuildArtifactDelegateRequest;
+import build.archipelago.packageservice.models.ArtifactUploadRestResponse;
+import build.archipelago.packageservice.models.UploadPackageRestRequest;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.*;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
@@ -32,11 +48,11 @@ public class ArtifactController {
 
     @PostMapping("{name}/{version}")
     @ResponseStatus(HttpStatus.OK)
-    public ArtifactUploadResponse uploadBuiltArtifact(
+    public ArtifactUploadRestResponse uploadBuiltArtifact(
             @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
-            @ModelAttribute UploadPackageRequest request)
+            @ModelAttribute UploadPackageRestRequest request)
             throws PackageNotFoundException, PackageExistsException {
         log.info("Request to upload new build: {}", request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
@@ -59,7 +75,7 @@ public class ArtifactController {
                             .buildArtifact(request.getBuildArtifact().getBytes())
                             .build()
             );
-            return ArtifactUploadResponse.builder()
+            return ArtifactUploadRestResponse.builder()
                     .hash(hash)
                     .build();
         } catch (IOException e) {

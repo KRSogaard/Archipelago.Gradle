@@ -4,7 +4,8 @@ import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.packageservice.core.data.PackageData;
 import build.archipelago.packageservice.core.data.models.PackageDetails;
-import com.google.common.base.*;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 public class GetPackageDelegate {
 

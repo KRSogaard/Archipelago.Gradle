@@ -1,7 +1,8 @@
 package build.archipelago.packageservice.core.delegates.getBuildArtifact;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 @Builder
 @Data

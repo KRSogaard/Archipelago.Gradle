@@ -1,8 +1,8 @@
 package build.archipelago.buildserver.common.services.build.models;
 
-import build.archipelago.buildserver.common.services.build.*;
-import build.archipelago.common.dynamodb.AV;
-import lombok.*;
+import build.archipelago.buildserver.common.services.build.BuildStatus;
+import lombok.Builder;
+import lombok.Value;
 
 import java.time.Instant;
 import java.util.List;

@@ -3,7 +3,6 @@ package build.archipelago.buildserver.builder.builder;
 import build.archipelago.account.common.AccountService;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.common.services.build.BuildService;
-import build.archipelago.maui.common.PackageSourceProvider;
 import build.archipelago.maui.path.MauiPath;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;

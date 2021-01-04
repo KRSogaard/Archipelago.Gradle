@@ -1,24 +1,32 @@
 package build.archipelago.maui.configuration;
 
-import build.archipelago.harbor.client.*;
+import build.archipelago.harbor.client.HarborClient;
+import build.archipelago.harbor.client.RestHarborClient;
 import build.archipelago.maui.MauiConstants;
-import build.archipelago.maui.core.output.*;
 import build.archipelago.maui.clients.UnauthorizedHarborClient;
-import build.archipelago.maui.common.*;
-import build.archipelago.maui.common.cache.*;
-import build.archipelago.maui.core.providers.SystemPathProvider;
+import build.archipelago.maui.common.LocalGitPackageSourceProvider;
+import build.archipelago.maui.common.PackageSourceProvider;
+import build.archipelago.maui.common.cache.LocalPackageCacher;
+import build.archipelago.maui.common.cache.PackageCacher;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.core.output.ConsoleOutputWrapper;
+import build.archipelago.maui.core.output.OutputWrapper;
+import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.graph.DependencyGraphGenerator;
 import build.archipelago.maui.models.OAuthTokenResponse;
 import build.archipelago.maui.path.MauiPath;
-import build.archipelago.maui.path.recipies.*;
+import build.archipelago.maui.path.recipies.BinRecipe;
+import build.archipelago.maui.path.recipies.PackageRecipe;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.*;
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 @Slf4j

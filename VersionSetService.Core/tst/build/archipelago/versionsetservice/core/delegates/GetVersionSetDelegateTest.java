@@ -2,15 +2,19 @@ package build.archipelago.versionsetservice.core.delegates;
 
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.versionset.*;
+import build.archipelago.common.versionset.Revision;
+import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class GetVersionSetDelegateTest {
 

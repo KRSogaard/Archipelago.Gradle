@@ -1,8 +1,8 @@
 package build.archipelago.maui.common.serializer;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.common.exceptions.VersionSetNotSyncedException;
+import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.common.WorkspaceConstants;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,9 +11,11 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j

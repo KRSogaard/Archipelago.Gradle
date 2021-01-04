@@ -18,6 +18,15 @@ endpoints:
   versionset-service: "http://localhost:8091"
 
 oauth:
-  client-id: "iijvIrTcYH7CTeBAAA1tycFKjvFvQ7n3"
-  client-secret: "Kvdi9nLapjGVQ4Zt84gVKRNIA0c6Dm7xUpZNNPnCLHaiC-3Cre0tYPizTUX6G7Mf"
-  audience: "http://harbor.archipelago.build"
+  client-id: "4ok75klvst0vf15lel5sdbdoc0"
+  client-secret: "1u7m9pa9njct19jbj51b592ci0ku151quhjo4n0pcm36h3lude91"
+
+dynamodb:
+  accounts: "accounts.alpha"
+  account-mapping: "account-mapping.alpha"
+
+aws:
+  region: "us-west-2"
+  access:
+    id: "AKIARDAF5R4ODZ2LMPNZ"
+    key: "MS7flruyxp3QPlEVEd41NZVDG7WTkkZYBfZjfWEM"

@@ -4,17 +4,17 @@ import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.maui.common.PackageSourceProvider;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
-import net.lingala.zip4j.model.*;
-import org.apache.http.auth.*;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.*;
-import java.nio.file.*;
-import java.util.*;
-import java.util.stream.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class GitHubPackageSourceProvider implements PackageSourceProvider {
 

@@ -1,14 +1,12 @@
 package build.archipelago.packageservice.client;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.*;
-import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
-import org.junit.*;
+import build.archipelago.common.exceptions.PackageExistsException;
+import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.common.exceptions.UnauthorizedException;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
 
 public class RestPackageServiceClientTest {
 

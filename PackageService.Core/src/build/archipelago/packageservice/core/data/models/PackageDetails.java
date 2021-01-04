@@ -1,7 +1,8 @@
 package build.archipelago.packageservice.core.data.models;
 
 import com.google.common.collect.ImmutableList;
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 import java.time.Instant;
 

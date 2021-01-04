@@ -1,6 +1,7 @@
 package build.archipelago.versionsetservice.core.utils;
 
-import build.archipelago.common.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.ArchipelagoPackage;
 
 public class TestConstants {
     public static ArchipelagoPackage pkgA = ArchipelagoPackage.parse("TestPackageA-1.0");

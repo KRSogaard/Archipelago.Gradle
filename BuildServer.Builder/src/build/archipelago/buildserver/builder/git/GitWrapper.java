@@ -2,6 +2,7 @@ package build.archipelago.buildserver.builder.git;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;

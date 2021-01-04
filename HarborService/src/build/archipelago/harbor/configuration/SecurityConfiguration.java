@@ -14,6 +14,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
                 .mvcMatchers(HealthController.HEALTH_PATH).permitAll()
+                //.mvcMatchers("/package/**").hasAuthority("SCOPE_http://harbor.archipelago.build/packages")
                 .anyRequest().authenticated()
                 .and().cors()
                 .and().oauth2ResourceServer().jwt();

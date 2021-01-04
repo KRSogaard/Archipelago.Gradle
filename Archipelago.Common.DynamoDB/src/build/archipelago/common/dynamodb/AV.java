@@ -1,11 +1,11 @@
 package build.archipelago.common.dynamodb;
 
-import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 
 import java.time.Instant;
-import java.util.*;
-import java.util.function.*;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 public class AV {
     public static AttributeValue of(String v) {

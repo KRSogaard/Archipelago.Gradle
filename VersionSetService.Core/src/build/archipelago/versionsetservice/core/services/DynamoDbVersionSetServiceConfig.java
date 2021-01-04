@@ -1,6 +1,7 @@
 package build.archipelago.versionsetservice.core.services;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Value;
 
 @Builder
 @Value

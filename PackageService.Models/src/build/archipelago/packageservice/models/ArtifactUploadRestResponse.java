@@ -1,9 +1,10 @@
 package build.archipelago.packageservice.models;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Value;
 
 @Builder
 @Value
-public class ArtifactUploadResponse {
+public class ArtifactUploadRestResponse {
     private String hash;
 }
