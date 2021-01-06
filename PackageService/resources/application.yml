@@ -19,19 +19,16 @@ spring:
           issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
 
 s3:
-  packages:
-    name: "alpha-archipelago-packages"
+  packages: "alpha-archipelago-packages"
 
 dynamodb:
-  packages:
-    name: "packages.alpha"
-  packages_versions:
-    name: "packages-versions.alpha"
-  packages_builds:
-    name: "packages-builds.alpha"
-  packages_builds_git:
-    name: "packages-builds-git.alpha"
-
+  packages: "packages.alpha"
+  packages_versions: "packages-versions.alpha"
+  packages_builds: "packages-builds.alpha"
+  packages_builds_git: "packages-builds-git.alpha"
+  accounts: "accounts.alpha"
+  account-mapping: "account-mapping.alpha"
+  accounts-git: "accounts-git.alpha"
 aws:
   region: "us-west-2"
   access:

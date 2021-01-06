@@ -15,6 +15,8 @@ import java.util.List;
 public class RestGetPackageResponse {
     private String name;
     private String description;
+    private String gitCloneUrl;
+    private String gitUrl;
     private long created;
     private List<Version> versions;
 
@@ -68,6 +70,8 @@ public class RestGetPackageResponse {
                 .description(getDescription())
                 .created(Instant.ofEpochMilli(getCreated()))
                 .versions(versions.build())
+                .gitCloneUrl(getGitCloneUrl())
+                .gitUrl(getGitUrl())
                 .build();
     }
 }

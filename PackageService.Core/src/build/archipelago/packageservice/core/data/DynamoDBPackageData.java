@@ -134,6 +134,8 @@ public class DynamoDBPackageData implements PackageData {
                 .name(pkgItem.get(DynamoDBKeys.DISPLAY_PACKAGE_NAME).getS())
                 .created(AV.toInstant(pkgItem.get(DynamoDBKeys.CREATED)))
                 .description(pkgItem.get(DynamoDBKeys.DESCRIPTION).getS())
+                .gitCloneUrl(pkgItem.get(DynamoDBKeys.GIT_CLONE_URL).getS())
+                .gitUrl(pkgItem.get(DynamoDBKeys.GIT_URL).getS())
                 .versions(versions.build())
                 .build();
     }
@@ -337,6 +339,8 @@ public class DynamoDBPackageData implements PackageData {
                 .put(DynamoDBKeys.ACCOUNT_ID, AV.of(searchName(accountId)))
                 .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(model.getName())))
                 .put(DynamoDBKeys.DISPLAY_PACKAGE_NAME, AV.of(model.getName()))
+                .put(DynamoDBKeys.GIT_CLONE_URL, AV.of(model.getGitCloneUrl()))
+                .put(DynamoDBKeys.GIT_URL, AV.of(model.getGitUrl()))
                 .put(DynamoDBKeys.CREATED, AV.of(Instant.now()))
                 .put(DynamoDBKeys.DESCRIPTION, AV.of(model.getDescription()));
 
@@ -371,6 +375,8 @@ public class DynamoDBPackageData implements PackageData {
                     .name(item.get(DynamoDBKeys.DISPLAY_PACKAGE_NAME).getS())
                     .description(AV.getStringOrNull(item, DynamoDBKeys.DESCRIPTION))
                     .created(AV.toInstant(item.get(DynamoDBKeys.CREATED)))
+                    .gitCloneUrl(item.get(DynamoDBKeys.GIT_CLONE_URL).getS())
+                    .gitUrl(item.get(DynamoDBKeys.GIT_URL).getS())
                     .versions(latestVersion.build())
                     .build());
         }

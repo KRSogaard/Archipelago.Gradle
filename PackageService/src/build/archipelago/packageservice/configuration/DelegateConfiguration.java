@@ -1,5 +1,7 @@
 package build.archipelago.packageservice.configuration;
 
+import build.archipelago.account.common.AccountService;
+import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.packageservice.core.data.PackageData;
 import build.archipelago.packageservice.core.delegates.createPackage.CreatePackageDelegate;
 import build.archipelago.packageservice.core.delegates.getBuildArtifact.GetBuildArtifactDelegate;
@@ -41,8 +43,10 @@ public class DelegateConfiguration {
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public CreatePackageDelegate createPackageDelegate(
-            PackageData packageData) {
-        return new CreatePackageDelegate(packageData);
+            PackageData packageData,
+            AccountService accountService,
+            GitServiceFactory gitServiceFactory) {
+        return new CreatePackageDelegate(packageData, accountService, gitServiceFactory);
     }
 
     @Bean

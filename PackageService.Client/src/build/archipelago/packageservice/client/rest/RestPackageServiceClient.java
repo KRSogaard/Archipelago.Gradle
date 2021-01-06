@@ -70,8 +70,6 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .header("accept", "application/json")
                     .build();
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -102,8 +100,6 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .build();
 
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -123,8 +119,6 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -152,8 +146,6 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -182,8 +174,6 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -207,8 +197,6 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -247,8 +235,6 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -296,8 +282,6 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .POST(publisher.build())
                     .build();
             restResponse = client.send(restTequest, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -325,12 +309,11 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         }
         HttpResponse<Path> restResponse;
         try {
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/artifact/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/artifact/" +
+                    pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofFile(filePath));
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -356,8 +339,6 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -379,7 +360,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         }
     }
 
-    private <T> T validateResponse(HttpResponse<String> response, String packageName, Function<String, T> onOk) throws PackageNotFoundException {
+    private <T> T validateResponse(HttpResponse<String> response, String packageName, Function<String, T> onOk) throws PackageNotFoundException, UnauthorizedException {
 
         switch (response.statusCode()) {
             case 401:
@@ -392,7 +373,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                 throw new RuntimeException("Unknown response " + response.statusCode());
         }
     }
-    private <T> T validateResponse(HttpResponse<String> response, String packageName, Class<T> outputCalls) throws PackageNotFoundException {
+    private <T> T validateResponse(HttpResponse<String> response, String packageName, Class<T> outputCalls) throws PackageNotFoundException, UnauthorizedException {
         return validateResponse(response, packageName, s -> {
             try {
                 return objectMapper.readValue(response.body(), outputCalls);

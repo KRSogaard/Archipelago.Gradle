@@ -7,7 +7,4 @@ import lombok.Data;
 @Data
 public class AccountDetails {
     private String id;
-    private String codeSource;
-    private String gitHubAccessToken;
-    private String githubAccount;
 }

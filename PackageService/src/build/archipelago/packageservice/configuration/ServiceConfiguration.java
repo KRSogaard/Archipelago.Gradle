@@ -1,5 +1,7 @@
 package build.archipelago.packageservice.configuration;
 
+import build.archipelago.account.common.AccountService;
+import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.packageservice.core.data.DynamoDBPackageConfig;
 import build.archipelago.packageservice.core.data.DynamoDBPackageData;
 import build.archipelago.packageservice.core.data.PackageData;
@@ -23,7 +25,7 @@ public class ServiceConfiguration {
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public PackageStorage packageStorage(AmazonS3 amazonS3,
-                                         @Value("${s3.packages.name}") String bucketName) {
+                                         @Value("${s3.packages}") String bucketName) {
         log.info("Creating S3PackageStorage using bucket \"{}\"",
                 bucketName);
         return new S3PackageStorage(amazonS3, bucketName);
@@ -32,10 +34,10 @@ public class ServiceConfiguration {
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public PackageData packageData(
-            @Value("${dynamodb.packages.name}") String packageTable,
-            @Value("${dynamodb.packages_versions.name}") String packageVersionsTable,
-            @Value("${dynamodb.packages_builds.name}") String packageBuildsTable,
-            @Value("${dynamodb.packages_builds_git.name}") String packageBuildsGitTable,
+            @Value("${dynamodb.packages}") String packageTable,
+            @Value("${dynamodb.packages_versions}") String packageVersionsTable,
+            @Value("${dynamodb.packages_builds}") String packageBuildsTable,
+            @Value("${dynamodb.packages_builds_git}") String packageBuildsGitTable,
             AmazonDynamoDB dynamoDB) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageTable));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageVersionsTable));
@@ -52,5 +54,21 @@ public class ServiceConfiguration {
         log.info("Creating DynamoDBPackageData with config \"{}\"",
                 config.toString());
         return new DynamoDBPackageData(dynamoDB, config);
+    }
+
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public AccountService accountService(AmazonDynamoDB amazonDynamoDB,
+                                         @Value("${dynamodb.accounts}") String accountsTableName,
+                                         @Value("${dynamodb.account-mapping}") String accountsMappingTableName,
+                                         @Value("${dynamodb.accounts-git}") String accountsGitTableName) {
+        return new AccountService(amazonDynamoDB, accountsTableName, accountsMappingTableName, accountsGitTableName);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public GitServiceFactory gitServiceFactory() {
+        return new GitServiceFactory();
     }
 }

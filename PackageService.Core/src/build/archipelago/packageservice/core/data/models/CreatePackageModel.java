@@ -11,6 +11,8 @@ import lombok.Data;
 public class CreatePackageModel {
     private String name;
     private String description;
+    private String gitCloneUrl;
+    private String gitUrl;
 
     public void validate() {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");

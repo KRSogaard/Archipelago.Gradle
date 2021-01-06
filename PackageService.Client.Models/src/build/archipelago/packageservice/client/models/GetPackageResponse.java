@@ -12,6 +12,8 @@ import java.util.List;
 public class GetPackageResponse {
     private String name;
     private String description;
+    private String gitCloneUrl;
+    private String gitUrl;
     private Instant created;
     private ImmutableList<Version> versions;
 

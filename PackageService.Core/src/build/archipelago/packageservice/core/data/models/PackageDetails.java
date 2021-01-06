@@ -11,6 +11,8 @@ import java.time.Instant;
 public class PackageDetails {
     private String name;
     private String description;
+    private String gitCloneUrl;
+    private String gitUrl;
     private Instant created;
     private ImmutableList<PackageDetailsVersion> versions;
 }

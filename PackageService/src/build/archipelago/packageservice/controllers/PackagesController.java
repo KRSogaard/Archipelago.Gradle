@@ -1,5 +1,6 @@
 package build.archipelago.packageservice.controllers;
 
+import build.archipelago.account.common.exceptions.GitDetailsNotFound;
 import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.PackageExistsException;
@@ -88,7 +89,7 @@ public class PackagesController {
     @ResponseStatus(HttpStatus.OK)
     public void createPackage(
             @PathVariable("accountId") String accountId,
-            @RequestBody CreatePackageRestRequest request) throws PackageExistsException {
+            @RequestBody CreatePackageRestRequest request) throws PackageExistsException, GitDetailsNotFound {
         log.info("Request to create package {} for account {}", request.getName(), accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(request);

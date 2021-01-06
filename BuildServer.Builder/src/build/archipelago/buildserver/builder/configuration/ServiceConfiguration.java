@@ -57,8 +57,9 @@ public class ServiceConfiguration {
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public AccountService accountService(AmazonDynamoDB amazonDynamoDB,
                                          @Value("${dynamodb.accounts}") String accountsTableName,
-                                         @Value("${dynamodb.account-mapping}") String accountsMappingTableName) {
-        return new AccountService(amazonDynamoDB, accountsTableName, accountsMappingTableName);
+                                         @Value("${dynamodb.account-mapping}") String accountsMappingTableName,
+                                         @Value("${dynamodb.accounts-git") String accountGitTableName) {
+        return new AccountService(amazonDynamoDB, accountsTableName, accountsMappingTableName, accountGitTableName);
     }
 
     @Bean

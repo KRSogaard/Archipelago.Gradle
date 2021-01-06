@@ -24,6 +24,7 @@ oauth:
 dynamodb:
   accounts: "accounts.alpha"
   account-mapping: "account-mapping.alpha"
+  accounts-git: "accounts-git.alpha"
 
 aws:
   region: "us-west-2"

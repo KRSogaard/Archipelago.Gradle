@@ -51,8 +51,6 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -102,8 +100,6 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -154,8 +150,6 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofFile(filePath));
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -189,8 +183,6 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
                     .header("accept", "application/json")
                     .build();
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -218,8 +210,6 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -248,8 +238,6 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
                     .build();
 
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

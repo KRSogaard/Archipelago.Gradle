@@ -28,4 +28,9 @@ public class CustomGlobalExceptionHandler {
         response.sendError(HttpStatus.CONFLICT.value(), ex.getMessage());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public void springHandleIllegalArgumentException(Exception ex, HttpServletResponse response) throws IOException {
+        response.sendError(HttpStatus.NOT_ACCEPTABLE.value(), ex.getMessage());
+    }
+
 }

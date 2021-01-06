@@ -1,6 +1,7 @@
 package build.archipelago.harbor.configuration;
 
 import build.archipelago.account.common.AccountService;
+import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
@@ -60,7 +61,14 @@ public class ServiceConfiguration {
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public AccountService accountService(AmazonDynamoDB amazonDynamoDB,
                                          @Value("${dynamodb.accounts}") String accountsTableName,
-                                         @Value("${dynamodb.account-mapping}") String accountsMappingTableName) {
-        return new AccountService(amazonDynamoDB, accountsTableName, accountsMappingTableName);
+                                         @Value("${dynamodb.account-mapping}") String accountsMappingTableName,
+                                         @Value("${dynamodb.accounts-git}") String accountsGitTableName) {
+        return new AccountService(amazonDynamoDB, accountsTableName, accountsMappingTableName, accountsGitTableName);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public GitServiceFactory gitServiceFactory() {
+        return new GitServiceFactory();
     }
 }

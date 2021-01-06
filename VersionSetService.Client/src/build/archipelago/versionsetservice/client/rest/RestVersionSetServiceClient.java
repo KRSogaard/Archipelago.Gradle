@@ -58,8 +58,6 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.discarding());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -105,8 +103,6 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -133,7 +129,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
     }
 
     @Override
-    public VersionSet getVersionSet(String accountId, String versionSetName) throws VersionSetDoseNotExistsException {
+    public VersionSet getVersionSet(String accountId, String versionSetName) throws VersionSetDoseNotExistsException, UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
 
@@ -144,8 +140,6 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -184,7 +178,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
     }
 
     @Override
-    public VersionSetRevision getVersionSetPackages(String accountId, String versionSetName, String revisionId) throws VersionSetDoseNotExistsException {
+    public VersionSetRevision getVersionSetPackages(String accountId, String versionSetName, String revisionId) throws VersionSetDoseNotExistsException, UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(revisionId), "Version set revision is required");
@@ -196,8 +190,6 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

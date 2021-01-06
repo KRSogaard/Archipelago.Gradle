@@ -2,7 +2,9 @@ package build.archipelago.buildserver.builder.builder;
 
 import build.archipelago.account.common.AccountService;
 import build.archipelago.account.common.exceptions.AccountNotFoundException;
+import build.archipelago.account.common.exceptions.GitDetailsNotFound;
 import build.archipelago.account.common.models.AccountDetails;
+import build.archipelago.account.common.models.GitDetails;
 import build.archipelago.buildserver.builder.StageLog;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.builder.git.GitHubPackageSourceProvider;
@@ -133,14 +135,20 @@ public class VersionSetBuilder {
                 throw new PermanentMessageProcessingException("The build account was not found", e);
             }
 
+            GitDetails gitDetails;
+            try {
+                gitDetails = accountService.getGitDetails(request.getAccountId());
+            } catch (GitDetailsNotFound gitDetailsNotFound) {
+                throw new PermanentMessageProcessingException("No git settings was found for the account", gitDetailsNotFound);
+            }
             buildRoot = createBuildRoot(buildId);
-            if (!accountDetails.getCodeSource().equalsIgnoreCase("github")) {
-                log.error("Unknown code source {}", accountDetails.getCodeSource());
+            if (!gitDetails.getCodeSource().toLowerCase().startsWith("github")) {
+                log.error("Unknown code source {}", gitDetails.getCodeSource());
                 throw new PermanentMessageProcessingException("Only github is supported at this time");
             }
             packageSourceProvider = new GitHubPackageSourceProvider(
-                    accountDetails.getGithubAccount(),
-                    accountDetails.getGitHubAccessToken());
+                    gitDetails.getGithubAccount(),
+                    gitDetails.getGitHubAccessToken());
             harborClient = internalHarborClientFactory.create(request.getAccountId());
             maui = new Maui(buildRoot, harborClient, packageSourceProvider, mauiPath);
             try {
