@@ -1,4 +1,4 @@
 package build.archipelago.common.github.exceptions;
 
-public class NotFoundException extends Exception {
+public class RepoNotFoundException extends Exception {
 }

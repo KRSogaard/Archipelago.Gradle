@@ -6,12 +6,12 @@ import lombok.Value;
 
 @Builder
 @Value
-public class RevisionIdResponse {
+public class RevisionIdRestResponse {
     private String revisionId;
     private Long created;
 
-    public static RevisionIdResponse from(Revision r) {
-        return RevisionIdResponse.builder()
+    public static RevisionIdRestResponse from(Revision r) {
+        return RevisionIdRestResponse.builder()
                 .revisionId(r.getRevisionId())
                 .created(r.getCreated().toEpochMilli())
                 .build();

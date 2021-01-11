@@ -3,10 +3,9 @@ package build.archipelago.common.github.github;
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.github.GitService;
 import build.archipelago.common.github.exceptions.GitRepoExistsException;
-import build.archipelago.common.github.exceptions.NotFoundException;
+import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.common.github.models.GitRepo;
 import com.google.common.base.Function;
-import lombok.extern.java.Log;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
@@ -44,7 +43,7 @@ public class OrgGitService implements GitService {
     }
 
     //@Override
-    public String getRepos() throws NotFoundException, UnauthorizedException {
+    public String getRepos() throws RepoNotFoundException, UnauthorizedException {
         HttpResponse<String> httpResponse;
         try {
             HttpRequest httpRequest = getGithubRequest("/orgs/" + username + "/repos")
@@ -86,7 +85,7 @@ public class OrgGitService implements GitService {
     }
 
     @Override
-    public GitRepo getRepo(String name) throws NotFoundException, UnauthorizedException {
+    public GitRepo getRepo(String name) throws RepoNotFoundException, UnauthorizedException {
         HttpResponse<String> httpResponse;
         try {
             HttpRequest httpRequest = getGithubRequest("/repos/" + username + "/" + name)
@@ -102,7 +101,7 @@ public class OrgGitService implements GitService {
             case 200:
                 return parseToGitRepo(httpResponse.body());
             case 404:
-                throw new NotFoundException();
+                throw new RepoNotFoundException();
             case 401:
             case 403:
                 throw new UnauthorizedException();
@@ -131,6 +130,7 @@ public class OrgGitService implements GitService {
 
         switch (httpResponse.statusCode()) {
             case 200:
+            case 201:
                 return parseToGitRepo(httpResponse.body());
             case 422:
                 throw new GitRepoExistsException(name);
@@ -138,7 +138,7 @@ public class OrgGitService implements GitService {
             case 403:
                 throw new UnauthorizedException();
             default:
-                throw new RuntimeException("Got unknown git response");
+                throw new RuntimeException("Got unknown git response: " + httpResponse.statusCode());
         }
     }
 
@@ -157,12 +157,12 @@ public class OrgGitService implements GitService {
     }
 
     private <T> T validateReponse(HttpResponse<String> httpResponse, Function<String, T> onOk)
-            throws NotFoundException, UnauthorizedException {
+            throws RepoNotFoundException, UnauthorizedException {
         switch (httpResponse.statusCode()) {
             case 401:
                 throw new UnauthorizedException();
             case 404:
-                throw new NotFoundException();
+                throw new RepoNotFoundException();
             case 200: // Ok
                 return onOk.apply(httpResponse.body());
             default:

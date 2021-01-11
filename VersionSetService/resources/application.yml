@@ -34,5 +34,5 @@ endpoints:
   package-service: "http://localhost:8090"
 
 oauth:
-  client-id: "ImRTxga0z1WT6LSdNMRird9R29QQ8GBn"
-  client-secret: "3RjLmcYj1M6jZkEoG6AAMsvtfWkkmt6s3AJgem1xumxcDe_8FVvztwU66D4Maz2M"
+  client-id: "1iv0c51b2f7a2nsl0hnphthnq6"
+  client-secret: "n1uv2fh8o1hf0medie0luo85ksh5hju0s0na1p3i7lv6c82h0ic"

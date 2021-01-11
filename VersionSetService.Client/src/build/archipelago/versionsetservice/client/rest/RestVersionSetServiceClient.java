@@ -18,6 +18,7 @@ import build.archipelago.versionsetservice.client.rest.models.RestCreateVersionS
 import build.archipelago.versionsetservice.client.rest.models.RestCreateVersionSetRevisionResponse;
 import build.archipelago.versionsetservice.client.rest.models.RestVersionSetResponse;
 import build.archipelago.versionsetservice.client.rest.models.RestVersionSetRevisionResponse;
+import build.archipelago.versionsetservice.client.rest.models.RestVersionSetsResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,6 +39,42 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
 
     public RestVersionSetServiceClient(String endpoint, String clientId, String clientSecret) {
         super(endpoint, OAUTH2_TOKENURL, clientId, clientSecret, OAUTH2_SCOPES);
+    }
+
+    @Override
+    public List<VersionSet> getVersionSets(String accountId) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+
+        RestVersionSetsResponse response;
+        HttpResponse<String> httpResponse;
+        try {
+            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-set")
+                    .GET()
+                    .build();
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                try {
+                    response = objectMapper.readValue(httpResponse.body(), RestVersionSetsResponse.class);
+                } catch (IOException e) {
+                    log.error(String.format("Failed to parse the string \"%s\" as a RestVersionSetResponse object", httpResponse.body()), e);
+                    throw new RuntimeException("Failed to parse RestVersionSetResponse", e);
+                }
+                break;
+            case 401:
+                throw new UnauthorizedException();
+            default:
+                throw new RuntimeException("Was unable to get the version set revision with status code " + httpResponse.statusCode());
+        }
+
+        List<VersionSet> versionSets = new ArrayList<>();
+        for (RestVersionSetResponse vs : response.getVersionSets()) {
+            versionSets.add(parseVersionSetFromRestResponse(vs));
+        }
+        return versionSets;
     }
 
     @Override
@@ -54,7 +92,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
 
         HttpResponse<Void> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-sets")
+            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-set")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.discarding());
@@ -160,6 +198,10 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                 throw new RuntimeException("Was unable to get the version set revision with status code " + httpResponse.statusCode());
         }
 
+        return parseVersionSetFromRestResponse(response);
+    }
+
+    private VersionSet parseVersionSetFromRestResponse(RestVersionSetResponse response) {
         return VersionSet.builder()
                 .name(response.getName())
                 .created(Instant.ofEpochMilli(response.getCreated()))
@@ -167,9 +209,9 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                 .targets(response.getTargets().stream().map(ArchipelagoPackage::parse).collect(Collectors.toList()))
                 .revisions(response.getRevisions().stream().map(x ->
                         Revision.builder()
-                        .revisionId(x.getRevisionId())
-                        .created(Instant.ofEpochMilli(x.getCreated()))
-                        .build()).collect(Collectors.toList()))
+                                .revisionId(x.getRevisionId())
+                                .created(Instant.ofEpochMilli(x.getCreated()))
+                                .build()).collect(Collectors.toList()))
                 .latestRevision(response.getLatestRevision())
                 .latestRevisionCreated(response.getLatestRevisionCreated() != null ?
                         Instant.ofEpochMilli(response.getLatestRevisionCreated()) :

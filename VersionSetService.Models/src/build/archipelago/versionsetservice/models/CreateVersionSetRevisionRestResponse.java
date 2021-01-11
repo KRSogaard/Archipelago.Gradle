@@ -5,6 +5,6 @@ import lombok.Value;
 
 @Builder
 @Value
-public class CreateVersionSetRevisionResponse {
+public class CreateVersionSetRevisionRestResponse {
     private String revisionId;
 }

@@ -7,7 +7,7 @@ import build.archipelago.common.exceptions.PackageExistsException;
 import build.archipelago.common.github.GitService;
 import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.common.github.exceptions.GitRepoExistsException;
-import build.archipelago.common.github.exceptions.NotFoundException;
+import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.common.github.models.GitRepo;
 import build.archipelago.packageservice.core.data.PackageData;
 import build.archipelago.packageservice.core.data.models.CreatePackageModel;
@@ -35,28 +35,20 @@ public class CreatePackageDelegate {
                 gitDetails.getGithubAccount(),
                 gitDetails.getGitHubAccessToken());
 
-        GitRepo repo = null;
-        if (!git.hasRep(request.getName())) {
-            log.info("The repo {} dose not exists", request.getName());
-            try {
-                git.createRepo(request.getName(), request.getDescription(), true);
-            } catch (GitRepoExistsException e) {
-                log.error("Not repo exists for {}, but we already checked if it exists and got no. " +
-                        "Trying to fetch again", request.getName());
-                try {
-                    repo = git.getRepo(request.getName());
-                } catch (NotFoundException ex) {
-                    log.error("Was told the repo {} exists but we where unable to fetch it", request.getName());
-                    throw new RuntimeException(ex);
-                }
-            }
-        } else {
-            try {
+        GitRepo repo;
+        try {
+            if (!git.hasRep(request.getName())) {
+                log.info("The repo {} dose not exists", request.getName());
+                repo = git.createRepo(request.getName(), request.getDescription(), true);
+            } else {
                 repo = git.getRepo(request.getName());
-            } catch (NotFoundException ex) {
-                log.error("Was told the repo {} exists but we where unable to fetch it", request.getName());
-                throw new RuntimeException(ex);
             }
+        } catch (RepoNotFoundException ex) {
+            log.error("Was told the repo {} exists but we where unable to fetch it", request.getName());
+            throw new RuntimeException(ex);
+        } catch (GitRepoExistsException ex) {
+            log.error("Was told the repo {} did not exists, but we where not able to create it", request.getName());
+            throw new RuntimeException(ex);
         }
 
         packageData.createPackage(request.getAccountId(), CreatePackageModel.builder()

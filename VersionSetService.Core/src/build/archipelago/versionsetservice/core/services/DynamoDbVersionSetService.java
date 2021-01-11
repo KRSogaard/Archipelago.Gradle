@@ -40,6 +40,27 @@ public class DynamoDbVersionSetService implements VersionSetService {
     }
 
     @Override
+    public List<VersionSet> getAll(String accountId) {
+        Preconditions.checkNotNull(accountId);
+
+        QueryRequest request = new QueryRequest()
+                .withTableName(config.getVersionSetTable())
+                .withKeyConditionExpression("#accountId = :accountId")
+                .withExpressionAttributeNames(ImmutableMap.of(
+                        "#accountId", Keys.ACCOUNT_ID
+                ))
+                .withExpressionAttributeValues(ImmutableMap.of(
+                        ":accountId", AV.of(sanitizeName(accountId))));
+        QueryResult result = dynamoDB.query(request);
+        List<VersionSet> versionSets = new ArrayList<>();
+        for (Map<String, AttributeValue> item : result.getItems()) {
+            versionSets.add(parseVersionDBItem(item, new ArrayList<>()));
+        }
+
+        return versionSets;
+    }
+
+    @Override
     public VersionSet get(String accountId, String versionSetName) {
         Preconditions.checkNotNull(accountId);
         Preconditions.checkNotNull(versionSetName);
@@ -53,7 +74,11 @@ public class DynamoDbVersionSetService implements VersionSetService {
         if (result.getItem() == null) {
             return null;
         }
-        Map<String, AttributeValue> dbItem = result.getItem();
+
+        return parseVersionDBItem(result.getItem(), getRevisions(accountId, versionSetName));
+    }
+
+    private VersionSet parseVersionDBItem(Map<String, AttributeValue> dbItem, List<Revision> revisions) {
 
         List<ArchipelagoPackage> targets = new ArrayList<>();
         if (dbItem.get(Keys.TARGETS) != null) {
@@ -72,9 +97,6 @@ public class DynamoDbVersionSetService implements VersionSetService {
             latestRevision = dbItem.get(Keys.REVISION_LATEST).getS();
             latestRevisionCreated = AV.toInstant(dbItem.get(Keys.REVISION_CREATED));
         }
-
-        List<Revision> revisions = getRevisions(accountId, versionSetName);
-
         return VersionSet.builder()
                 .name(dbItem.get(Keys.DISPLAY_NAME).getS())
                 .created(Instant.ofEpochMilli(Long.parseLong(dbItem.get(Keys.CREATED).getN())))

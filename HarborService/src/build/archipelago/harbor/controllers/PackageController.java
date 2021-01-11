@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("package")
+@RequestMapping("packages")
 @Slf4j
 @CrossOrigin(origins = "*")
 public class PackageController {

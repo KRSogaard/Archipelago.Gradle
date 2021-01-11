@@ -15,4 +15,5 @@ public interface VersionSetService {
     void create(String accountId, String versionSetName, List<ArchipelagoPackage> targets, Optional<String> parent) throws VersionSetExistsException;
     String createRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> parsePackages) throws VersionSetDoseNotExistsException;
     VersionSetRevision getRevision(String accountId, String versionSetName, String revision) throws VersionSetDoseNotExistsException;
+    List<VersionSet> getAll(String accountId);
 }

@@ -182,7 +182,7 @@ project(':PackageService') {
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
 
-    mainClassName = 'build.archipelago.packageservice.Application'
+    mainClassName = 'build.archipelago.packageservice.PackageServiceApplication'
 
     configurations {
         all {
@@ -270,7 +270,7 @@ project(':VersionSetService') {
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
 
-    mainClassName = 'build.archipelago.versionsetservice.Application'
+    mainClassName = 'build.archipelago.versionsetservice.VersionSetServiceApplication'
 
     configurations {
         all {
@@ -507,7 +507,7 @@ project(':HarborService') {
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
 
-    mainClassName = 'build.archipelago.harbor.Application'
+    mainClassName = 'build.archipelago.harbor.HarborServiceApplication'
 
     configurations {
         all {
@@ -518,9 +518,8 @@ project(':HarborService') {
     dependencies {
         implementation project(':Archipelago.Common')
         implementation project(':VersionSetService.Client')
-        implementation project(':VersionSetService.Core')
+        implementation project(':VersionSetService.Models')
         implementation project(':PackageService.Client')
-        implementation project(':PackageService.Core')
         implementation project(':Archipelago.Common.Clients')
         implementation project(':PackageService.Client.Models')
         implementation project(':VersionSetService.Client.Models')

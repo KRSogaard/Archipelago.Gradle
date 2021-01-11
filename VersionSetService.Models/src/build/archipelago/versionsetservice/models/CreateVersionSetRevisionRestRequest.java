@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class CreateVersionSetRevisionRequest {
+public class CreateVersionSetRevisionRestRequest {
     private List<String> packages;
 
     public void validate() {

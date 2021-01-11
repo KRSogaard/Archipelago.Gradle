@@ -6,11 +6,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @Slf4j
-public class Application {
+public class VersionSetServiceApplication {
 
     public static void main(String[] args) {
         log.info("Starting Version set service");
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(VersionSetServiceApplication.class, args);
     }
 
 }

@@ -7,7 +7,7 @@ import java.util.List;
 
 @Builder
 @Value
-public class VersionSetRevisionResponse {
+public class VersionSetRevisionRestResponse {
     private Long created;
     private List<String> packages;
 }

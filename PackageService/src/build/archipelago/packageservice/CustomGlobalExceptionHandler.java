@@ -19,25 +19,27 @@ public class CustomGlobalExceptionHandler {
 
     @ExceptionHandler(PackageNotFoundException.class)
     public void springHandlePackageNotFoundException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.NOT_FOUND.value(), ex.getMessage());
+        response.sendError(HttpStatus.NOT_FOUND.value(), formatErrorMessage("PackageNotFound", ex.getMessage()));
     }
 
     @ExceptionHandler(PackageArtifactExistsException.class)
     public void springHandlePackageArtifactExistsException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.CONFLICT.value(), ex.getMessage());
+        response.sendError(HttpStatus.CONFLICT.value(), formatErrorMessage("PackageArtifactExists", ex.getMessage()));
     }
 
     @ExceptionHandler(PackageExistsException.class)
     public void springHandlePackageExistsException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.CONFLICT.value(), ex.getMessage());
+        response.sendError(HttpStatus.CONFLICT.value(), formatErrorMessage("PackageExists", ex.getMessage()));
     }
 
     @ExceptionHandler(GitDetailsNotFound.class)
     public void springHandleGitDetailsNotFound(Exception ex, HttpServletResponse response) throws IOException {
         log.error("The user did not have git details, so we could not execute the command");
-        response.sendError(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        response.sendError(HttpStatus.BAD_REQUEST.value(), formatErrorMessage("GitDetailsNotFound", ex.getMessage()));
     }
 
-
+    private String formatErrorMessage(String code, String message) {
+        return String.format("{ \"code\": \"%s\", \"message\": \"%s\"}", code, message);
+    }
 
 }

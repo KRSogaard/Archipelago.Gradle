@@ -5,6 +5,7 @@ import build.archipelago.versionsetservice.core.delegates.CreateVersionSetDelega
 import build.archipelago.versionsetservice.core.delegates.CreateVersionSetRevisionDelegate;
 import build.archipelago.versionsetservice.core.delegates.GetVersionSetDelegate;
 import build.archipelago.versionsetservice.core.delegates.GetVersionSetPackagesDelegate;
+import build.archipelago.versionsetservice.core.delegates.GetVersionSetsDelegate;
 import build.archipelago.versionsetservice.core.services.DynamoDbVersionSetService;
 import build.archipelago.versionsetservice.core.services.DynamoDbVersionSetServiceConfig;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
@@ -56,4 +57,9 @@ public class VersionSetConfiguration {
         return new GetVersionSetPackagesDelegate(versionSetService);
     }
 
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public GetVersionSetsDelegate getVersionSetsDelegate(VersionSetService versionSetService){
+        return new GetVersionSetsDelegate(versionSetService);
+    }
 }

@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class CreateVersionSetRequest {
+public class CreateVersionSetRestRequest {
     private String name;
     private List<String> targets;
     private String parent;

@@ -3,7 +3,7 @@ package build.archipelago.common.github.github;
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.github.GitService;
 import build.archipelago.common.github.exceptions.GitRepoExistsException;
-import build.archipelago.common.github.exceptions.NotFoundException;
+import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.common.github.models.GitRepo;
 
 public class UserGitService implements GitService {
@@ -27,7 +27,7 @@ public class UserGitService implements GitService {
     }
 
     @Override
-    public GitRepo getRepo(String name) throws NotFoundException, UnauthorizedException {
+    public GitRepo getRepo(String name) throws RepoNotFoundException, UnauthorizedException {
         return null;
     }
 
