@@ -8,6 +8,7 @@ import build.archipelago.packageservice.core.delegates.getBuildArtifact.GetBuild
 import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.UploadBuildArtifactDelegate;
 import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.UploadBuildArtifactDelegateRequest;
 import build.archipelago.packageservice.models.ArtifactUploadRestResponse;
+import build.archipelago.packageservice.models.GetBuildArtifactRestResponse;
 import build.archipelago.packageservice.models.UploadPackageRestRequest;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -86,7 +87,7 @@ public class ArtifactController {
 
     @GetMapping(value = {"{name}/{version}/{hash}", "{name}/{version}"})
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<Resource> getBuildArtifact(
+    public GetBuildArtifactRestResponse getBuildArtifact(
             @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
@@ -105,9 +106,10 @@ public class ArtifactController {
 
         String zipFileName = String.format("%s.zip", response.getPkg().toString());
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("application/zip"))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipFileName + "\"")
-                .body(new ByteArrayResource(response.getByteArray()));
+        return GetBuildArtifactRestResponse.builder()
+                .fileName(zipFileName)
+                .url(response.getDownloadUrl())
+                .hash(response.getPkg().getHash())
+                .build();
     }
 }

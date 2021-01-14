@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.time.Instant;
+import java.util.Date;
 
 @Slf4j
 public class S3PackageStorage implements PackageStorage {
@@ -36,17 +39,13 @@ public class S3PackageStorage implements PackageStorage {
     }
 
     @Override
-    public byte[] get(String accountId, ArchipelagoBuiltPackage pkg) throws IOException {
+    public String getDownloadUrl(String accountId, ArchipelagoBuiltPackage pkg) {
         String keyName = getS3FileName(accountId, pkg);
         log.debug("Fetching build artifact from S3 \"{}\" with key \"{}\"", bucketName, keyName);
-        S3Object result = s3Client.getObject(bucketName, keyName);
-        // TODO: Check is object exists
-        try {
-            return IOUtils.toByteArray(result.getObjectContent());
-        } catch (AmazonServiceException exp) {
-            log.error("Was not able to download the S3 file {}", keyName);
-            throw exp; // This should not happen, so it is ok to throw so we can fail fast
-        }
+        // The user have 5 min to download the file
+        Instant expiresAt = Instant.now().plusSeconds(60*5);
+        URL url = s3Client.generatePresignedUrl(bucketName, keyName, Date.from(expiresAt));
+        return url.toString();
     }
 
     private String getS3FileName(String accountId, ArchipelagoBuiltPackage pkg) {

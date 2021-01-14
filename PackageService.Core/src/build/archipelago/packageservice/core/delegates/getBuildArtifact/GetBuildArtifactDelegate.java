@@ -41,9 +41,10 @@ public class GetBuildArtifactDelegate {
             }
         }
         ArchipelagoBuiltPackage pkg = new ArchipelagoBuiltPackage(nameVersion, latestHash);
+        String downloadUrl = packageStorage.getDownloadUrl(accountId, pkg);
 
         return GetBuildArtifactResponse.builder()
-                .byteArray(packageStorage.get(accountId, pkg))
+                .downloadUrl(downloadUrl)
                 .pkg(pkg)
                 .build();
     }

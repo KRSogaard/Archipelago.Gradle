@@ -6,5 +6,5 @@ import java.io.IOException;
 
 public interface PackageStorage {
     void upload(String accountId, ArchipelagoBuiltPackage pkg, byte[] artifactBytes);
-    byte[] get(String accountId, ArchipelagoBuiltPackage pkg) throws IOException;
+    String getDownloadUrl(String accountId, ArchipelagoBuiltPackage pkg);
 }

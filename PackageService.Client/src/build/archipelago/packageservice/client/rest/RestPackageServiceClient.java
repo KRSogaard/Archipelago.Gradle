@@ -16,6 +16,7 @@ import build.archipelago.packageservice.client.models.PackageBuildsResponse;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
 import build.archipelago.packageservice.client.models.UploadPackageRequest;
 import build.archipelago.packageservice.client.rest.models.ArchipelagoBuiltPackageResponse;
+import build.archipelago.packageservice.client.rest.models.GetBuildArtifactRestResponse;
 import build.archipelago.packageservice.client.rest.models.RestArtifactUploadResponse;
 import build.archipelago.packageservice.client.rest.models.RestCreatePackageRequest;
 import build.archipelago.packageservice.client.rest.models.RestGetPackageBuildResponse;
@@ -307,25 +308,52 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                 throw new RuntimeException(e);
             }
         }
-        HttpResponse<Path> restResponse;
+
+        GetBuildArtifactRestResponse restResponse;
+        HttpResponse<String> restStringResponse;
         try {
             HttpRequest request = getOAuthRequest("/account/" + accountId + "/artifact/" +
                     pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
                     .GET()
                     .build();
-            restResponse = client.send(request, HttpResponse.BodyHandlers.ofFile(filePath));
+            restStringResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        switch (restResponse.statusCode()) {
+        switch (restStringResponse.statusCode()) {
             case 401:
                 throw new UnauthorizedException();
             case 404: // Not found
                 throw new PackageNotFoundException(pkg);
             case 200: // Ok
-                return restResponse.body();
+                try {
+                    restResponse = objectMapper.readValue(restStringResponse.body(), GetBuildArtifactRestResponse.class);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
             default:
-                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+                throw new RuntimeException("Unknown response " + restStringResponse.statusCode());
+        }
+
+        HttpResponse<Path> restPathResponse;
+        try {
+            HttpRequest request = getOAuthRequest(restResponse.getUrl())
+                    .GET()
+                    .build();
+            restPathResponse = client.send(request, HttpResponse.BodyHandlers.ofFile(filePath));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        switch (restPathResponse.statusCode()) {
+            case 401:
+                throw new UnauthorizedException();
+            case 404: // Not found
+                throw new PackageNotFoundException(pkg);
+            case 200: // Ok
+                return restPathResponse.body();
+            default:
+                throw new RuntimeException("Unknown response " + restPathResponse.statusCode());
         }
     }
 

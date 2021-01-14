@@ -7,6 +7,6 @@ import lombok.Data;
 @Builder
 @Data
 public class GetBuildArtifactResponse {
-    private byte[] byteArray;
+    private String downloadUrl;
     private ArchipelagoBuiltPackage pkg;
 }
