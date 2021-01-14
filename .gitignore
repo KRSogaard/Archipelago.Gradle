@@ -33,6 +33,7 @@ BuildServer.Common/build/
 Maui.Common/build/
 PackageService/build/
 PackageService.Models/build/
+Archipelago.Common.Github/build/
 VersionSetService.Client.Models/build/
 /build/
 
