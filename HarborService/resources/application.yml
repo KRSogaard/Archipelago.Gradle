@@ -16,6 +16,7 @@ spring:
 endpoints:
   package-service: "http://localhost:8090"
   versionset-service: "http://localhost:8091"
+  build-server-api: "http://localhost:8095"
 
 oauth:
   client-id: "4ok75klvst0vf15lel5sdbdoc0"

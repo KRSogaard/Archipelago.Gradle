@@ -1,4 +1,4 @@
-package build.archipelago.buildserver.common.services.build;
+package build.archipelago.buildserver.models;
 
 public enum BuildStatus {
     WAITING("waiting"),

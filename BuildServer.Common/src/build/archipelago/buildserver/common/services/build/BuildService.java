@@ -1,8 +1,10 @@
 package build.archipelago.buildserver.common.services.build;
 
 import build.archipelago.buildserver.common.services.build.exceptions.BuildRequestNotFoundException;
-import build.archipelago.buildserver.common.services.build.models.ArchipelagoBuild;
-import build.archipelago.buildserver.common.services.build.models.BuildPackageDetails;
+import build.archipelago.buildserver.models.ArchipelagoBuild;
+import build.archipelago.buildserver.models.BuildStage;
+import build.archipelago.buildserver.models.BuildStatus;
+import build.archipelago.buildserver.models.BuildPackageDetails;
 import build.archipelago.buildserver.common.services.build.models.BuildQueueMessage;
 import build.archipelago.common.dynamodb.AV;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -10,6 +12,8 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import com.amazonaws.services.dynamodbv2.model.QueryRequest;
+import com.amazonaws.services.dynamodbv2.model.QueryResult;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.google.common.base.Function;
@@ -19,6 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -56,7 +61,7 @@ public class BuildService {
 
         dynamoDB.putItem(new PutItemRequest(buildTable, ImmutableMap.<String, AttributeValue>builder()
                 .put(Constants.ATTRIBUTE_ID, AV.of(buildId))
-                .put(Constants.ATTRIBUTE_ACCOUNT, AV.of(accountId))
+                .put(Constants.ATTRIBUTE_ACCOUNT_ID, AV.of(accountId))
                 .put(Constants.ATTRIBUTE_CREATED, AV.of(Instant.now()))
                 .put(Constants.ATTRIBUTE_VERSION_SET, AV.of(versionSet))
                 .put(Constants.ATTRIBUTE_DRY_RUN, AV.of(dryRun))
@@ -73,9 +78,10 @@ public class BuildService {
         return buildId;
     }
 
-    public ArchipelagoBuild getBuildRequest(String buildId) throws BuildRequestNotFoundException {
+    public ArchipelagoBuild getBuildRequest(String accountId, String buildId) throws BuildRequestNotFoundException {
         GetItemResult result = dynamoDB.getItem(new GetItemRequest(buildTable,
                 ImmutableMap.<String, AttributeValue>builder()
+                    .put(Constants.ATTRIBUTE_ACCOUNT_ID, AV.of(accountId))
                     .put(Constants.ATTRIBUTE_ID, AV.of(buildId))
                 .build()));
 
@@ -83,24 +89,27 @@ public class BuildService {
             throw new BuildRequestNotFoundException(buildId);
         }
 
+        return parseBuildItem(result.getItem());
+    }
+
+    private ArchipelagoBuild parseBuildItem(Map<String, AttributeValue> item) {
         return ArchipelagoBuild.builder()
-                .buildId(result.getItem().get(Constants.ATTRIBUTE_ID).getS())
-                .accountId(result.getItem().get(Constants.ATTRIBUTE_ACCOUNT).getS())
-                .versionSet(result.getItem().get(Constants.ATTRIBUTE_VERSION_SET).getS())
-                .dryRun(result.getItem().get(Constants.ATTRIBUTE_DRY_RUN).getBOOL())
-                .buildPackages(result.getItem().get(Constants.ATTRIBUTE_BUILD_PACKAGES).getL().stream()
-                        .map(AttributeValue::getS)
+                .buildId(item.get(Constants.ATTRIBUTE_ID).getS())
+                .accountId(item.get(Constants.ATTRIBUTE_ACCOUNT_ID).getS())
+                .versionSet(item.get(Constants.ATTRIBUTE_VERSION_SET).getS())
+                .dryRun(item.get(Constants.ATTRIBUTE_DRY_RUN).getBOOL())
+                .buildPackages(item.get(Constants.ATTRIBUTE_BUILD_PACKAGES).getSS().stream()
                         .map(BuildPackageDetails::parse)
                         .collect(Collectors.toList()))
-                .created(AV.toInstant(result.getItem().get(Constants.ATTRIBUTE_CREATED)))
-                .updated(AV.getOrNull(result.getItem(), Constants.ATTRIBUTE_UPDATED, AV::toInstant))
-                .buildStatus(AV.getEnumOrNull(result.getItem(), Constants.ATTRIBUTE_BUILD_STATUS,
+                .created(AV.toInstant(item.get(Constants.ATTRIBUTE_CREATED)))
+                .updated(AV.getOrNull(item, Constants.ATTRIBUTE_UPDATED, AV::toInstant))
+                .buildStatus(AV.getEnumOrNull(item, Constants.ATTRIBUTE_BUILD_STATUS,
                         (Function<AttributeValue, BuildStatus>) av -> BuildStatus.getEnum(av.getS())))
-                .stagePrepare(AV.getEnumOrNull(result.getItem(), Constants.ATTRIBUTE_STAGE_PREPARE,
+                .stagePrepare(AV.getEnumOrNull(item, Constants.ATTRIBUTE_STAGE_PREPARE,
                         (Function<AttributeValue, BuildStatus>) av -> BuildStatus.getEnum(av.getS())))
-                .stagePackages(AV.getEnumOrNull(result.getItem(), Constants.ATTRIBUTE_STAGE_PACKAGES,
+                .stagePackages(AV.getEnumOrNull(item, Constants.ATTRIBUTE_STAGE_PACKAGES,
                         (Function<AttributeValue, BuildStatus>) av -> BuildStatus.getEnum(av.getS())))
-                .stagePublish(AV.getEnumOrNull(result.getItem(), Constants.ATTRIBUTE_STAGE_PUBLISH,
+                .stagePublish(AV.getEnumOrNull(item, Constants.ATTRIBUTE_STAGE_PUBLISH,
                         (Function<AttributeValue, BuildStatus>) av -> BuildStatus.getEnum(av.getS())))
                 .build();
     }
@@ -168,6 +177,22 @@ public class BuildService {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(readString));
 
         amazonS3.putObject(buildLogS3Bucket, getS3LogKey(buildId, nameVersion), readString);
+    }
+
+    public List<ArchipelagoBuild> getAllBuildsForAccount(String accountId) {
+        QueryRequest queryRequest = new QueryRequest()
+                .withTableName(buildTable)
+                .withKeyConditionExpression("#accountId = :accountId")
+                .withExpressionAttributeNames(ImmutableMap.of(
+                        "#accountId", Constants.ATTRIBUTE_ACCOUNT_ID
+                ))
+                .withExpressionAttributeValues(ImmutableMap.of(":accountId", AV.of(accountId)));
+        QueryResult result = dynamoDB.query(queryRequest);
+        List<ArchipelagoBuild> builds = new ArrayList<>();
+        for (Map<String, AttributeValue> item : result.getItems()) {
+            builds.add(parseBuildItem(item));
+        }
+        return builds;
     }
 
     private String getS3LogKey(String buildId, String nameVersion) {

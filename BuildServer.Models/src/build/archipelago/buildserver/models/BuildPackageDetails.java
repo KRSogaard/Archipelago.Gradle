@@ -1,4 +1,4 @@
-package build.archipelago.buildserver.common.services.build.models;
+package build.archipelago.buildserver.models;
 
 import lombok.Builder;
 import lombok.Value;

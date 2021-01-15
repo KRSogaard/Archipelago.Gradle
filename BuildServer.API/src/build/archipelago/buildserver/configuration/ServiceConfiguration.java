@@ -1,6 +1,8 @@
 package build.archipelago.buildserver.configuration;
 
 import build.archipelago.buildserver.common.services.build.BuildService;
+import build.archipelago.packageservice.client.PackageServiceClient;
+import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.client.rest.RestVersionSetServiceClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -28,14 +30,16 @@ public class ServiceConfiguration {
     }
 
     @Bean
-    public VersionSetServiceClient versionServiceClient(@Value("${services.versionset.url}") String vsEndpoint,
+    public VersionSetServiceClient versionServiceClient(@Value("${endpoints.versionset-service}") String vsEndpoint,
                                                         @Value("${oauth.client-id}") String clientId,
                                                         @Value("${oauth.client-secret}") String clientSecret) {
         return new RestVersionSetServiceClient(vsEndpoint, clientId, clientSecret);
     }
-//
-//    @Bean
-//    public PackageServiceClient packageServiceClient(@Value("services.packages.url") String pkgEndpoint) {
-//        return new RestPackageServiceClient(pkgEndpoint);
-//    }
+
+    @Bean
+    public PackageServiceClient packageServiceClient(@Value("endpoints.package-service") String pkgEndpoint,
+                                                     @Value("${oauth.client-id}") String clientId,
+                                                     @Value("${oauth.client-secret}") String clientSecret) {
+        return new RestPackageServiceClient(pkgEndpoint, clientId, clientSecret);
+    }
 }

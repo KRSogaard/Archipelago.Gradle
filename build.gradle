@@ -365,7 +365,7 @@ project(':BuildServer.API') {
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
 
-    mainClassName = 'build.archipelago.buildserver.Application'
+    mainClassName = 'build.archipelago.buildserver.BuildServerAPIApplication'
 
     configurations {
         all {
@@ -381,6 +381,7 @@ project(':BuildServer.API') {
         implementation project(':PackageService.Client')
         implementation project(':Maui.Core')
         implementation project(':BuildServer.Common')
+        implementation project(':BuildServer.Models')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -434,6 +435,7 @@ project(':BuildServer.Builder') {
         implementation project(':Harbor.Client')
         implementation project(':PackageService.Client.Models')
         implementation project(':VersionSetService.Client.Models')
+        implementation project(':BuildServer.Models')
 
         implementation 'com.wewelo:SQSConsumer:1.1'
         implementation 'org.springframework.boot:spring-boot-starter'
@@ -463,9 +465,23 @@ project(':BuildServer.Common') {
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
         implementation project(':Maui.Core')
+        implementation project(':BuildServer.Models')
 
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
         implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
+    }
+}
+
+project(':BuildServer.API.Client') {
+    dependencies {
+        implementation project(':BuildServer.Models')
+        implementation project(':Archipelago.Common')
+        implementation project(':Archipelago.Common.Clients')
+    }
+}
+
+project(':BuildServer.Models') {
+    dependencies {
     }
 }
 
@@ -527,6 +543,8 @@ project(':HarborService') {
         implementation project(':VersionSetService.Models')
         implementation project(':Archipelago.Account.Common')
         implementation project(':Archipelago.Common.Github')
+        implementation project(':BuildServer.API.Client')
+        implementation project(':BuildServer.Models')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'

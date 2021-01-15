@@ -35,6 +35,7 @@ PackageService/build/
 PackageService.Models/build/
 Archipelago.Common.Github/build/
 VersionSetService.Client.Models/build/
+BuildServer.Models/build/
 /build/
 
 # Ignore Gradle GUI config

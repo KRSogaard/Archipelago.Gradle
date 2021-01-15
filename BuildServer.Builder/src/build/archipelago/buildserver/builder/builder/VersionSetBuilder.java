@@ -10,11 +10,11 @@ import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory
 import build.archipelago.buildserver.builder.git.GitHubPackageSourceProvider;
 import build.archipelago.buildserver.builder.maui.Maui;
 import build.archipelago.buildserver.common.services.build.BuildService;
-import build.archipelago.buildserver.common.services.build.BuildStage;
-import build.archipelago.buildserver.common.services.build.BuildStatus;
+import build.archipelago.buildserver.models.BuildStage;
+import build.archipelago.buildserver.models.BuildStatus;
 import build.archipelago.buildserver.common.services.build.exceptions.BuildRequestNotFoundException;
-import build.archipelago.buildserver.common.services.build.models.ArchipelagoBuild;
-import build.archipelago.buildserver.common.services.build.models.BuildPackageDetails;
+import build.archipelago.buildserver.models.rest.ArchipelagoBuild;
+import build.archipelago.buildserver.models.BuildPackageDetails;
 import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.concurrent.BlockingExecutorServiceFactory;

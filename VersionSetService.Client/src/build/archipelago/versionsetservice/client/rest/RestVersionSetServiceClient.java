@@ -191,6 +191,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                 }
                 break;
             case 401:
+            case 403:
                 throw new UnauthorizedException();
             case 404: // Not found
                 throw new VersionSetDoseNotExistsException(versionSetName);

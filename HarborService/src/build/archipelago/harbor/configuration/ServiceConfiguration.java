@@ -1,6 +1,8 @@
 package build.archipelago.harbor.configuration;
 
 import build.archipelago.account.common.AccountService;
+import build.archipelago.buildserver.api.client.BuildServerAPIClient;
+import build.archipelago.buildserver.api.client.rest.RestBuildServerAPIClient;
 import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
@@ -40,6 +42,15 @@ public class ServiceConfiguration {
             @Value("${oauth.client-id}") String clientId,
             @Value("${oauth.client-secret}") String clientSecret) {
         return new RestVersionSetServiceClient(vsServiceEndpoint, clientId, clientSecret);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public BuildServerAPIClient buildServerAPIClient(
+            @Value("${endpoints.build-server-api}") String buildServerEndpoint,
+            @Value("${oauth.client-id}") String clientId,
+            @Value("${oauth.client-secret}") String clientSecret) {
+        return new RestBuildServerAPIClient(buildServerEndpoint, clientId, clientSecret);
     }
 
     @Bean("tempDir")
