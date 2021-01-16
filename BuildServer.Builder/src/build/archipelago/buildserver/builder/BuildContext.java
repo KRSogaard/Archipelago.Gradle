@@ -1,6 +1,6 @@
 package build.archipelago.buildserver.builder;
 
-import build.archipelago.buildserver.models.rest.ArchipelagoBuild;
+import build.archipelago.buildserver.models.ArchipelagoBuild;
 
 
 public class BuildContext {

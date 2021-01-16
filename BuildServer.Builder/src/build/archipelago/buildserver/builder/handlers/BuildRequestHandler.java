@@ -3,6 +3,8 @@ package build.archipelago.buildserver.builder.handlers;
 import build.archipelago.buildserver.builder.builder.BuilderFactory;
 import build.archipelago.buildserver.common.services.build.models.BuildQueueMessage;
 import com.amazonaws.services.sqs.model.Message;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.wewelo.sqsconsumer.SqsMessageHandler;
 import com.wewelo.sqsconsumer.exceptions.PermanentMessageProcessingException;
 import com.wewelo.sqsconsumer.exceptions.TemporaryMessageProcessingException;
@@ -23,11 +25,13 @@ public class BuildRequestHandler implements SqsMessageHandler {
         BuildQueueMessage buildMsg;
         try {
             buildMsg = BuildQueueMessage.parse(message.getBody());
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(buildMsg.getBuildId()));
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(buildMsg.getAccountId()));
         } catch (RuntimeException exp) {
             log.warn(String.format("Failed to parse the build message, may have been a status message: %s", message.getBody()), exp);
             throw new PermanentMessageProcessingException();
         }
 
-        builderFactory.create(buildMsg.getBuildId()).build();
+        builderFactory.create(buildMsg).build();
     }
 }

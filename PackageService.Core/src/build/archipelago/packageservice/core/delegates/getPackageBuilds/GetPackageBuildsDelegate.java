@@ -2,7 +2,7 @@ package build.archipelago.packageservice.core.delegates.getPackageBuilds;
 
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.packageservice.core.data.PackageData;
-import build.archipelago.packageservice.core.data.models.VersionBuildDetails;
+import build.archipelago.packageservice.models.VersionBuildDetails;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 

@@ -4,7 +4,8 @@ public enum BuildStatus {
     WAITING("waiting"),
     IN_PROGRESS("in-progress"),
     FINISHED("finished"),
-    FAILED("failed");
+    FAILED("failed"),
+    SKIPPED("skipped");
 
     private final String status;
 
@@ -28,6 +29,9 @@ public enum BuildStatus {
         }
         if (FAILED.getStatus().equalsIgnoreCase(value)) {
             return FAILED;
+        }
+        if (SKIPPED.getStatus().equalsIgnoreCase(value)) {
+            return SKIPPED;
         }
         throw new IllegalArgumentException(value + " is not a valid enum");
     }

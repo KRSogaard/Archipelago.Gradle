@@ -4,12 +4,10 @@ import build.archipelago.buildserver.api.client.BuildServerAPIClient;
 import build.archipelago.buildserver.models.client.Builds;
 import build.archipelago.buildserver.models.rest.BuildRestResponse;
 import build.archipelago.buildserver.models.rest.BuildsRestResponse;
-import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.clients.rest.OAuthRestClient;
 import build.archipelago.common.exceptions.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.net.http.HttpRequest;

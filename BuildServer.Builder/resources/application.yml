@@ -27,9 +27,8 @@ s3:
 sqs:
   build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-queue-alpha"
 workspace:
-  path: "C:\\Users\\accou\\Downloads\\BuildServer"
-  maui: "C:\\Users\\accou\\bin\\maui.cmd"
+  path: "/Users/kasper.sogaard/Downloads/BuildServer"
 
 oauth:
-  client-id: "mMw0iPmtdeMnNQn55mmzi0r85x9m8xy5"
-  client-secret: "6Qjmwm2cEFu7CFMVO9-9z84_OmJuAMN0lL2z462WbEe-KI7Jw9zDWHlqYonLMLwO"
+  client-id: "49o8iok838r23u7ivmq5g106ci"
+  client-secret: "19q4onmr0khqdod7ckohq362hjfs3sbtbfebp0u4ob13rugvfsqj"

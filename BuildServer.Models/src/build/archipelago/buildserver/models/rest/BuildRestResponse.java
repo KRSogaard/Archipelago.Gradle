@@ -3,15 +3,20 @@ package build.archipelago.buildserver.models.rest;
 import build.archipelago.buildserver.models.ArchipelagoBuild;
 import build.archipelago.buildserver.models.BuildPackageDetails;
 import build.archipelago.buildserver.models.BuildStatus;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Builder
-@Value
+@Data
+@NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BuildRestResponse {
     private String buildId;
     private String accountId;
@@ -35,8 +40,8 @@ public class BuildRestResponse {
                 .updated(archipelagoBuild.getUpdated().toEpochMilli())
                 .buildStatus(archipelagoBuild.getBuildStatus().getStatus())
                 .stagePrepare(archipelagoBuild.getStagePrepare().getStatus())
-                .stagePublish(archipelagoBuild.getStagePublish().getStatus())
                 .stagePackages(archipelagoBuild.getStagePackages().getStatus())
+                .stagePublish(archipelagoBuild.getStagePublish().getStatus())
                 .buildPackages(archipelagoBuild.getBuildPackages().stream().map(BuildPackageDetails::toString)
                         .collect(Collectors.toList()))
                 .build();
@@ -52,6 +57,7 @@ public class BuildRestResponse {
                 .updated(Instant.ofEpochMilli(getUpdated()))
                 .buildStatus(BuildStatus.getEnum(getBuildStatus()))
                 .stagePrepare(BuildStatus.getEnum(getStagePrepare()))
+                .stagePackages(BuildStatus.getEnum(getStagePackages()))
                 .stagePublish(BuildStatus.getEnum(getStagePublish()))
                 .buildPackages(getBuildPackages().stream().map(BuildPackageDetails::parse).collect(Collectors.toList()))
                 .build();

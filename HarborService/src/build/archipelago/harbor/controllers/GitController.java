@@ -2,7 +2,6 @@ package build.archipelago.harbor.controllers;
 
 import build.archipelago.account.common.AccountService;
 import build.archipelago.account.common.models.GitDetails;
-import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.github.GitService;
 import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.harbor.filters.AccountIdFilter;

@@ -1,7 +1,6 @@
 package build.archipelago.packageservice;
 
 import build.archipelago.account.common.exceptions.GitDetailsNotFound;
-import build.archipelago.account.common.models.GitDetails;
 import build.archipelago.common.exceptions.PackageArtifactExistsException;
 import build.archipelago.common.exceptions.PackageExistsException;
 import build.archipelago.common.exceptions.PackageNotFoundException;

@@ -96,7 +96,6 @@ project(':Maui') {
         implementation project(':Maui.Graph')
         implementation project(':Harbor.Client')
         implementation project(':Archipelago.Common.Clients')
-        implementation project(':PackageService.Client.Models')
         implementation project(':VersionSetService.Client.Models')
 
         implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
@@ -135,8 +134,8 @@ project(':Maui.Core') {
         implementation project(':Maui.Graph')
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
+        implementation project(':PackageService.Models')
         implementation project(':Harbor.Client')
-        implementation project(':PackageService.Client.Models')
         implementation project(':VersionSetService.Client.Models')
 
         implementation 'org.slf4j:slf4j-api:1.7.30'
@@ -169,6 +168,7 @@ project(':Maui.Common') {
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
         implementation project(':Harbor.Client')
+        implementation project(':PackageService.Models')
 
         implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
@@ -245,7 +245,6 @@ project(':PackageService.Core') {
 project(':PackageService.Models') {
     dependencies {
         implementation project(':Archipelago.Common')
-        implementation 'org.springframework.boot:spring-boot-starter-web:2.2.6.RELEASE'
     }
 }
 
@@ -253,15 +252,9 @@ project(':PackageService.Client') {
     dependencies {
         implementation project(':Archipelago.Common')
         implementation project(':Archipelago.Common.Clients')
-        implementation project(':PackageService.Client.Models')
+        implementation project(':PackageService.Models')
 
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
-    }
-}
-
-project(':PackageService.Client.Models') {
-    dependencies {
-        implementation project(':Archipelago.Common')
     }
 }
 
@@ -326,7 +319,6 @@ project(':VersionSetService.Core') {
         implementation project(':Archipelago.Common.DynamoDB')
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
-        implementation project(':PackageService.Client.Models')
         implementation project(':Archipelago.Common.Clients')
 
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
@@ -418,7 +410,7 @@ project(':BuildServer.Builder') {
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
 
-    mainClassName = 'build.archipelago.buildserver.builder.Application'
+    mainClassName = 'build.archipelago.buildserver.builder.BuilderApplication'
 
     dependencies {
         implementation project(":Maui.Core")
@@ -427,15 +419,16 @@ project(':BuildServer.Builder') {
         implementation project(":Maui.Graph")
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
+        implementation project(':PackageService.Models')
         implementation project(':Archipelago.Common')
         implementation project(':Archipelago.Common.Clients')
         implementation project(':Archipelago.Common.Concurrent')
         implementation project(':BuildServer.Common')
         implementation project(':Archipelago.Account.Common')
         implementation project(':Harbor.Client')
-        implementation project(':PackageService.Client.Models')
         implementation project(':VersionSetService.Client.Models')
         implementation project(':BuildServer.Models')
+        implementation project(':Archipelago.Common.Github')
 
         implementation 'com.wewelo:SQSConsumer:1.1'
         implementation 'org.springframework.boot:spring-boot-starter'
@@ -477,6 +470,8 @@ project(':BuildServer.API.Client') {
         implementation project(':BuildServer.Models')
         implementation project(':Archipelago.Common')
         implementation project(':Archipelago.Common.Clients')
+
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 }
 
@@ -511,7 +506,7 @@ project(':Harbor.Client') {
         implementation project(':Archipelago.Common')
         implementation project(':VersionSetService.Client')
         implementation project(':PackageService.Client')
-        implementation project(':PackageService.Client.Models')
+        implementation project(':PackageService.Models')
         implementation project(':VersionSetService.Client.Models')
         implementation project(':Archipelago.Common.Clients')
 
@@ -537,7 +532,6 @@ project(':HarborService') {
         implementation project(':VersionSetService.Models')
         implementation project(':PackageService.Client')
         implementation project(':Archipelago.Common.Clients')
-        implementation project(':PackageService.Client.Models')
         implementation project(':VersionSetService.Client.Models')
         implementation project(':PackageService.Models')
         implementation project(':VersionSetService.Models')

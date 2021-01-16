@@ -153,6 +153,8 @@ public class OrgGitService implements GitService {
                 .name(json.getAsString("name"))
                 .url(json.getAsString("html_url"))
                 .cloneUrl(json.getAsString("clone_url"))
+                .fullName(json.getAsString("full_name"))
+                .privateRepo("true".equalsIgnoreCase(json.getAsString("private")))
                 .build();
     }
 
@@ -174,9 +176,6 @@ public class OrgGitService implements GitService {
         String auth = username + ":" + accessToken;
         String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
 
-        if (!encodedAuth.equals("d2V3ZWxvLWNvbTpmZjljM2M5NmU3NjU5NWFkZjA3MWViNTAyOWEwNDRlZjYyZWI4YTkx")) {
-            System.out.println("WRONG!");
-        }
         return HttpRequest.newBuilder(new URI(baseUrl + url))
                 .header("Authorization", "Basic " + encodedAuth)
                 .header("accept", "application/vnd.github.v3+json");

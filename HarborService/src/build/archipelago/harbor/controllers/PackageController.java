@@ -6,12 +6,11 @@ import build.archipelago.common.exceptions.PackageExistsException;
 import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.harbor.filters.AccountIdFilter;
 import build.archipelago.packageservice.client.PackageServiceClient;
-import build.archipelago.packageservice.client.models.GetPackageBuildResponse;
-import build.archipelago.packageservice.client.models.GetPackageResponse;
-import build.archipelago.packageservice.client.models.GetPackagesResponse;
-import build.archipelago.packageservice.models.CreatePackageRestRequest;
-import build.archipelago.packageservice.models.GetPackageRestResponse;
-import build.archipelago.packageservice.models.GetPackagesRestResponse;
+import build.archipelago.packageservice.models.BuiltPackageDetails;
+import build.archipelago.packageservice.models.PackageDetails;
+import build.archipelago.packageservice.models.rest.CreatePackageRestRequest;
+import build.archipelago.packageservice.models.rest.GetPackageRestResponse;
+import build.archipelago.packageservice.models.rest.GetPackagesRestResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -34,8 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
@@ -96,7 +93,7 @@ public class PackageController {
     public String getConfig(@PathVariable("name") String name,
                             @PathVariable("version") String version,
                             @PathVariable("hash") String hash) throws PackageNotFoundException {
-        GetPackageBuildResponse response = packageServiceClient.getPackageBuild(
+        BuiltPackageDetails response = packageServiceClient.getPackageBuild(
                 accountId, new ArchipelagoBuiltPackage(name, version, hash));
 
         return response.getConfig();
@@ -107,38 +104,17 @@ public class PackageController {
                                              @RequestAttribute(AccountIdFilter.Key) String accountId) throws PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 
-        GetPackageResponse pkg = packageServiceClient.getPackage(accountId, packageName);
-
-        return GetPackageRestResponse.builder()
-                .name(pkg.getName())
-                .description(pkg.getDescription())
-                .created(pkg.getCreated().toEpochMilli())
-                .versions(pkg.getVersions().stream().map(x -> new GetPackageRestResponse.VersionRestResponse(
-                        x.getVersion(),
-                        x.getLatestBuildHash(),
-                        x.getLatestBuildTime().toEpochMilli())).collect(Collectors.toList()))
-                .build();
+        PackageDetails pkg = packageServiceClient.getPackage(accountId, packageName);
+        return GetPackageRestResponse.from(pkg);
     }
 
     @GetMapping("all")
     public GetPackagesRestResponse getAllPackages(@RequestAttribute(AccountIdFilter.Key) String accountId) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 
-        GetPackagesResponse packages = packageServiceClient.getAllPackages(accountId);
-        List<GetPackageRestResponse> pkgList = new ArrayList<>();
-        for (GetPackageResponse pkg : packages.getPackages()) {
-            pkgList.add(GetPackageRestResponse.builder()
-                    .name(pkg.getName())
-                    .description(pkg.getDescription())
-                    .created(pkg.getCreated().toEpochMilli())
-                    .versions(pkg.getVersions().stream().map(x -> new GetPackageRestResponse.VersionRestResponse(
-                            x.getVersion(),
-                            x.getLatestBuildHash(),
-                            x.getLatestBuildTime().toEpochMilli())).collect(Collectors.toList()))
-                    .build());
-        }
+        ImmutableList<PackageDetails> packages = packageServiceClient.getAllPackages(accountId);
         return GetPackagesRestResponse.builder()
-                .packages(pkgList)
+                .packages(packages.stream().map(GetPackageRestResponse::from).collect(Collectors.toList()))
                 .build();
     }
 }

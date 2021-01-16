@@ -1,7 +1,7 @@
 package build.archipelago.buildserver.common.services.build;
 
 public class Constants {
-    public static final String ATTRIBUTE_ID = "build-id";
+    public static final String ATTRIBUTE_BUILD_ID = "build-id";
     public static final String ATTRIBUTE_VERSION_SET = "version-set";
     public static final String ATTRIBUTE_DRY_RUN = "dry-run";
     public static final String ATTRIBUTE_BUILD_PACKAGES = "build-packages";
@@ -13,4 +13,5 @@ public class Constants {
     public static final String ATTRIBUTE_UPDATED = "updated";
     public static final String ATTRIBUTE_PACKAGE = "package";
     public static final String ATTRIBUTE_ACCOUNT_ID = "account-id";
+    public static final String ATTRIBUTE_DIRECT = "direct";
 }

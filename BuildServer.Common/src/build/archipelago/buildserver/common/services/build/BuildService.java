@@ -1,19 +1,25 @@
 package build.archipelago.buildserver.common.services.build;
 
 import build.archipelago.buildserver.common.services.build.exceptions.BuildRequestNotFoundException;
+import build.archipelago.buildserver.common.services.build.models.BuildQueueMessage;
+import build.archipelago.buildserver.common.services.build.models.PackageBuild;
 import build.archipelago.buildserver.models.ArchipelagoBuild;
+import build.archipelago.buildserver.models.BuildPackageDetails;
 import build.archipelago.buildserver.models.BuildStage;
 import build.archipelago.buildserver.models.BuildStatus;
-import build.archipelago.buildserver.models.BuildPackageDetails;
-import build.archipelago.buildserver.common.services.build.models.BuildQueueMessage;
+import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.dynamodb.AV;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
+import com.amazonaws.services.dynamodbv2.model.BatchWriteItemResult;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import com.amazonaws.services.dynamodbv2.model.PutRequest;
 import com.amazonaws.services.dynamodbv2.model.QueryRequest;
 import com.amazonaws.services.dynamodbv2.model.QueryResult;
+import com.amazonaws.services.dynamodbv2.model.WriteRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.google.common.base.Function;
@@ -60,7 +66,7 @@ public class BuildService {
         String buildId = UUID.randomUUID().toString();
 
         dynamoDB.putItem(new PutItemRequest(buildTable, ImmutableMap.<String, AttributeValue>builder()
-                .put(Constants.ATTRIBUTE_ID, AV.of(buildId))
+                .put(Constants.ATTRIBUTE_BUILD_ID, AV.of(buildId))
                 .put(Constants.ATTRIBUTE_ACCOUNT_ID, AV.of(accountId))
                 .put(Constants.ATTRIBUTE_CREATED, AV.of(Instant.now()))
                 .put(Constants.ATTRIBUTE_VERSION_SET, AV.of(versionSet))
@@ -74,7 +80,10 @@ public class BuildService {
                 .put(Constants.ATTRIBUTE_UPDATED, AV.of(Instant.now()))
                 .build()));
 
-        amazonSQS.sendMessage(buildQueue, new BuildQueueMessage(buildId).toJson());
+        amazonSQS.sendMessage(buildQueue, BuildQueueMessage.builder()
+                .accountId(accountId)
+                .buildId(buildId)
+                .build().toJson());
         return buildId;
     }
 
@@ -82,7 +91,7 @@ public class BuildService {
         GetItemResult result = dynamoDB.getItem(new GetItemRequest(buildTable,
                 ImmutableMap.<String, AttributeValue>builder()
                     .put(Constants.ATTRIBUTE_ACCOUNT_ID, AV.of(accountId))
-                    .put(Constants.ATTRIBUTE_ID, AV.of(buildId))
+                    .put(Constants.ATTRIBUTE_BUILD_ID, AV.of(buildId))
                 .build()));
 
         if (result.getItem() == null || result.getItem().keySet().size() == 0) {
@@ -94,7 +103,7 @@ public class BuildService {
 
     private ArchipelagoBuild parseBuildItem(Map<String, AttributeValue> item) {
         return ArchipelagoBuild.builder()
-                .buildId(item.get(Constants.ATTRIBUTE_ID).getS())
+                .buildId(item.get(Constants.ATTRIBUTE_BUILD_ID).getS())
                 .accountId(item.get(Constants.ATTRIBUTE_ACCOUNT_ID).getS())
                 .versionSet(item.get(Constants.ATTRIBUTE_VERSION_SET).getS())
                 .dryRun(item.get(Constants.ATTRIBUTE_DRY_RUN).getBOOL())
@@ -114,13 +123,14 @@ public class BuildService {
                 .build();
     }
 
-    public void setBuildStatus(String buildId, BuildStage stage, BuildStatus status) {
+    public void setBuildStatus(String accountId, String buildId, BuildStage stage, BuildStatus status) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(buildId));
         Preconditions.checkNotNull(stage);
         Preconditions.checkNotNull(status);
 
         GetItemResult itemResult = dynamoDB.getItem(new GetItemRequest(buildTable,ImmutableMap.<String, AttributeValue>builder()
-                .put(Constants.ATTRIBUTE_ID, AV.of(buildId))
+                .put(Constants.ATTRIBUTE_ACCOUNT_ID, AV.of(accountId))
+                .put(Constants.ATTRIBUTE_BUILD_ID, AV.of(buildId))
                 .build()));
         if (itemResult.getItem() == null) {
             log.warn("No build was found for build id {}", buildId);
@@ -150,14 +160,62 @@ public class BuildService {
         dynamoDB.putItem(new PutItemRequest(buildTable, item));
     }
 
-    public void setPackageStatus(String buildId, String packageNameVersion, BuildStatus status) {
+    public void setBuildPackages(String buildId, List<PackageBuild> packages) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(buildId));
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(packageNameVersion));
+        Preconditions.checkNotNull(packages);
+        Preconditions.checkArgument(packages.size() > 0);
+        if (packages.size() > 100) {
+            log.info("The package list was larger then 100, we need to do it in batches");
+            List<PackageBuild> batch = new ArrayList<>();
+            for (int i = 0; i < packages.size(); i++) {
+                batch.add(packages.get(i));
+                if (batch.size() == 100) {
+                    executeSetBuildPackages(buildId, batch);
+                    batch = new ArrayList<>();
+                }
+            }
+            if (batch.size() > 0) {
+                executeSetBuildPackages(buildId, batch);
+            }
+        } else {
+            executeSetBuildPackages(buildId, packages);
+        }
+    }
+    private void executeSetBuildPackages(String buildId, List<PackageBuild> packages) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(buildId));
+        Preconditions.checkNotNull(packages);
+        Preconditions.checkArgument(packages.size() > 0);
+
+        List<WriteRequest> requests = new ArrayList<>();
+        for(PackageBuild pkg : packages) {
+            requests.add(new WriteRequest().withPutRequest(new PutRequest(ImmutableMap.<String, AttributeValue>builder()
+                    .put(Constants.ATTRIBUTE_BUILD_ID, AV.of(buildId))
+                    .put(Constants.ATTRIBUTE_PACKAGE, AV.of(pkg.getPkg().getNameVersion()))
+                    .put(Constants.ATTRIBUTE_DIRECT, AV.of(pkg.isDirect()))
+                    .put(Constants.ATTRIBUTE_CREATED, AV.of(Instant.now()))
+                    .put(Constants.ATTRIBUTE_UPDATED, AV.of(Instant.now()))
+                    .put(Constants.ATTRIBUTE_BUILD_STATUS, AV.of(BuildStatus.WAITING.toString()))
+                    .build())));
+        }
+
+        BatchWriteItemRequest batchWrite = new BatchWriteItemRequest();
+        batchWrite.addRequestItemsEntry(buildPackagesTable, requests);
+        BatchWriteItemResult result = dynamoDB.batchWriteItem(batchWrite);
+        if (result.getUnprocessedItems().size() > 0) {
+            log.error("Failed to store {} build packages", result.getUnprocessedItems().size());
+            throw new RuntimeException("Failed to store all build packages");
+        }
+    }
+
+    public void setPackageStatus(String buildId, ArchipelagoPackage pkg, BuildStatus status) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(buildId));
+        Preconditions.checkNotNull(pkg);
         Preconditions.checkNotNull(status);
 
+
         dynamoDB.putItem(new PutItemRequest(buildPackagesTable, ImmutableMap.<String, AttributeValue>builder()
-                .put(Constants.ATTRIBUTE_ID, AV.of(buildId))
-                .put(Constants.ATTRIBUTE_PACKAGE, AV.of(packageNameVersion))
+                .put(Constants.ATTRIBUTE_BUILD_ID, AV.of(buildId))
+                .put(Constants.ATTRIBUTE_PACKAGE, AV.of(pkg.getNameVersion()))
                 .put(Constants.ATTRIBUTE_BUILD_STATUS, AV.of(status.getStatus()))
                 .put(Constants.ATTRIBUTE_UPDATED, AV.of(Instant.now()))
                 .build()));

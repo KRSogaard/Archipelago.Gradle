@@ -1,4 +1,4 @@
-package build.archipelago.packageservice.core.data.models;
+package build.archipelago.packageservice.models;
 
 import lombok.Builder;
 import lombok.Data;

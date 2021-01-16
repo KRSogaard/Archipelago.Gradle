@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,10 +13,12 @@ import java.io.IOException;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class BuildQueueMessage {
     private static final ObjectMapper mapper = new ObjectMapper(new JsonFactory());
 
     private String buildId;
+    private String accountId;
 
     public String toJson() {
         try {

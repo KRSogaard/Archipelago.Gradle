@@ -9,7 +9,7 @@ import build.archipelago.maui.common.PackageSourceProvider;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
-import build.archipelago.packageservice.client.models.GetPackageResponse;
+import build.archipelago.packageservice.models.PackageDetails;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;
@@ -78,24 +78,22 @@ public class WorkspaceUseAction extends BaseAction {
                     out.error("The package name \"%s\" already checked out", pkg);
                     continue;
                 }
-                GetPackageResponse aPackage = harborClient.getPackage(pkg);
-                // Ensure we have the capitalization of the package name
-                String cleanPKGName = aPackage.getName();
-                if (Files.exists(wsDir.resolve(cleanPKGName))) {
+                PackageDetails aPackage = harborClient.getPackage(pkg);
+                if (Files.exists(wsDir.resolve(aPackage.getName()))) {
                     out.error("Directory %s already exists, please remove or rename it " +
-                            "before checking out the package %s", cleanPKGName, cleanPKGName);
+                            "before checking out the package %s", aPackage.getName(), aPackage.getName());
                     continue;
                 }
 
-                if (!packageSourceProvider.checkOutSource(wsDir, cleanPKGName)) {
+                if (!packageSourceProvider.checkOutSource(wsDir, aPackage)) {
                     out.error("Failed to checkout the source for the package \"%s\"", pkg);
                     continue;
                 }
 
-                workspaceContext.addLocalPackage(cleanPKGName);
+                workspaceContext.addLocalPackage(aPackage.getName());
                 workspaceContext.save();
 
-                out.write("Successfully added %s to the workspace", cleanPKGName);
+                out.write("Successfully added %s to the workspace", aPackage.getName());
             } catch (PackageNotFoundException exp) {
                 out.error("The package name \"%s\" dose not exists", pkg);
             } catch (IOException e) {

@@ -8,10 +8,8 @@ import build.archipelago.common.exceptions.VersionSetExistsException;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.harbor.filters.AccountIdFilter;
-import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.client.models.CreateVersionSetRequest;
-import build.archipelago.versionsetservice.client.rest.models.RestVersionSetsResponse;
 import build.archipelago.versionsetservice.models.CreateVersionSetRestRequest;
 import build.archipelago.versionsetservice.models.VersionSetRestResponse;
 import build.archipelago.versionsetservice.models.VersionSetRevisionRestResponse;
@@ -19,7 +17,6 @@ import build.archipelago.versionsetservice.models.VersionSetsRestResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,12 +26,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.swing.text.html.Option;
 
 @Slf4j
 @RestController

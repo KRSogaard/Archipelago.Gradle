@@ -11,15 +11,13 @@ import build.archipelago.common.versionset.Revision;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.packageservice.client.models.CreatePackageRequest;
-import build.archipelago.packageservice.client.models.GetPackageResponse;
-import build.archipelago.packageservice.client.rest.models.RestCreatePackageRequest;
-import build.archipelago.packageservice.client.rest.models.RestGetPackageBuildResponse;
-import build.archipelago.packageservice.client.rest.models.RestGetPackageResponse;
+import build.archipelago.packageservice.models.PackageDetails;
+import build.archipelago.packageservice.models.rest.CreatePackageRestRequest;
+import build.archipelago.packageservice.models.rest.GetPackageRestResponse;
 import build.archipelago.versionsetservice.client.rest.models.RestVersionSetResponse;
 import build.archipelago.versionsetservice.client.rest.models.RestVersionSetRevisionResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -171,10 +169,10 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getDescription()));
 
-        RestCreatePackageRequest restRequest = new RestCreatePackageRequest(
-                request.getName(),
-                request.getDescription()
-        );
+        CreatePackageRestRequest restRequest = CreatePackageRestRequest.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .build();
 
         HttpResponse<String> response;
         try {
@@ -203,7 +201,6 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
     public String getConfig(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
         Preconditions.checkNotNull(pkg);
 
-        RestGetPackageBuildResponse response;
         HttpResponse<String> restResponse;
         try {
             HttpRequest request = getOAuthRequest( "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash() + "/config")
@@ -227,10 +224,10 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
     }
 
     @Override
-    public GetPackageResponse getPackage(String name) throws PackageNotFoundException {
+    public PackageDetails getPackage(String name) throws PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
-        RestGetPackageResponse response;
+        GetPackageRestResponse response;
         HttpResponse<String> restResponse;
         try {
             HttpRequest request = getOAuthRequest("/package/" + name)
@@ -248,7 +245,7 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
                 throw new PackageNotFoundException(name);
             case 200: // Ok
                 try {
-                    response = objectMapper.readValue(restResponse.body(), RestGetPackageResponse.class);
+                    response = objectMapper.readValue(restResponse.body(), GetPackageRestResponse.class);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -257,16 +254,6 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
                 throw new RuntimeException("Unknown response " + restResponse.statusCode());
         }
 
-        ImmutableList.Builder<GetPackageResponse.Version> versions = ImmutableList.builder();
-        response.getVersions().forEach(x -> versions.add(new GetPackageResponse.Version(
-                x.getVersion(), x.getLatestBuildHash(), Instant.ofEpochMilli(x.getLatestBuildTime())
-        )));
-
-        return GetPackageResponse.builder()
-                .name(response.getName())
-                .description(response.getDescription())
-                .created(Instant.ofEpochMilli(response.getCreated()))
-                .versions(versions.build())
-                .build();
+        return response.toInternal();
     }
 }

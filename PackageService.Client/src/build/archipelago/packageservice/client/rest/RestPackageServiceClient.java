@@ -9,22 +9,21 @@ import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.CreatePackageRequest;
-import build.archipelago.packageservice.client.models.GetPackageBuildResponse;
-import build.archipelago.packageservice.client.models.GetPackageResponse;
-import build.archipelago.packageservice.client.models.GetPackagesResponse;
-import build.archipelago.packageservice.client.models.PackageBuildsResponse;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
 import build.archipelago.packageservice.client.models.UploadPackageRequest;
-import build.archipelago.packageservice.client.rest.models.ArchipelagoBuiltPackageResponse;
-import build.archipelago.packageservice.client.rest.models.GetBuildArtifactRestResponse;
-import build.archipelago.packageservice.client.rest.models.RestArtifactUploadResponse;
-import build.archipelago.packageservice.client.rest.models.RestCreatePackageRequest;
-import build.archipelago.packageservice.client.rest.models.RestGetPackageBuildResponse;
-import build.archipelago.packageservice.client.rest.models.RestGetPackageResponse;
-import build.archipelago.packageservice.client.rest.models.RestGetPackagesResponse;
-import build.archipelago.packageservice.client.rest.models.RestPackageBuildsResponse;
-import build.archipelago.packageservice.client.rest.models.RestVerificationRequest;
-import build.archipelago.packageservice.client.rest.models.RestVerificationResponse;
+import build.archipelago.packageservice.models.BuiltPackageDetails;
+import build.archipelago.packageservice.models.PackageDetails;
+import build.archipelago.packageservice.models.VersionBuildDetails;
+import build.archipelago.packageservice.models.rest.ArchipelagoBuiltPackageRestResponse;
+import build.archipelago.packageservice.models.rest.ArtifactUploadRestResponse;
+import build.archipelago.packageservice.models.rest.CreatePackageRestRequest;
+import build.archipelago.packageservice.models.rest.GetBuildArtifactRestResponse;
+import build.archipelago.packageservice.models.rest.GetPackageBuildRestResponse;
+import build.archipelago.packageservice.models.rest.GetPackageBuildsRestResponse;
+import build.archipelago.packageservice.models.rest.GetPackageRestResponse;
+import build.archipelago.packageservice.models.rest.GetPackagesRestResponse;
+import build.archipelago.packageservice.models.rest.VerificationRestRequest;
+import build.archipelago.packageservice.models.rest.VerificationRestResponse;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -38,7 +37,6 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,10 +57,10 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getDescription()));
 
-        RestCreatePackageRequest restRequest = new RestCreatePackageRequest(
-                request.getName(),
-                request.getDescription()
-        );
+        CreatePackageRestRequest restRequest = CreatePackageRestRequest.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .build();
 
         HttpResponse<String> response;
         try {
@@ -71,6 +69,9 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .header("accept", "application/json")
                     .build();
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -89,11 +90,11 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
     }
 
     @Override
-    public GetPackageResponse getPackage(String accountId, String name) throws PackageNotFoundException, UnauthorizedException {
+    public PackageDetails getPackage(String accountId, String name) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
-        RestGetPackageResponse response;
+        GetPackageRestResponse response;
         HttpResponse<String> restResponse;
         try {
             HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + name)
@@ -104,61 +105,53 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        response = validateResponse(restResponse, name, RestGetPackageResponse.class);
+        response = validateResponse(restResponse, name, GetPackageRestResponse.class);
         return response.toInternal();
     }
 
     @Override
-    public PackageBuildsResponse getPackageBuilds(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException, UnauthorizedException {
+    public ImmutableList<VersionBuildDetails> getPackageBuilds(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(pkg);
 
-        RestPackageBuildsResponse response;
+        GetPackageBuildsRestResponse response;
         HttpResponse<String> restResponse;
         try {
             HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + pkg.getName() + "/" + pkg.getVersion())
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        response = validateResponse(restResponse, pkg.toString(), RestPackageBuildsResponse.class);
-
-        ImmutableList.Builder<PackageBuildsResponse.Build> builds = ImmutableList.builder();
-        response.getBuilds().forEach(x -> builds.add(new PackageBuildsResponse.Build(
-                x.getHash(), Instant.ofEpochMilli(x.getCreated())
-        )));
-
-        return PackageBuildsResponse.builder()
-                .builds(builds.build())
-                .build();
+        response = validateResponse(restResponse, pkg.toString(), GetPackageBuildsRestResponse.class);
+        return response.toInternal();
     }
 
     @Override
-    public GetPackageBuildResponse getPackageBuild(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException, UnauthorizedException {
+    public BuiltPackageDetails getPackageBuild(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(pkg);
 
-        RestGetPackageBuildResponse response;
+        GetPackageBuildRestResponse response;
         HttpResponse<String> restResponse;
         try {
             HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        response = validateResponse(restResponse, pkg.toString(), RestGetPackageBuildResponse.class);
+        response = validateResponse(restResponse, pkg.toString(), GetPackageBuildRestResponse.class);
 
-        return GetPackageBuildResponse.builder()
-                .hash(response.getHash())
-                .created(Instant.ofEpochMilli(response.getCreated()))
-                .config(response.getConfig())
-                .gitCommit(response.getGitCommit())
-                .gitBranch(response.getGitBranch())
-                .build();
+        return response.toInternal();
     }
 
     @Override
@@ -168,20 +161,23 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         Preconditions.checkArgument(!Strings.isNullOrEmpty(branch));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(commit));
 
-        ArchipelagoBuiltPackageResponse response;
+        ArchipelagoBuiltPackageRestResponse response;
         HttpResponse<String> restResponse;
         try {
             HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + packageName + "/git/" + branch + "/" + commit)
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        response = validateResponse(restResponse, packageName + " (B: " + branch +", C:" + commit + ")",
-                ArchipelagoBuiltPackageResponse.class);
-
-        return new ArchipelagoBuiltPackage(response.getName(), response.getVersion(), response.getHash());
+        response = validateResponse(restResponse,
+                packageName + " (B: " + branch +", C:" + commit + ")",
+                ArchipelagoBuiltPackageRestResponse.class);
+        return response.toInternal();
     }
 
     @Override
@@ -189,15 +185,17 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(packages.size() > 0);
 
-        RestVerificationResponse response;
-        RestVerificationRequest restRequest = new RestVerificationRequest(
-                packages.stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()));
+        VerificationRestResponse response;
         HttpResponse<String> restResponse;
         try {
+            VerificationRestRequest restRequest = VerificationRestRequest.from(packages);
             HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/verify-packages")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -206,7 +204,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                 throw new UnauthorizedException();
             case 200: // Ok
                 try {
-                    response = objectMapper.readValue(restResponse.body(), RestVerificationResponse.class);
+                    response = objectMapper.readValue(restResponse.body(), VerificationRestResponse.class);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -227,22 +225,24 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         Preconditions.checkNotNull(packages);
         Preconditions.checkArgument(packages.size() > 0);
 
-        RestVerificationResponse response;
-        RestVerificationRequest restRequest = new RestVerificationRequest(
-                packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList()));
+        VerificationRestResponse response;
         HttpResponse<String> restResponse;
         try {
+            VerificationRestRequest restRequest = VerificationRestRequest.fromBuilt(packages);
             HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/verify-builds")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         switch (restResponse.statusCode()) {
             case 200: // Ok
                 try {
-                    response = objectMapper.readValue(restResponse.body(), RestVerificationResponse.class);
+                    response = objectMapper.readValue(restResponse.body(), VerificationRestResponse.class);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -273,7 +273,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                 .addPart("gitCommit", request.getGitCommit())
                 .addPart("gitBranch", request.getGitBranch());
 
-        RestArtifactUploadResponse response;
+        ArtifactUploadRestResponse response;
         HttpResponse<String> restResponse;
         try {
             String url = baseUrl + "/account/" + accountId + "/artifact/" + request.getPkg().getName() + "/" + request.getPkg().getVersion();
@@ -283,10 +283,13 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .POST(publisher.build())
                     .build();
             restResponse = client.send(restTequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        response = validateResponse(restResponse, request.getPkg().toString(), RestArtifactUploadResponse.class);
+        response = validateResponse(restResponse, request.getPkg().toString(), ArtifactUploadRestResponse.class);
         return response.getHash();
     }
 
@@ -317,6 +320,9 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                     .GET()
                     .build();
             restStringResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -338,10 +344,13 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
         HttpResponse<Path> restPathResponse;
         try {
-            HttpRequest request = getOAuthRequest(restResponse.getUrl())
+            HttpRequest request = HttpRequest.newBuilder(new URI(restResponse.getUrl()))
                     .GET()
                     .build();
             restPathResponse = client.send(request, HttpResponse.BodyHandlers.ofFile(filePath));
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -358,15 +367,18 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
     }
 
     @Override
-    public GetPackagesResponse getAllPackages(String accountId) throws UnauthorizedException {
+    public ImmutableList<PackageDetails> getAllPackages(String accountId) throws UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 
         HttpResponse<String> restResponse;
         try {
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/all")
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package")
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -375,11 +387,10 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                 throw new UnauthorizedException();
             case 200: // Ok
                 try {
-                    RestGetPackagesResponse restObj = objectMapper.readValue(restResponse.body(),
-                            RestGetPackagesResponse.class);
-                    ImmutableList.Builder<GetPackageResponse> pkgs = ImmutableList.builder();
-                    restObj.getPackages().forEach(x -> pkgs.add(x.toInternal()));
-                    return GetPackagesResponse.builder().packages(pkgs.build()).build();
+                    GetPackagesRestResponse restObj = objectMapper.readValue(restResponse.body(),
+                            GetPackagesRestResponse.class);
+                    return restObj.getPackages().stream().map(GetPackageRestResponse::toInternal)
+                            .collect(ImmutableList.toImmutableList());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

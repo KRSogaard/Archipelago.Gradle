@@ -10,7 +10,7 @@ import build.archipelago.common.github.exceptions.GitRepoExistsException;
 import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.common.github.models.GitRepo;
 import build.archipelago.packageservice.core.data.PackageData;
-import build.archipelago.packageservice.core.data.models.CreatePackageModel;
+import build.archipelago.packageservice.models.CreatePackageModel;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -56,6 +56,8 @@ public class CreatePackageDelegate {
                 .description(request.getDescription())
                 .gitCloneUrl(repo.getCloneUrl())
                 .gitUrl(repo.getUrl())
+                .gitRepoName(repo.getName())
+                .gitFullName(repo.getFullName())
                 .build());
     }
 }

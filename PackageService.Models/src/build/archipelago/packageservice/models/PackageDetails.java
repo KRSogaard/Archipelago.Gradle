@@ -1,4 +1,4 @@
-package build.archipelago.packageservice.core.data.models;
+package build.archipelago.packageservice.models;
 
 import com.google.common.collect.ImmutableList;
 import lombok.Builder;
@@ -13,6 +13,8 @@ public class PackageDetails {
     private String description;
     private String gitCloneUrl;
     private String gitUrl;
+    private String gitRepoName;
+    private String gitRepoFullName;
     private Instant created;
     private ImmutableList<PackageDetailsVersion> versions;
 }

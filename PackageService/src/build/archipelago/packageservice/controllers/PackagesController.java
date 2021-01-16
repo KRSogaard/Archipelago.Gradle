@@ -5,9 +5,6 @@ import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.PackageExistsException;
 import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.packageservice.core.data.models.BuiltPackageDetails;
-import build.archipelago.packageservice.core.data.models.PackageDetails;
-import build.archipelago.packageservice.core.data.models.VersionBuildDetails;
 import build.archipelago.packageservice.core.delegates.createPackage.CreatePackageDelegate;
 import build.archipelago.packageservice.core.delegates.createPackage.CreatePackageDelegateRequest;
 import build.archipelago.packageservice.core.delegates.getPackage.GetPackageDelegate;
@@ -17,14 +14,18 @@ import build.archipelago.packageservice.core.delegates.getPackageBuilds.GetPacka
 import build.archipelago.packageservice.core.delegates.getPackages.GetPackagesDelegate;
 import build.archipelago.packageservice.core.delegates.verifyBuildsExists.VerifyBuildsExistsDelegate;
 import build.archipelago.packageservice.core.delegates.verifyPackageExists.VerifyPackageExistsDelegate;
-import build.archipelago.packageservice.models.ArchipelagoBuiltPackageRestResponse;
-import build.archipelago.packageservice.models.CreatePackageRestRequest;
-import build.archipelago.packageservice.models.GetPackageBuildRestResponse;
-import build.archipelago.packageservice.models.GetPackageBuildsRestResponse;
-import build.archipelago.packageservice.models.GetPackageRestResponse;
-import build.archipelago.packageservice.models.GetPackagesRestResponse;
-import build.archipelago.packageservice.models.VerificationRestRequest;
-import build.archipelago.packageservice.models.VerificationRestResponse;
+import build.archipelago.packageservice.models.BuiltPackageDetails;
+import build.archipelago.packageservice.models.PackageDetails;
+import build.archipelago.packageservice.models.VersionBuildDetails;
+import build.archipelago.packageservice.models.rest.ArchipelagoBuiltPackageRestResponse;
+import build.archipelago.packageservice.models.rest.CreatePackageRestRequest;
+import build.archipelago.packageservice.models.rest.GetPackageBuildRestResponse;
+import build.archipelago.packageservice.models.rest.GetPackageBuildsRestResponse;
+import build.archipelago.packageservice.models.rest.GetPackageRestResponse;
+import build.archipelago.packageservice.models.rest.GetPackagesRestResponse;
+import build.archipelago.packageservice.models.rest.PackageVersionRestResponse;
+import build.archipelago.packageservice.models.rest.VerificationRestRequest;
+import build.archipelago.packageservice.models.rest.VerificationRestResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -104,7 +105,7 @@ public class PackagesController {
     }
 
 
-    @GetMapping(value = "all")
+    @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public GetPackagesRestResponse getAllPackages(
             @PathVariable("accountId") String accountId) {
@@ -118,7 +119,7 @@ public class PackagesController {
                     .name(pkg.getName())
                     .description(pkg.getDescription())
                     .created(pkg.getCreated().toEpochMilli())
-                    .versions(pkg.getVersions().stream().map(x -> new GetPackageRestResponse.VersionRestResponse(
+                    .versions(pkg.getVersions().stream().map(x -> new PackageVersionRestResponse(
                             x.getVersion(),
                             x.getLatestBuildHash(),
                             x.getLatestBuildTime().toEpochMilli())).collect(Collectors.toList()))
@@ -141,16 +142,7 @@ public class PackagesController {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
         PackageDetails pkg = getPackageDelegate.get(accountId, name);
-
-        return GetPackageRestResponse.builder()
-                .name(pkg.getName())
-                .description(pkg.getDescription())
-                .created(pkg.getCreated().toEpochMilli())
-                .versions(pkg.getVersions().stream().map(x -> new GetPackageRestResponse.VersionRestResponse(
-                        x.getVersion(),
-                        x.getLatestBuildHash(),
-                        x.getLatestBuildTime().toEpochMilli())).collect(Collectors.toList()))
-                .build();
+        return GetPackageRestResponse.from(pkg);
     }
 
     @GetMapping(value = "{name}/{version}")
@@ -169,11 +161,7 @@ public class PackagesController {
 
         ImmutableList<VersionBuildDetails> builds = getPackageBuildsDelegate.get(accountId, pkg);
 
-        return GetPackageBuildsRestResponse.builder()
-                .builds(builds.stream()
-                        .map(x -> new GetPackageBuildsRestResponse.Build(x.getHash(), x.getCreated().toEpochMilli()))
-                        .collect(Collectors.toList()))
-                .build();
+        return GetPackageBuildsRestResponse.from(builds);
     }
 
     @GetMapping(value = "{name}/{version}/{hash}")
@@ -193,14 +181,7 @@ public class PackagesController {
         log.info("Request to get build details for {}", pkg);
 
         BuiltPackageDetails build = getPackageBuildDelegate.get(accountId, pkg);
-
-        return GetPackageBuildRestResponse.builder()
-                .hash(build.getHash())
-                .config(build.getConfig())
-                .created(build.getCreated().toEpochMilli())
-                .gitCommit(build.getGitCommit())
-                .gitBranch(build.getGitBranch())
-                .build();
+        return GetPackageBuildRestResponse.from(build);
     }
 
     @GetMapping(value = "{name}/git/{branch}/{commit}")
@@ -217,12 +198,7 @@ public class PackagesController {
         Preconditions.checkNotNull(commit);
 
         ArchipelagoBuiltPackage pkg = getPackageBuildByGitDelegate.get(accountId, name, branch, commit);
-
-        return ArchipelagoBuiltPackageRestResponse.builder()
-                .name(pkg.getName())
-                .version(pkg.getVersion())
-                .hash(pkg.getHash())
-                .build();
+        return ArchipelagoBuiltPackageRestResponse.from(pkg);
     }
 
     @PostMapping(value = "verify-packages")

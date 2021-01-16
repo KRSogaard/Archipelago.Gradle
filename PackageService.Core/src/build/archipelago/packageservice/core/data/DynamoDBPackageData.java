@@ -5,13 +5,12 @@ import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.dynamodb.AV;
 import build.archipelago.common.exceptions.PackageExistsException;
 import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.packageservice.core.data.models.BuiltPackageDetails;
-import build.archipelago.packageservice.core.data.models.CreatePackageModel;
-import build.archipelago.packageservice.core.data.models.PackageDetails;
-import build.archipelago.packageservice.core.data.models.PackageDetailsVersion;
-import build.archipelago.packageservice.core.data.models.VersionBuildDetails;
+import build.archipelago.packageservice.models.BuiltPackageDetails;
+import build.archipelago.packageservice.models.CreatePackageModel;
+import build.archipelago.packageservice.models.PackageDetails;
+import build.archipelago.packageservice.models.PackageDetailsVersion;
+import build.archipelago.packageservice.models.VersionBuildDetails;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
@@ -25,8 +24,6 @@ import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -136,6 +133,8 @@ public class DynamoDBPackageData implements PackageData {
                 .description(pkgItem.get(DynamoDBKeys.DESCRIPTION).getS())
                 .gitCloneUrl(pkgItem.get(DynamoDBKeys.GIT_CLONE_URL).getS())
                 .gitUrl(pkgItem.get(DynamoDBKeys.GIT_URL).getS())
+                .gitRepoName(pkgItem.get(DynamoDBKeys.GIT_REPO_NAME).getS())
+                .gitRepoFullName(pkgItem.get(DynamoDBKeys.GIT_REPO_FULL_NAME).getS())
                 .versions(versions.build())
                 .build();
     }
@@ -341,6 +340,8 @@ public class DynamoDBPackageData implements PackageData {
                 .put(DynamoDBKeys.DISPLAY_PACKAGE_NAME, AV.of(model.getName()))
                 .put(DynamoDBKeys.GIT_CLONE_URL, AV.of(model.getGitCloneUrl()))
                 .put(DynamoDBKeys.GIT_URL, AV.of(model.getGitUrl()))
+                .put(DynamoDBKeys.GIT_REPO_NAME, AV.of(model.getGitRepoName()))
+                .put(DynamoDBKeys.GIT_REPO_FULL_NAME, AV.of(model.getGitFullName()))
                 .put(DynamoDBKeys.CREATED, AV.of(Instant.now()))
                 .put(DynamoDBKeys.DESCRIPTION, AV.of(model.getDescription()));
 
@@ -377,6 +378,8 @@ public class DynamoDBPackageData implements PackageData {
                     .created(AV.toInstant(item.get(DynamoDBKeys.CREATED)))
                     .gitCloneUrl(item.get(DynamoDBKeys.GIT_CLONE_URL).getS())
                     .gitUrl(item.get(DynamoDBKeys.GIT_URL).getS())
+                    .gitRepoName(item.get(DynamoDBKeys.GIT_REPO_NAME).getS())
+                    .gitRepoFullName(item.get(DynamoDBKeys.GIT_REPO_FULL_NAME).getS())
                     .versions(latestVersion.build())
                     .build());
         }

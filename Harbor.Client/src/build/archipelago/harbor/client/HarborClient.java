@@ -7,7 +7,7 @@ import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.packageservice.client.models.CreatePackageRequest;
-import build.archipelago.packageservice.client.models.GetPackageResponse;
+import build.archipelago.packageservice.models.PackageDetails;
 
 import java.nio.file.Path;
 
@@ -20,5 +20,5 @@ public interface HarborClient {
 
     void createPackage(CreatePackageRequest request) throws PackageExistsException;
     String getConfig(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException;
-    GetPackageResponse getPackage(String pkg) throws PackageNotFoundException;
+    PackageDetails getPackage(String pkg) throws PackageNotFoundException;
 }

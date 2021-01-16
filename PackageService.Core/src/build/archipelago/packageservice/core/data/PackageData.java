@@ -4,10 +4,10 @@ import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.PackageExistsException;
 import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.packageservice.core.data.models.BuiltPackageDetails;
-import build.archipelago.packageservice.core.data.models.CreatePackageModel;
-import build.archipelago.packageservice.core.data.models.PackageDetails;
-import build.archipelago.packageservice.core.data.models.VersionBuildDetails;
+import build.archipelago.packageservice.models.BuiltPackageDetails;
+import build.archipelago.packageservice.models.CreatePackageModel;
+import build.archipelago.packageservice.models.PackageDetails;
+import build.archipelago.packageservice.models.VersionBuildDetails;
 import com.google.common.collect.ImmutableList;
 
 public interface PackageData {

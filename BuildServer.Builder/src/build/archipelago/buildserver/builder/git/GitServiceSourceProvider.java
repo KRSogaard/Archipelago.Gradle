@@ -1,13 +1,13 @@
 package build.archipelago.buildserver.builder.git;
 
 import build.archipelago.common.exceptions.UnauthorizedException;
+import build.archipelago.common.github.GitService;
 import build.archipelago.maui.common.PackageSourceProvider;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
@@ -16,30 +16,27 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class GitHubPackageSourceProvider implements PackageSourceProvider {
+public class GitServiceSourceProvider implements PackageSourceProvider {
 
-    private String account;
-    private String token;
+    private GitService gitService;
 
-    protected HttpClient client;
-
-    public GitHubPackageSourceProvider(String account,String token) {
-        this.account = account;
-        this.token = token;
-
-        client = HttpClient
-                .newBuilder()
-                .build();
+    public GitServiceSourceProvider(GitService gitService) {
+        this.gitService = gitService;
     }
 
     @Override
-    public boolean checkOutSource(Path workspaceRoot, String packageName) {
-        return checkOutSource(workspaceRoot, packageName, "master");
+    public boolean checkOutSource(Path workspaceRoot, String packageName, String checkOutUrl) {
+        return checkOutSource(workspaceRoot, packageName, checkOutUrl);
     }
 
     @Override
-    public boolean checkOutSource(Path workspaceRoot, String packageName, String commit) {
+    public boolean checkOutSource(Path workspaceRoot, String packageName, String checkOutUrl, String commit) {
         Path filePath = workspaceRoot.resolve(packageName + "-" + commit + ".zip");
+
+//        https://github.com/KRSogaard/Archipelago.Gradle/archive/master.zip
+//        https://github.com/KRSogaard/Archipelago.Gradle/archive/15c4623b4bb5df76a32119fd12ab0ee0c9cc447c.zip
+//        https://github.com/KRSogaard/Archipelago.Gradle/archive/Account-Refactor.zip
+//        https://github.com/KRSogaard/Archipelago.Gradle/archive/5c6efb18b2d92fc73666187378e47e58554b3e45.zip
 
         HttpResponse<Path> response;
         try {

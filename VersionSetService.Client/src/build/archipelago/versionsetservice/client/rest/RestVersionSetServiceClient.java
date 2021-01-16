@@ -52,6 +52,9 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -96,6 +99,9 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.discarding());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -178,6 +184,9 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -233,6 +242,9 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

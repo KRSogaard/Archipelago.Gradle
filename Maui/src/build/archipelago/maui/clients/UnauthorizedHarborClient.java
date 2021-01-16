@@ -9,7 +9,6 @@ import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.packageservice.client.models.CreatePackageRequest;
-import build.archipelago.packageservice.client.models.GetPackageResponse;
 
 import java.nio.file.Path;
 
@@ -40,7 +39,7 @@ public class UnauthorizedHarborClient implements HarborClient {
     }
 
     @Override
-    public GetPackageResponse getPackage(String pkg) throws PackageNotFoundException {
+    public build.archipelago.packageservice.models.PackageDetails getPackage(String pkg) throws PackageNotFoundException {
         throw new UnauthorizedException();
     }
 }

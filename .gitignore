@@ -19,7 +19,6 @@ Archipelago.Common/build/
 BuildServer.API/build/
 HarborService/build/
 Maui.Graph/build/
-PackageService.Client.Models/build/
 VersionSetService/build/
 VersionSetService.Models/build/
 Archipelago.Common.Clients/build/
@@ -36,6 +35,7 @@ PackageService.Models/build/
 Archipelago.Common.Github/build/
 VersionSetService.Client.Models/build/
 BuildServer.Models/build/
+BuildServer.API.Client/build/
 /build/
 
 # Ignore Gradle GUI config

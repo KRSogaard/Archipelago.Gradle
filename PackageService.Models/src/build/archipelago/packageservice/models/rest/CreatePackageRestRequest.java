@@ -1,15 +1,15 @@
-package build.archipelago.packageservice.models;
+package build.archipelago.packageservice.models.rest;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Data
 @Builder
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@NoArgsConstructor
+@Getter
 public class CreatePackageRestRequest {
     private String name;
     private String description;

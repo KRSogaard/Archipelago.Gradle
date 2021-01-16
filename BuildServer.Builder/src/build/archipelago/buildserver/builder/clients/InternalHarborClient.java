@@ -10,7 +10,7 @@ import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.CreatePackageRequest;
-import build.archipelago.packageservice.client.models.GetPackageResponse;
+import build.archipelago.packageservice.models.PackageDetails;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 
 import java.nio.file.Path;
@@ -57,7 +57,7 @@ public class InternalHarborClient implements HarborClient {
     }
 
     @Override
-    public GetPackageResponse getPackage(String pkg) throws PackageNotFoundException {
+    public PackageDetails getPackage(String pkg) throws PackageNotFoundException {
         return packageServiceClient.getPackage(accountId, pkg);
     }
 }

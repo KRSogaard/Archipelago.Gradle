@@ -6,6 +6,7 @@ import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory
 import build.archipelago.buildserver.builder.handlers.BuildRequestFailureHandler;
 import build.archipelago.buildserver.builder.handlers.BuildRequestHandler;
 import build.archipelago.buildserver.common.services.build.BuildService;
+import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.maui.graph.DependencyGraphGenerator;
 import build.archipelago.maui.path.MauiPath;
 import build.archipelago.maui.path.recipies.BinRecipe;
@@ -17,6 +18,8 @@ import build.archipelago.versionsetservice.client.rest.RestVersionSetServiceClie
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.wewelo.sqsconsumer.AmazonSQSFactory;
 import com.wewelo.sqsconsumer.SQSConsumer;
 import com.wewelo.sqsconsumer.SqsMessageProcessorFactory;
@@ -42,6 +45,9 @@ public class ServiceConfiguration {
     public VersionSetServiceClient versionServiceClient(@Value("${services.versionset.url}") String vsEndpoint,
                                                         @Value("${oauth.client-id}") String clientId,
                                                         @Value("${oauth.client-secret}") String clientSecret) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(vsEndpoint));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(clientId));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(clientSecret));
         return new RestVersionSetServiceClient(vsEndpoint, clientId, clientSecret);
     }
 
@@ -50,6 +56,9 @@ public class ServiceConfiguration {
     public PackageServiceClient packageServiceClient(@Value("${services.packages.url}") String pkgEndpoint,
                                                      @Value("${oauth.client-id}") String clientId,
                                                      @Value("${oauth.client-secret}") String clientSecret) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(pkgEndpoint));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(clientId));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(clientSecret));
         return new RestPackageServiceClient(pkgEndpoint, clientId, clientSecret);
     }
 
@@ -58,7 +67,11 @@ public class ServiceConfiguration {
     public AccountService accountService(AmazonDynamoDB amazonDynamoDB,
                                          @Value("${dynamodb.accounts}") String accountsTableName,
                                          @Value("${dynamodb.account-mapping}") String accountsMappingTableName,
-                                         @Value("${dynamodb.accounts-git") String accountGitTableName) {
+                                         @Value("${dynamodb.accounts-git}") String accountGitTableName) {
+        Preconditions.checkNotNull(amazonDynamoDB);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountGitTableName));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountsMappingTableName));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountGitTableName));
         return new AccountService(amazonDynamoDB, accountsTableName, accountsMappingTableName, accountGitTableName);
     }
 
@@ -71,6 +84,13 @@ public class ServiceConfiguration {
                                      @Value("${dynamodb.build-packages}") String buildPackagesTable,
                                      @Value("${s3.logs}") String bucketNameLogs,
                                      @Value("${sqs.build-queue}") String queueUrl) {
+        Preconditions.checkNotNull(amazonSQS);
+        Preconditions.checkNotNull(amazonDynamoDB);
+        Preconditions.checkNotNull(amazonS3);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(buildTable));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(buildPackagesTable));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(bucketNameLogs));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(queueUrl));
         return new BuildService(amazonDynamoDB, amazonSQS, amazonS3, buildTable, buildPackagesTable, bucketNameLogs, queueUrl);
     }
 
@@ -85,17 +105,26 @@ public class ServiceConfiguration {
     public BuilderFactory builderFactory(InternalHarborClientFactory internalHarborClientFactory,
                                          VersionSetServiceClient versionSetServiceClient,
                                          PackageServiceClient packageServiceClient,
+                                         GitServiceFactory gitServiceFactory,
                                          BuildService buildService,
                                          AccountService accountService,
                                          MauiPath mauiPath,
                                          @Value("${workspace.path}") String workspacePath) throws IOException {
+        Preconditions.checkNotNull(internalHarborClientFactory);
+        Preconditions.checkNotNull(versionSetServiceClient);
+        Preconditions.checkNotNull(packageServiceClient);
+        Preconditions.checkNotNull(buildService);
+        Preconditions.checkNotNull(accountService);
+        Preconditions.checkNotNull(mauiPath);
+        Preconditions.checkNotNull(gitServiceFactory);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(workspacePath));
         Path wsPath = Path.of(workspacePath);
         if (!Files.exists(wsPath) || !Files.isDirectory(wsPath)) {
             Files.createDirectory(wsPath);
         }
         return new BuilderFactory(internalHarborClientFactory, versionSetServiceClient,
                 packageServiceClient, wsPath,
-                buildService, accountService,
+                gitServiceFactory, buildService, accountService,
                 mauiPath);
     }
 
@@ -151,5 +180,11 @@ public class ServiceConfiguration {
                 new BinRecipe(),
                 new PackageRecipe()
         ), dependencyGraphGenerator);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public GitServiceFactory gitServiceFactory() {
+        return new GitServiceFactory();
     }
 }

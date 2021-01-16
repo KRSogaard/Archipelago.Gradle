@@ -1,5 +1,6 @@
 package build.archipelago.maui.common;
 
+import build.archipelago.packageservice.models.PackageDetails;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
@@ -7,21 +8,14 @@ import java.nio.file.Path;
 @Slf4j
 public class LocalGitPackageSourceProvider implements PackageSourceProvider {
 
-    private String gitBase;
-    private String gitGroup;
-
-    public LocalGitPackageSourceProvider(String gitBase,
-                                         String gitGroup) {
-        this.gitBase = gitBase;
-        this.gitGroup = gitGroup;
+    public LocalGitPackageSourceProvider() {
     }
 
     @Override
-    public boolean checkOutSource(Path workspaceRoot, String packageName) {
+    public boolean checkOutSource(Path workspaceRoot, PackageDetails packageDetails) {
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.directory(workspaceRoot.toFile());
-        String gitUrl = getGitClonePath(packageName);
-        processBuilder.command("git", "clone", gitUrl, packageName);
+        processBuilder.command("git", "clone", packageDetails.getGitCloneUrl(), packageDetails.getName());
 
         try {
             return processBuilder.start().waitFor() == 0;
@@ -31,25 +25,14 @@ public class LocalGitPackageSourceProvider implements PackageSourceProvider {
         }
     }
 
-    private String getGitClonePath(String packageName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(gitBase);
-        sb.append("/");
-        sb.append(gitGroup);
-        sb.append("/");
-        sb.append(packageName);
-        sb.append(".git");
-        return sb.toString();
-    }
-
     @Override
-    public boolean checkOutSource(Path workspaceRoot, String packageName, String commit) {
-        if (!checkOutSource(workspaceRoot, packageName)) {
+    public boolean checkOutSource(Path workspaceRoot, PackageDetails packageDetails, String commit) {
+        if (!checkOutSource(workspaceRoot, packageDetails)) {
             return false;
         }
 
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.directory(workspaceRoot.resolve(packageName).toFile());
+        processBuilder.directory(workspaceRoot.resolve(packageDetails.getName()).toFile());
         processBuilder.command("git", "checkout", commit);
 
         try {

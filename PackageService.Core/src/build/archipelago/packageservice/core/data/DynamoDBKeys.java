@@ -6,6 +6,8 @@ public class DynamoDBKeys {
     public static final String DESCRIPTION = "description";
     public static final String GIT_CLONE_URL = "git-clone-url";
     public static final String GIT_URL = "git-url";
+    public static final String GIT_REPO_NAME = "git-repo-name";
+    public static final String GIT_REPO_FULL_NAME = "git-repo-full-name";
     public static final String PACKAGE_NAME = "package-name";
     public static final String VERSION = "version";
     public static final String DISPLAY_VERSION = "display-version";

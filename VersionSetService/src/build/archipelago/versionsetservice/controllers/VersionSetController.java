@@ -16,7 +16,6 @@ import build.archipelago.versionsetservice.core.delegates.GetVersionSetsDelegate
 import build.archipelago.versionsetservice.models.CreateVersionSetRestRequest;
 import build.archipelago.versionsetservice.models.CreateVersionSetRevisionRestRequest;
 import build.archipelago.versionsetservice.models.CreateVersionSetRevisionRestResponse;
-import build.archipelago.versionsetservice.models.RevisionIdRestResponse;
 import build.archipelago.versionsetservice.models.VersionSetRestResponse;
 import build.archipelago.versionsetservice.models.VersionSetRevisionRestResponse;
 import build.archipelago.versionsetservice.models.VersionSetsRestResponse;

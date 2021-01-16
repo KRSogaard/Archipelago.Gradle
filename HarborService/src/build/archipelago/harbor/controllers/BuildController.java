@@ -5,7 +5,6 @@ import build.archipelago.buildserver.models.client.Builds;
 import build.archipelago.buildserver.models.rest.BuildRestResponse;
 import build.archipelago.buildserver.models.rest.BuildsRestResponse;
 import build.archipelago.harbor.filters.AccountIdFilter;
-import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
