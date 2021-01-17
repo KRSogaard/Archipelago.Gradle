@@ -18,7 +18,7 @@ public interface PackageData {
     PackageDetails getPackageDetails(String accountId, String name) throws PackageNotFoundException;
     ImmutableList<VersionBuildDetails> getPackageVersionBuilds(String accountId, ArchipelagoPackage pkg);
     BuiltPackageDetails getBuildPackage(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException;
-    ArchipelagoBuiltPackage getBuildPackageByGit(String accountId, String packageName, String branch, String gitCommit) throws PackageNotFoundException;
+    ArchipelagoBuiltPackage getBuildPackageByGit(String accountId, String packageName, String gitCommit) throws PackageNotFoundException;
     BuiltPackageDetails getLatestBuildPackage(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException;
 
     void createBuild(String accountId, ArchipelagoBuiltPackage pkg, String config, String gitCommit, String gitBranch) throws PackageNotFoundException, PackageExistsException;

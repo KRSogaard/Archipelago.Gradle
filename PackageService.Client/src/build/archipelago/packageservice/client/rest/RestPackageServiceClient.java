@@ -155,16 +155,15 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
     }
 
     @Override
-    public ArchipelagoBuiltPackage getPackageByGit(String accountId, String packageName, String branch, String commit) throws PackageNotFoundException, UnauthorizedException {
+    public ArchipelagoBuiltPackage getPackageByGit(String accountId, String packageName, String commit) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageName));
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(branch));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(commit));
 
         ArchipelagoBuiltPackageRestResponse response;
         HttpResponse<String> restResponse;
         try {
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + packageName + "/git/" + branch + "/" + commit)
+            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + packageName + "/git/" + commit)
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -175,7 +174,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             throw new RuntimeException(e);
         }
         response = validateResponse(restResponse,
-                packageName + " (B: " + branch +", C:" + commit + ")",
+                packageName + " (C:" + commit + ")",
                 ArchipelagoBuiltPackageRestResponse.class);
         return response.toInternal();
     }

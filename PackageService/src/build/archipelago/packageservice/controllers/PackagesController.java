@@ -167,20 +167,18 @@ public class PackagesController {
         return GetPackageBuildRestResponse.from(build);
     }
 
-    @GetMapping(value = "{name}/git/{branch}/{commit}")
+    @GetMapping(value = "{name}/git/{commit}")
     @ResponseStatus(HttpStatus.OK)
     public ArchipelagoBuiltPackageRestResponse getPackageByGit(
             @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
-            @PathVariable("branch") String branch,
             @PathVariable("commit") String commit) throws PackageNotFoundException {
-        log.info("Request to get package build by git {} (B: {}, C: {}) for account {}", name, branch, commit, accountId);
+        log.info("Request to get package build by git {} (C: {}) for account {}", name, commit, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(branch);
         Preconditions.checkNotNull(commit);
 
-        ArchipelagoBuiltPackage pkg = getPackageBuildByGitDelegate.get(accountId, name, branch, commit);
+        ArchipelagoBuiltPackage pkg = getPackageBuildByGitDelegate.get(accountId, name, commit);
         return ArchipelagoBuiltPackageRestResponse.from(pkg);
     }
 

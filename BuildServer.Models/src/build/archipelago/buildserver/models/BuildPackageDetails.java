@@ -7,7 +7,6 @@ import lombok.Value;
 @Value
 public class BuildPackageDetails {
     private String packageName;
-    private String branch;
     private String commit;
 
     @Override
@@ -15,21 +14,18 @@ public class BuildPackageDetails {
         StringBuilder sb = new StringBuilder();
         sb.append(packageName);
         sb.append(";");
-        sb.append(branch);
-        sb.append(";");
         sb.append(commit);
         return sb.toString();
     }
 
     public static BuildPackageDetails parse(String value) {
         String[] parts = value.split(";");
-        if (parts.length != 3) {
-            throw new IllegalArgumentException(value + " was not valid");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException(value + " was not a valid package commit format");
         }
         return BuildPackageDetails.builder()
                 .packageName(parts[0])
-                .branch(parts[1])
-                .commit(parts[2])
+                .commit(parts[1])
                 .build();
     }
 }

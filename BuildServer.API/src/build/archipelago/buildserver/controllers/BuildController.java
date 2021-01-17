@@ -2,7 +2,7 @@ package build.archipelago.buildserver.controllers;
 
 import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.buildserver.models.ArchipelagoBuild;
-import build.archipelago.buildserver.models.BuildPackageDetails;
+import build.archipelago.buildserver.models.rest.BuildPackageRestRequest;
 import build.archipelago.buildserver.models.rest.BuildRestResponse;
 import build.archipelago.buildserver.models.rest.BuildsRestResponse;
 import build.archipelago.buildserver.models.rest.NewBuildRestRequest;
@@ -53,11 +53,7 @@ public class BuildController {
         VersionSet versionSet = versionSetServiceClient.getVersionSet(accountId, request.getVersionSet());
 
         String buildId = buildService.addNewBuildRequest(accountId, versionSet.getName(), request.isDryRun(),
-                request.getBuildPackages().stream().map(bp -> BuildPackageDetails.builder()
-                        .packageName(bp.getPackageName())
-                        .branch(bp.getBranch())
-                        .commit(bp.getCommit())
-                        .build())
+                request.getBuildPackages().stream().map(BuildPackageRestRequest::toInternal)
                         .collect(Collectors.toList()));
         return buildId;
     }

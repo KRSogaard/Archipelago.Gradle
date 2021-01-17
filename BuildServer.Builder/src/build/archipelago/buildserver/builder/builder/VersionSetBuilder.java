@@ -315,7 +315,7 @@ public class VersionSetBuilder {
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.IN_PROGRESS);
             stageLog.addInfo("Starting version set publishing");
 
-            Map<ArchipelagoPackage, Pair<String, String>> gitMap = new HashMap<>();
+            Map<ArchipelagoPackage, String> gitMap = new HashMap<>();
             for (BuildPackageDetails bpd : request.getBuildPackages()) {
                 Optional<ArchipelagoPackage> archipelagoPackage = directPackages.stream()
                         .filter(p -> p.getName().equalsIgnoreCase(bpd.getPackageName()))
@@ -323,7 +323,7 @@ public class VersionSetBuilder {
                 if (archipelagoPackage.isEmpty()) {
                     throw new RuntimeException(String.format("Could not find the archipelago package \"%s\" in build details", bpd.getPackageName()));
                 }
-                gitMap.put(archipelagoPackage.get(), new Pair<>(bpd.getBranch(), bpd.getCommit()));
+                gitMap.put(archipelagoPackage.get(), bpd.getCommit());
             }
 
             // Build are done
@@ -333,17 +333,17 @@ public class VersionSetBuilder {
                     log.error("Build package {} was not in the git map", builtPackage);
                     throw new RuntimeException(String.format("Build package %s was not in the git map", builtPackage));
                 }
-                Pair<String, String> gitInfo = gitMap.get(builtPackage);
+                String gitCommit = gitMap.get(builtPackage);
                 String buildHash = null;
 
-                ArchipelagoBuiltPackage previousBuilt = getPreviousBuild(builtPackage.getName(), gitInfo.getFirst(), gitInfo.getSecond());
+                ArchipelagoBuiltPackage previousBuilt = getPreviousBuild(builtPackage.getName(), gitCommit);
                 if (previousBuilt != null) {
                     buildHash = previousBuilt.getHash();
                 }
 
                 if (buildHash == null) {
-                    log.info("First time the package {}, branch {} at commit {} has been built",
-                            builtPackage.getName(), gitInfo.getFirst(), gitInfo.getSecond());
+                    log.info("First time the package {}, at commit {} has been built",
+                            builtPackage.getName(), gitCommit);
                     try {
                         String configContent;
                         try {
@@ -356,8 +356,7 @@ public class VersionSetBuilder {
                         buildHash = packageServiceClient.uploadBuiltArtifact(accountDetails.getId(), UploadPackageRequest.builder()
                                 .config(configContent)
                                 .pkg(builtPackage)
-                                .gitBranch(gitInfo.getFirst())
-                                .gitCommit(gitInfo.getSecond())
+                                .gitCommit(gitCommit)
                                 .build(),
                                 zip);
                     } catch (PackageNotFoundException e) {
@@ -422,12 +421,12 @@ public class VersionSetBuilder {
         return false;
     }
 
-    private ArchipelagoBuiltPackage getPreviousBuild(String name, String branch, String commit) {
+    private ArchipelagoBuiltPackage getPreviousBuild(String name, String commit) {
         try {
-            return packageServiceClient.getPackageByGit(accountDetails.getId(), name, branch, commit);
+            return packageServiceClient.getPackageByGit(accountDetails.getId(), name, commit);
         } catch (PackageNotFoundException e) {
-            log.debug("This is a new build of package \"{}\" for git branch \"{}\" commit \"{}\"",
-                    name, branch, commit);
+            log.debug("This is a new build of package \"{}\" for git commit \"{}\"",
+                    name, commit);
         }
         return null;
     }

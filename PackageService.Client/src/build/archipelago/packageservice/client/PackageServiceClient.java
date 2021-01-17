@@ -22,7 +22,7 @@ public interface PackageServiceClient {
     PackageDetails getPackage(String accountId, String name) throws PackageNotFoundException, UnauthorizedException;
     ImmutableList<VersionBuildDetails> getPackageBuilds(String accountId, ArchipelagoPackage pks) throws PackageNotFoundException, UnauthorizedException;
     BuiltPackageDetails getPackageBuild(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException, UnauthorizedException;
-    ArchipelagoBuiltPackage getPackageByGit(String accountId, String packageName, String branch, String commit) throws PackageNotFoundException, UnauthorizedException;
+    ArchipelagoBuiltPackage getPackageByGit(String accountId, String packageName, String commit) throws PackageNotFoundException, UnauthorizedException;
 
     PackageVerificationResult<ArchipelagoPackage> verifyPackagesExists(String accountId, List<ArchipelagoPackage> packages) throws UnauthorizedException;
     PackageVerificationResult<ArchipelagoBuiltPackage> verifyBuildsExists(String accountId, List<ArchipelagoBuiltPackage> packages) throws UnauthorizedException;
