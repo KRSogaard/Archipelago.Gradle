@@ -23,6 +23,7 @@ dynamodb:
   accounts-git: "accounts-git.alpha"
 s3:
   logs: "alpha-archipelago-build-log"
+  packages-logs: "alpha-archipelago-build-packages-log"
 
 sqs:
   build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-queue-alpha"

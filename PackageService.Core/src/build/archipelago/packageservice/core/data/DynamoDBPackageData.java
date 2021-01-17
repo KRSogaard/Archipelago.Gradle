@@ -207,7 +207,7 @@ public class DynamoDBPackageData implements PackageData {
         }
 
         return new ArchipelagoBuiltPackage(
-                item.get(DynamoDBKeys.DISPLAY_PACKAGE_NAME).getS(),
+                item.get(DynamoDBKeys.PACKAGE_NAME).getS(),
                 item.get(DynamoDBKeys.VERSION).getS(),
                 item.get(DynamoDBKeys.HASH).getS());
     }

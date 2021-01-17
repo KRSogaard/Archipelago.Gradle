@@ -3,6 +3,7 @@ package build.archipelago.maui.core.actions;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.maui.common.PackageSourceProvider;
@@ -96,6 +97,8 @@ public class WorkspaceUseAction extends BaseAction {
                 out.write("Successfully added %s to the workspace", aPackage.getName());
             } catch (PackageNotFoundException exp) {
                 out.error("The package name \"%s\" dose not exists", pkg);
+            } catch (RepoNotFoundException e) {
+                out.error("The repo for package \"%s\" was not found", pkg);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

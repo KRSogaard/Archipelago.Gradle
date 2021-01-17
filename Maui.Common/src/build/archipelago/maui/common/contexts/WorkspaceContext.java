@@ -180,7 +180,7 @@ public class WorkspaceContext extends Workspace {
                     buildConfig = BuildConfig.from(pkgDir);
                 } catch (IOException e) {
                     log.error("Failed to read build config for " + packageName, e);
-                    continue;
+                    throw new RuntimeException(e);
                 }
                 localArchipelagoPackages.add(new ArchipelagoPackage(packageName, buildConfig.getVersion()));
             }

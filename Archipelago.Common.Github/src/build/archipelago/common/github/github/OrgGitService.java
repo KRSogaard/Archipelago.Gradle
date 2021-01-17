@@ -5,7 +5,6 @@ import build.archipelago.common.github.GitService;
 import build.archipelago.common.github.exceptions.GitRepoExistsException;
 import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.common.github.models.GitRepo;
-import com.google.common.base.Function;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
@@ -16,7 +15,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Base64;
+import java.util.Optional;
 
 // https://docs.github.com/en/free-pro-team@latest/rest/reference/permissions-required-for-github-apps
 public class OrgGitService implements GitService {
@@ -42,21 +44,21 @@ public class OrgGitService implements GitService {
         return true;
     }
 
-    //@Override
-    public String getRepos() throws RepoNotFoundException, UnauthorizedException {
-        HttpResponse<String> httpResponse;
-        try {
-            HttpRequest httpRequest = getGithubRequest("/orgs/" + username + "/repos")
-                    .GET()
-                    .build();
-
-            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        return validateReponse(httpResponse, body -> body);
-    }
+//    //@Override
+//    public String getRepos() throws RepoNotFoundException, UnauthorizedException {
+//        HttpResponse<String> httpResponse;
+//        try {
+//            HttpRequest httpRequest = getGithubRequest("/orgs/" + username + "/repos")
+//                    .GET()
+//                    .build();
+//
+//            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        return validateReponse(httpResponse, body -> body);
+//    }
 
     @Override
     public boolean hasRep(String name) throws UnauthorizedException {
@@ -101,7 +103,7 @@ public class OrgGitService implements GitService {
             case 200:
                 return parseToGitRepo(httpResponse.body());
             case 404:
-                throw new RepoNotFoundException();
+                throw new RepoNotFoundException(name);
             case 401:
             case 403:
                 throw new UnauthorizedException();
@@ -142,6 +144,50 @@ public class OrgGitService implements GitService {
         }
     }
 
+    @Override
+    public void downloadRepoZip(Path filePath, String gitRepoFullName, String commit) throws RepoNotFoundException {
+        HttpResponse<Path> response;
+        try {
+            String url = String.format("https://github.com/%s/archive/%s.zip", gitRepoFullName, commit);
+
+            HttpRequest httpRequest = getGithubRequest(url, false)
+                    .GET().build();
+            response = client.send(httpRequest, HttpResponse.BodyHandlers.ofFile(filePath));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        switch (response.statusCode()) {
+            case 200:
+                break;
+            case 302:
+                Optional<String> location = response.headers().firstValue("location");
+                if (location.isPresent()) {
+                    try {
+                        HttpRequest httpRequest = getGithubRequest(location.get(), false)
+                                .GET().build();
+                        response = client.send(httpRequest, HttpResponse.BodyHandlers.ofFile(filePath));
+                        if (response.statusCode() != 200) {
+                            throw new RuntimeException("Was unable to get the redirected file from github: " + location.get());
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    throw new RuntimeException("Returned 302 but no location was given");
+                }
+                break;
+            case 401:
+            case 403:
+                throw new UnauthorizedException();
+            case 404:
+                throw new RepoNotFoundException(gitRepoFullName);
+        }
+        if (!Files.exists(filePath)) {
+            throw new RuntimeException("Failed to download the zip file for package: " + gitRepoFullName);
+        }
+    }
+
     private GitRepo parseToGitRepo(String body) {
         JSONObject json;
         try {
@@ -158,25 +204,28 @@ public class OrgGitService implements GitService {
                 .build();
     }
 
-    private <T> T validateReponse(HttpResponse<String> httpResponse, Function<String, T> onOk)
-            throws RepoNotFoundException, UnauthorizedException {
-        switch (httpResponse.statusCode()) {
-            case 401:
-                throw new UnauthorizedException();
-            case 404:
-                throw new RepoNotFoundException();
-            case 200: // Ok
-                return onOk.apply(httpResponse.body());
-            default:
-                throw new RuntimeException("Unknown response " + httpResponse.statusCode());
-        }
-    }
+//    private <T> T validateReponse(HttpResponse<String> httpResponse, Function<String, T> onOk)
+//            throws RepoNotFoundException, UnauthorizedException {
+//        switch (httpResponse.statusCode()) {
+//            case 401:
+//                throw new UnauthorizedException();
+//            case 404:
+//                throw new RepoNotFoundException();
+//            case 200: // Ok
+//                return onOk.apply(httpResponse.body());
+//            default:
+//                throw new RuntimeException("Unknown response " + httpResponse.statusCode());
+//        }
+//    }
 
     private HttpRequest.Builder getGithubRequest(String url) throws URISyntaxException {
+        return getGithubRequest(url, true);
+    }
+    private HttpRequest.Builder getGithubRequest(String url, boolean prepend) throws URISyntaxException {
         String auth = username + ":" + accessToken;
         String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
 
-        return HttpRequest.newBuilder(new URI(baseUrl + url))
+        return HttpRequest.newBuilder(new URI(prepend ? baseUrl + url : url))
                 .header("Authorization", "Basic " + encodedAuth)
                 .header("accept", "application/vnd.github.v3+json");
     }

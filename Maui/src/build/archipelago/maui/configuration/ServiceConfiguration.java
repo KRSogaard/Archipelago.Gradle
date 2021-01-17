@@ -114,10 +114,8 @@ public class ServiceConfiguration extends AbstractModule {
 
     @Provides
     @Singleton
-    public PackageSourceProvider packageSourceProvider(@Named("sourceprovider") String serviceProvider,
-                                                       @Named("sourceprovider.git.base") String gitBase,
-                                                       @Named("sourceprovider.git.group") String gitGroup) {
-        return new LocalGitPackageSourceProvider(gitBase, gitGroup);
+    public PackageSourceProvider packageSourceProvider() {
+        return new LocalGitPackageSourceProvider();
     }
 
     @Provides

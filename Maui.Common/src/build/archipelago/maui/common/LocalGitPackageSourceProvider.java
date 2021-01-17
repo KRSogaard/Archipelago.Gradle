@@ -1,5 +1,6 @@
 package build.archipelago.maui.common;
 
+import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.packageservice.models.PackageDetails;
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,7 +13,7 @@ public class LocalGitPackageSourceProvider implements PackageSourceProvider {
     }
 
     @Override
-    public boolean checkOutSource(Path workspaceRoot, PackageDetails packageDetails) {
+    public boolean checkOutSource(Path workspaceRoot, PackageDetails packageDetails) throws RepoNotFoundException {
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.directory(workspaceRoot.toFile());
         processBuilder.command("git", "clone", packageDetails.getGitCloneUrl(), packageDetails.getName());
@@ -26,7 +27,7 @@ public class LocalGitPackageSourceProvider implements PackageSourceProvider {
     }
 
     @Override
-    public boolean checkOutSource(Path workspaceRoot, PackageDetails packageDetails, String commit) {
+    public boolean checkOutSource(Path workspaceRoot, PackageDetails packageDetails, String commit) throws RepoNotFoundException {
         if (!checkOutSource(workspaceRoot, packageDetails)) {
             return false;
         }

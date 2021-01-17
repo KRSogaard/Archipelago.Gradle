@@ -229,14 +229,6 @@ public class BuildService {
         amazonS3.putObject(buildLogS3Bucket, getS3LogKey(buildId, buildStage.getStage()), readString);
     }
 
-    public void uploadBuildLog(String buildId, String nameVersion, String readString) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(buildId));
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(nameVersion));
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(readString));
-
-        amazonS3.putObject(buildLogS3Bucket, getS3LogKey(buildId, nameVersion), readString);
-    }
-
     public List<ArchipelagoBuild> getAllBuildsForAccount(String accountId) {
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(buildTable)

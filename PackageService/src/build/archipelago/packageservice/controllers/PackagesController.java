@@ -23,7 +23,6 @@ import build.archipelago.packageservice.models.rest.GetPackageBuildRestResponse;
 import build.archipelago.packageservice.models.rest.GetPackageBuildsRestResponse;
 import build.archipelago.packageservice.models.rest.GetPackageRestResponse;
 import build.archipelago.packageservice.models.rest.GetPackagesRestResponse;
-import build.archipelago.packageservice.models.rest.PackageVersionRestResponse;
 import build.archipelago.packageservice.models.rest.VerificationRestRequest;
 import build.archipelago.packageservice.models.rest.VerificationRestResponse;
 import com.google.common.base.Preconditions;
@@ -31,7 +30,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,8 +39,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
@@ -112,27 +108,14 @@ public class PackagesController {
         log.info("Request to get packages for account {}", accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 
-        List<GetPackageRestResponse> packageResponse = new ArrayList<>();
         ImmutableList<PackageDetails> packages = getPackagesDelegate.get(accountId);
-        for (PackageDetails pkg : packages) {
-            packageResponse.add(GetPackageRestResponse.builder()
-                    .name(pkg.getName())
-                    .description(pkg.getDescription())
-                    .created(pkg.getCreated().toEpochMilli())
-                    .versions(pkg.getVersions().stream().map(x -> new PackageVersionRestResponse(
-                            x.getVersion(),
-                            x.getLatestBuildHash(),
-                            x.getLatestBuildTime().toEpochMilli())).collect(Collectors.toList()))
-                    .build());
-        }
         return GetPackagesRestResponse.builder()
-                .packages(packageResponse)
+                .packages(packages.stream().map(GetPackageRestResponse::from).collect(Collectors.toList()))
                 .build();
     }
 
     @GetMapping(value = "{name}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("#oauth2.hasScope('http://packageservice.archipelago.build/package.write22')")
     public GetPackageRestResponse getPackage(
             @PathVariable("accountId") String accountId,
             @PathVariable("name") String name

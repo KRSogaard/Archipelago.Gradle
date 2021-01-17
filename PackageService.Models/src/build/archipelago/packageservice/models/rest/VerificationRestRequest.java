@@ -20,12 +20,16 @@ public class VerificationRestRequest {
 
     public static VerificationRestRequest from(List<ArchipelagoPackage> packages) {
         return VerificationRestRequest.builder()
-                .packages(packages.stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()))
+                .packages(packages.stream().map(ArchipelagoPackage::toString).collect(Collectors.toList()))
                 .build();
     }
     public static VerificationRestRequest fromBuilt(List<ArchipelagoBuiltPackage> packages) {
+        List<String> pkgs = packages.stream().map(x -> {
+            String name = x.getBuiltPackageName();
+            return name;
+        }).collect(Collectors.toList());
         return VerificationRestRequest.builder()
-                .packages(packages.stream().map(ArchipelagoBuiltPackage::getNameVersion).collect(Collectors.toList()))
+                .packages(pkgs)
                 .build();
     }
 }

@@ -9,6 +9,8 @@ import build.archipelago.buildserver.builder.StageLog;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.builder.git.GitServiceSourceProvider;
 import build.archipelago.buildserver.builder.maui.Maui;
+import build.archipelago.buildserver.builder.output.S3OutputWrapper;
+import build.archipelago.buildserver.builder.output.S3OutputWrapperFactory;
 import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.buildserver.common.services.build.exceptions.BuildRequestNotFoundException;
 import build.archipelago.buildserver.common.services.build.models.BuildQueueMessage;
@@ -20,13 +22,13 @@ import build.archipelago.buildserver.models.BuildStatus;
 import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.concurrent.BlockingExecutorServiceFactory;
-import build.archipelago.common.exceptions.ArchipelagoException;
 import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.exceptions.PackageNotLocalException;
 import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.exceptions.VersionSetNotSyncedException;
 import build.archipelago.common.github.GitService;
 import build.archipelago.common.github.GitServiceFactory;
+import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.maui.common.PackageSourceProvider;
@@ -56,6 +58,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -86,6 +89,7 @@ public class VersionSetBuilder {
     private DependencyGraphGenerator dependencyGraphGenerator;
     private GitServiceFactory gitServiceFactory;
     private PackageSourceProvider packageSourceProvider;
+    private S3OutputWrapperFactory s3OutputWrapperFactory;
 
     private ArchipelagoBuild request;
     private AccountDetails accountDetails;
@@ -108,6 +112,7 @@ public class VersionSetBuilder {
                              PackageServiceClient packageServiceClient,
                              Path buildLocation,
                              GitServiceFactory gitServiceFactory,
+                             S3OutputWrapperFactory s3OutputWrapperFactory,
                              BuildService buildService,
                              AccountService accountService,
                              MauiPath mauiPath,
@@ -121,6 +126,7 @@ public class VersionSetBuilder {
         this.accountService = accountService;
         this.mauiPath = mauiPath;
         this.gitServiceFactory = gitServiceFactory;
+        this.s3OutputWrapperFactory = s3OutputWrapperFactory;
 
         graphs = new HashMap<>();
         buildQueue = new ConcurrentLinkedDeque<>();
@@ -150,7 +156,8 @@ public class VersionSetBuilder {
             } catch (GitDetailsNotFound gitDetailsNotFound) {
                 throw new PermanentMessageProcessingException("No git settings was found for the account", gitDetailsNotFound);
             }
-            buildRoot = createBuildRoot(buildRequest.getAccountId() + "-" + buildRequest.getBuildId());
+
+            buildRoot = createBuildRoot(buildRequest.getAccountId() + "-" + Instant.now().toEpochMilli() + "-" + buildRequest.getBuildId());
             if (!gitDetails.getCodeSource().toLowerCase().startsWith("github")) {
                 log.error("Unknown code source {}", gitDetails.getCodeSource());
                 throw new PermanentMessageProcessingException("Only github is supported at this time");
@@ -168,8 +175,11 @@ public class VersionSetBuilder {
             stage_prepare();
             stage_packages();
             stage_publish();
+        } catch (FailBuildException exp) {
+            log.warn("The build was failed, will not retry");
         } catch (RuntimeException exp) {
-            log.error("Fatal error while processing build", exp);
+            log.error("Fatal error while processing build, will retry later", exp);
+            throw new TemporaryMessageProcessingException();
         } finally {
             try {
                 if (buildRoot != null && Files.exists(buildRoot) && Files.isDirectory(buildRoot)) {
@@ -207,8 +217,7 @@ public class VersionSetBuilder {
             setBuildPackages(directPackages, wsContext.getLocalArchipelagoPackages());
             generateGraphs();
 
-            Map<ArchipelagoPackage, Boolean> lookupMap = new HashMap<>();
-            wsContext.getLocalArchipelagoPackages().forEach(pkg -> lookupMap.put(pkg, true));
+            Map<ArchipelagoPackage, Boolean> lookupMap = buildLookUpMap(wsContext.getLocalArchipelagoPackages());
             for (ArchipelagoPackage pkg : wsContext.getLocalArchipelagoPackages()) {
                 BuildConfig config = wsContext.getConfig(pkg);
                 List<ArchipelagoPackage> dependencies = config.getAllDependencies().stream()
@@ -219,17 +228,30 @@ public class VersionSetBuilder {
 
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PREPARE, BuildStatus.FINISHED);
             stageLog.addInfo("Build preparations finished");
-        } catch (TemporaryMessageProcessingException e) {
-            throw e;
+        } catch (PackageNotFoundException exp) {
+            stageLog.addError("The package %s was not found.", exp.getPackageName());
+            log.error("Was unable to find the package {}, can not continue.", exp.getPackageName());
+            throw new FailBuildException();
+        } catch (RepoNotFoundException e) {
+            stageLog.addError("The repo " + e.getRepo() + " was not found");
+            log.error("The repo " + e.getRepo() + " was not found");
+            throw new FailBuildException();
         } catch (Exception e) {
             log.error("The prepare stage failed with an exception", e);
+            stageLog.addError("An unknown error occurred, need to restart the build: %s", e.getMessage());
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PREPARE, BuildStatus.FAILED);
-            throw new PermanentMessageProcessingException(e);
+            throw new TemporaryMessageProcessingException(e);
         } finally {
             if (stageLog.hasLogs()) {
                 buildService.uploadStageLog(buildRequest.getBuildId(), BuildStage.PREPARE, stageLog.getLogs());
             }
         }
+    }
+
+    private Map<ArchipelagoPackage, Boolean> buildLookUpMap(List<ArchipelagoPackage> packages) {
+        Map<ArchipelagoPackage, Boolean> lookupMap = new HashMap<>();
+        packages.forEach(pkg -> lookupMap.put(pkg, true));
+        return lookupMap;
     }
 
     private void setBuildPackages(List<ArchipelagoPackage> directPackages, List<ArchipelagoPackage> localArchipelagoPackages) {
@@ -249,20 +271,34 @@ public class VersionSetBuilder {
 
     private void stage_packages() {
         StageLog stageLog = new StageLog();
+        stageLog.addInfo("Starting package builds");
         try {
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.IN_PROGRESS);
             ArchipelagoPackage pkg = getNextPackageToBuild();
             while (pkg != null) {
+                if (failedBuild) {
+                    break;
+                }
                 log.info("Building " + pkg);
+                stageLog.addInfo("Starting build of %s", pkg.toString());
                 buildPackage(pkg);
+                stageLog.addInfo("Finished build of %s", pkg.toString());
                 pkg = getNextPackageToBuild();
             }
+            // Currently the build Package is in thread, but later it will be multi threaded,
+            // therefore we may get to here even though we failed the build.
             if (!failedBuild) {
+                stageLog.addInfo("Finished building packages");
                 buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FINISHED);
             } else {
-                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
+                log.debug("One of the packages failed it's build, failing the whole build");
+                throw new FailBuildException();
             }
         } finally {
+            if (failedBuild) {
+                stageLog.addInfo("Package build failed");
+                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
+            }
             if (stageLog.hasLogs()) {
                 buildService.uploadStageLog(buildRequest.getBuildId(), BuildStage.PACKAGES, stageLog.getLogs());
             }
@@ -277,13 +313,15 @@ public class VersionSetBuilder {
         StageLog stageLog = new StageLog();
         try {
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.IN_PROGRESS);
+            stageLog.addInfo("Starting version set publishing");
+
             Map<ArchipelagoPackage, Pair<String, String>> gitMap = new HashMap<>();
             for (BuildPackageDetails bpd : request.getBuildPackages()) {
                 Optional<ArchipelagoPackage> archipelagoPackage = directPackages.stream()
                         .filter(p -> p.getName().equalsIgnoreCase(bpd.getPackageName()))
                         .findFirst();
                 if (archipelagoPackage.isEmpty()) {
-                    throw new IOException(String.format("Could not find the archipelago package \"%s\" in build details", bpd.getPackageName()));
+                    throw new RuntimeException(String.format("Could not find the archipelago package \"%s\" in build details", bpd.getPackageName()));
                 }
                 gitMap.put(archipelagoPackage.get(), new Pair<>(bpd.getBranch(), bpd.getCommit()));
             }
@@ -293,7 +331,7 @@ public class VersionSetBuilder {
             for (ArchipelagoPackage builtPackage : directPackages) {
                 if (!gitMap.containsKey(builtPackage)) {
                     log.error("Build package {} was not in the git map", builtPackage);
-                    throw new IOException(String.format("Build package %s was not in the git map", builtPackage));
+                    throw new RuntimeException(String.format("Build package %s was not in the git map", builtPackage));
                 }
                 Pair<String, String> gitInfo = gitMap.get(builtPackage);
                 String buildHash = null;
@@ -311,7 +349,7 @@ public class VersionSetBuilder {
                         try {
                             configContent = Files.readString(wsContext.getPackageRoot(builtPackage).resolve(WorkspaceConstants.BUILD_FILE_NAME));
                         } catch (PackageNotLocalException e) {
-                            throw new ArchipelagoException("Where not able to find the package dir for " + builtPackage, e);
+                            throw new RuntimeException("Where not able to find the package dir for " + builtPackage, e);
                         }
 
                         Path zip = prepareBuildZip(builtPackage);
@@ -323,7 +361,7 @@ public class VersionSetBuilder {
                                 .build(),
                                 zip);
                     } catch (PackageNotFoundException e) {
-                        throw new ArchipelagoException(String.format("The package %s no longer exists, was it deleted while building?", builtPackage), e);
+                        throw new RuntimeException(String.format("The package %s no longer exists, was it deleted while building?", builtPackage), e);
                     }
                 }
 
@@ -336,24 +374,27 @@ public class VersionSetBuilder {
                         .stream().filter(rp -> newBuildPackage.stream().noneMatch(p -> rp.getNameVersion().equalsIgnoreCase(p.getNameVersion())))
                         .collect(Collectors.toList());
             } catch (VersionSetNotSyncedException e) {
-                throw new ArchipelagoException("The workspace had not been synced", e);
+                throw new RuntimeException("The workspace had not been synced", e);
             }
             newRevision.addAll(newBuildPackage);
 
             if (!doseRevisionHaveChanges(wsContext.getVersionSetRevision().getPackages(), newRevision)) {
                 log.warn("There are no changes to the version set");
-                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
-                throw new PermanentMessageProcessingException("There are no changes to the version set");
+                stageLog.addError("There are no change to the version set, can't publish");
+                throw new FailBuildException();
             }
 
             try {
-                versionSetServiceClient.createVersionRevision(accountDetails.getId(), wsContext.getVersionSet(), newRevision);
+                String revision = versionSetServiceClient.createVersionRevision(accountDetails.getId(), wsContext.getVersionSet(), newRevision);
+                stageLog.addInfo("Revision %s was created for version set %s", revision, wsContext.getVersionSet());
             } catch (Exception e) {
-                throw new ArchipelagoException("Was unable to create the new version-set revision", e);
+                throw new RuntimeException("Was unable to create the new version-set revision", e);
             }
 
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FINISHED);
-        } catch (ArchipelagoException | IOException e) {
+        } catch (FailBuildException exp) {
+            throw exp;
+        } catch (Exception e) {
             log.error("Had an error while publishing builds to version-set", e);
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
             throw new PermanentMessageProcessingException(e);
@@ -422,14 +463,19 @@ public class VersionSetBuilder {
     }
 
     private void buildPackage(ArchipelagoPackage pkg) {
-        if (!maui.build(new ConsoleOutputWrapper(), pkg)) {
-            failedBuild = true;
-            buildService.setPackageStatus(buildRequest.getBuildId(), pkg, BuildStatus.FAILED);
-            buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
-        } else {
-            buildService.setPackageStatus(buildRequest.getBuildId(), pkg, BuildStatus.FINISHED);
+        S3OutputWrapper outputWrapper = s3OutputWrapperFactory.create(request.getAccountId(), request.getBuildId(), pkg.getName());
+        try {
+            if (!maui.build(outputWrapper, pkg)) {
+                failedBuild = true;
+                buildService.setPackageStatus(buildRequest.getBuildId(), pkg, BuildStatus.FAILED);
+                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
+                throw new FailBuildException();
+            } else {
+                buildService.setPackageStatus(buildRequest.getBuildId(), pkg, BuildStatus.FINISHED);
+            }
+        } finally {
+            outputWrapper.upload();
         }
-        buildService.uploadBuildLog(buildRequest.getBuildId(), pkg.getNameVersion(),"TODO, LOG GOES HERE");
         doneBuilding.put(pkg, true);
     }
 
@@ -456,7 +502,8 @@ public class VersionSetBuilder {
         return true;
     }
 
-    private void checkoutAffectedPackages(List<ArchipelagoPackage> getBuildPackages) {
+    private void checkoutAffectedPackages(List<ArchipelagoPackage> getBuildPackages)
+            throws PackageNotFoundException, RepoNotFoundException {
         List<ArchipelagoPackage> affectedPackages = findPackageAffectedByChange();
         for(ArchipelagoPackage pkg : affectedPackages.stream()
                 .filter(p -> getBuildPackages.stream().noneMatch(bp -> bp.equals(p)))
@@ -468,16 +515,12 @@ public class VersionSetBuilder {
 
             PackageDetails packageDetails;
             BuiltPackageDetails response;
-            try {
-                // TODO: WAS HERE NEED TO FINISH THIS
-                packageDetails = packageServiceClient.getPackage(
-                        accountDetails.getId(), builtPackage.getName());
-                response = packageServiceClient.getPackageBuild(accountDetails.getId(), builtPackage);
-            } catch (PackageNotFoundException e) {
-                throw new RuntimeException("The package " + builtPackage + " was not found on the package server", e);
-            }
 
-            checkOutPackage(builtPackage.getName(), response.getGitCommit());
+            packageDetails = packageServiceClient.getPackage(
+                    accountDetails.getId(), builtPackage.getName());
+            response = packageServiceClient.getPackageBuild(accountDetails.getId(), builtPackage);
+
+            checkOutPackage(packageDetails, response.getGitCommit());
         }
     }
 
@@ -497,24 +540,25 @@ public class VersionSetBuilder {
         return null;
     }
 
-    private void checkOutPackagedToBuild() {
-        for (BuildPackageDetails details : request.getBuildPackages()) {
-            checkOutPackage(details.getPackageName(), details.getCommit());
+    private void checkOutPackagedToBuild() throws PackageNotFoundException, RepoNotFoundException {
+        for (BuildPackageDetails pkg : request.getBuildPackages()) {
+            PackageDetails packageDetails = packageServiceClient.getPackage(request.getAccountId(), pkg.getPackageName());
+            checkOutPackage(packageDetails, pkg.getCommit());
         }
     }
 
-    private void checkOutPackage(String packageName, String commit) {
-        packageSourceProvider.checkOutSource(maui.getWorkspaceLocation(), packageName, commit);
-        wsContext.addLocalPackage(packageName);
+    private void checkOutPackage(PackageDetails packageDetails, String commit) throws RepoNotFoundException {
+        packageSourceProvider.checkOutSource(maui.getWorkspaceLocation(), packageDetails, commit);
+        wsContext.addLocalPackage(packageDetails.getName());
         try {
             wsContext.save();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        Path packagePath = findPackageDir(packageName);
+        Path packagePath = findPackageDir(packageDetails.getName());
         if (packagePath == null) {
-            throw new RuntimeException("Failed to find package directory for package: " + packageName);
+            throw new RuntimeException("Failed to find package directory for package: " + packageDetails.getName());
         }
     }
 

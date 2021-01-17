@@ -1,6 +1,7 @@
 package build.archipelago.buildserver.builder;
 
 import build.archipelago.buildserver.builder.handlers.BuildRequestHandler;
+import com.amazonaws.services.sqs.model.Message;
 import com.wewelo.sqsconsumer.SQSConsumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -27,12 +28,12 @@ public class BuilderApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try {
-//            Message msg = new Message();
-//            msg.setBody("{\"buildId\":\"123-456\"}");
-//            buildRequestHandler.handle(msg);
-            sqsConsumer.start();
-            sqsConsumer.waitForExecutors();
-            log.warn("Executors was shutdown");
+            Message msg = new Message();
+            msg.setBody("{\"buildId\":\"03845159-b549-48f0-bfe8-105b4691fb0b\",\"accountId\":\"wewelo\"}");
+            buildRequestHandler.handle(msg);
+//            sqsConsumer.start();
+//            sqsConsumer.waitForExecutors();
+//            log.warn("Executors was shutdown");
         } catch (Exception exp) {
             log.error("Error while executing", exp);
         }

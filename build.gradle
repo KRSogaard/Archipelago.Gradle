@@ -137,6 +137,7 @@ project(':Maui.Core') {
         implementation project(':PackageService.Models')
         implementation project(':Harbor.Client')
         implementation project(':VersionSetService.Client.Models')
+        implementation project(':Archipelago.Common.Github')
 
         implementation 'org.slf4j:slf4j-api:1.7.30'
     }
@@ -169,6 +170,7 @@ project(':Maui.Common') {
         implementation project(':PackageService.Client')
         implementation project(':Harbor.Client')
         implementation project(':PackageService.Models')
+        implementation project(':Archipelago.Common.Github')
 
         implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'

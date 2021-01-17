@@ -5,6 +5,7 @@ import build.archipelago.buildserver.builder.builder.BuilderFactory;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.builder.handlers.BuildRequestFailureHandler;
 import build.archipelago.buildserver.builder.handlers.BuildRequestHandler;
+import build.archipelago.buildserver.builder.output.S3OutputWrapperFactory;
 import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.maui.graph.DependencyGraphGenerator;
@@ -109,6 +110,7 @@ public class ServiceConfiguration {
                                          BuildService buildService,
                                          AccountService accountService,
                                          MauiPath mauiPath,
+                                         S3OutputWrapperFactory s3OutputWrapperFactory,
                                          @Value("${workspace.path}") String workspacePath) throws IOException {
         Preconditions.checkNotNull(internalHarborClientFactory);
         Preconditions.checkNotNull(versionSetServiceClient);
@@ -124,7 +126,7 @@ public class ServiceConfiguration {
         }
         return new BuilderFactory(internalHarborClientFactory, versionSetServiceClient,
                 packageServiceClient, wsPath,
-                gitServiceFactory, buildService, accountService,
+                gitServiceFactory, s3OutputWrapperFactory, buildService, accountService,
                 mauiPath);
     }
 
@@ -186,5 +188,13 @@ public class ServiceConfiguration {
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public GitServiceFactory gitServiceFactory() {
         return new GitServiceFactory();
+    }
+
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public S3OutputWrapperFactory s3OutputWrapperFactory(AmazonS3 amazonS3,
+                                                         @Value("${s3.packages-logs}") String bucketPackageNameLogs) {
+        return new S3OutputWrapperFactory(amazonS3, bucketPackageNameLogs);
     }
 }

@@ -6,6 +6,8 @@ import build.archipelago.common.github.exceptions.GitRepoExistsException;
 import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.common.github.models.GitRepo;
 
+import java.nio.file.Path;
+
 public class UserGitService implements GitService {
 
     private String username;
@@ -34,5 +36,9 @@ public class UserGitService implements GitService {
     @Override
     public GitRepo createRepo(String name, String description, boolean privateRepo) throws UnauthorizedException, GitRepoExistsException {
         return null;
+    }
+
+    @Override
+    public void downloadRepoZip(Path filePath, String gitRepoFullName, String commit) throws RepoNotFoundException {
     }
 }

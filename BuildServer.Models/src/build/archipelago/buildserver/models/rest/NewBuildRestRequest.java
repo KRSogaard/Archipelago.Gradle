@@ -5,49 +5,22 @@ import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@Data
 @Builder
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@NoArgsConstructor
+@Getter
 public class NewBuildRestRequest {
     private String versionSet;
     private boolean dryRun;
-    private List<BuildPackageRequest> buildPackages;
+    private List<BuildPackageRestRequest> buildPackages;
 
     public void validate() {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSet));
         Preconditions.checkArgument(buildPackages != null && buildPackages.size() > 0);
-    }
-
-    public static class BuildPackageRequest {
-        private String packageName;
-        private String branch;
-        private String commit;
-
-        public BuildPackageRequest(String packageName, String branch, String commit) {
-            this.packageName = packageName;
-            this.branch = branch;
-            this.commit = commit;
-        }
-
-        private BuildPackageRequest() {
-        }
-
-        public String getPackageName() {
-            return packageName;
-        }
-
-        public String getBranch() {
-            return branch;
-        }
-
-        public String getCommit() {
-            return commit;
-        }
     }
 }
