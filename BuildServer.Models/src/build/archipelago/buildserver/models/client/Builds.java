@@ -1,8 +1,7 @@
 package build.archipelago.buildserver.models.client;
 
 import build.archipelago.buildserver.models.ArchipelagoBuild;
-import lombok.Builder;
-import lombok.Value;
+import lombok.*;
 
 import java.util.List;
 

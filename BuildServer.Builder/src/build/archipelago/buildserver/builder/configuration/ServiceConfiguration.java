@@ -3,15 +3,13 @@ package build.archipelago.buildserver.builder.configuration;
 import build.archipelago.account.common.AccountService;
 import build.archipelago.buildserver.builder.builder.BuilderFactory;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
-import build.archipelago.buildserver.builder.handlers.BuildRequestFailureHandler;
-import build.archipelago.buildserver.builder.handlers.BuildRequestHandler;
+import build.archipelago.buildserver.builder.handlers.*;
 import build.archipelago.buildserver.builder.output.S3OutputWrapperFactory;
 import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.maui.graph.DependencyGraphGenerator;
 import build.archipelago.maui.path.MauiPath;
-import build.archipelago.maui.path.recipies.BinRecipe;
-import build.archipelago.maui.path.recipies.PackageRecipe;
+import build.archipelago.maui.path.recipies.*;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
@@ -19,23 +17,16 @@ import build.archipelago.versionsetservice.client.rest.RestVersionSetServiceClie
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.wewelo.sqsconsumer.AmazonSQSFactory;
-import com.wewelo.sqsconsumer.SQSConsumer;
-import com.wewelo.sqsconsumer.SqsMessageProcessorFactory;
+import com.google.common.base.*;
+import com.wewelo.sqsconsumer.*;
 import com.wewelo.sqsconsumer.models.SQSConsumerConfig;
-import com.wewelo.sqsconsumer.threading.BlockingExecutorServiceFactory;
-import com.wewelo.sqsconsumer.threading.ExecutorServiceFactory;
+import com.wewelo.sqsconsumer.threading.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.List;
 
 @Configuration

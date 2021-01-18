@@ -1,14 +1,13 @@
 package build.archipelago.maui.clients;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.exceptions.PackageExistsException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.exceptions.UnauthorizedException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.common.versionset.VersionSetRevision;
+import build.archipelago.common.versionset.*;
 import build.archipelago.harbor.client.HarborClient;
-import build.archipelago.packageservice.client.models.CreatePackageRequest;
+import build.archipelago.harbor.client.models.CreatePackageRequest;
+import build.archipelago.packageservice.exceptions.*;
+import build.archipelago.packageservice.models.GetBuildArtifactResponse;
+import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
 
 import java.nio.file.Path;
 
@@ -25,6 +24,11 @@ public class UnauthorizedHarborClient implements HarborClient {
 
     @Override
     public Path getBuildArtifact(ArchipelagoBuiltPackage pkg, Path directory) throws PackageNotFoundException {
+        throw new UnauthorizedException();
+    }
+
+    @Override
+    public GetBuildArtifactResponse getBuildArtifact(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
         throw new UnauthorizedException();
     }
 

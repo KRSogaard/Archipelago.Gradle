@@ -1,12 +1,7 @@
 package build.archipelago.packageservice.models.rest;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import build.archipelago.common.*;
+import lombok.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +18,7 @@ public class VerificationRestRequest {
                 .packages(packages.stream().map(ArchipelagoPackage::toString).collect(Collectors.toList()))
                 .build();
     }
+
     public static VerificationRestRequest fromBuilt(List<ArchipelagoBuiltPackage> packages) {
         List<String> pkgs = packages.stream().map(x -> {
             String name = x.getBuiltPackageName();

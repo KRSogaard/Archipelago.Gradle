@@ -2,28 +2,17 @@ package build.archipelago.buildserver.controllers;
 
 import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.buildserver.models.ArchipelagoBuild;
-import build.archipelago.buildserver.models.rest.BuildPackageRestRequest;
-import build.archipelago.buildserver.models.rest.BuildRestResponse;
-import build.archipelago.buildserver.models.rest.BuildsRestResponse;
-import build.archipelago.buildserver.models.rest.NewBuildRestRequest;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.buildserver.models.rest.*;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
+import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController

@@ -1,19 +1,19 @@
 package build.archipelago.versionsetservice.core.services;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
-import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.common.versionset.VersionSetRevision;
+import build.archipelago.common.*;
+import build.archipelago.common.versionset.*;
+import build.archipelago.versionsetservice.exceptions.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public interface VersionSetService {
-    VersionSet get(String accountId, String versionSetName);
+    VersionSet get(String accountId, String versionSetName) throws VersionSetDoseNotExistsException;
+
     void create(String accountId, String versionSetName, List<ArchipelagoPackage> targets, Optional<String> parent) throws VersionSetExistsException;
+
     String createRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> parsePackages) throws VersionSetDoseNotExistsException;
+
     VersionSetRevision getRevision(String accountId, String versionSetName, String revision) throws VersionSetDoseNotExistsException;
+
     List<VersionSet> getAll(String accountId);
 }

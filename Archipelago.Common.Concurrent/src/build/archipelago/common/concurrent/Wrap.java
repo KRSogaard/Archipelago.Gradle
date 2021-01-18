@@ -1,7 +1,6 @@
 package build.archipelago.common.concurrent;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 public class Wrap<T> {
     @Getter @Setter

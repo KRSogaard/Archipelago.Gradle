@@ -2,8 +2,7 @@ package build.archipelago.packageservice.core.storage;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
@@ -24,22 +23,22 @@ public class S3PackageStorage implements PackageStorage {
 
     @Override
     public void upload(String accountId, ArchipelagoBuiltPackage pkg, byte[] artifactBytes) {
-        String keyName = getS3FileName(accountId, pkg);
-        log.info("Saving build artifact to \"{}\"", keyName);
+        String keyName = this.getS3FileName(accountId, pkg);
+        log.info("Saving build artifact to '{}'", keyName);
 
         ObjectMetadata om = new ObjectMetadata();
         om.setContentLength(artifactBytes.length);
 
         s3Client.putObject(
-            new PutObjectRequest(bucketName, keyName, new ByteArrayInputStream(artifactBytes), om));
+                new PutObjectRequest(bucketName, keyName, new ByteArrayInputStream(artifactBytes), om));
     }
 
     @Override
     public String getDownloadUrl(String accountId, ArchipelagoBuiltPackage pkg) {
-        String keyName = getS3FileName(accountId, pkg);
-        log.debug("Fetching build artifact from S3 \"{}\" with key \"{}\"", bucketName, keyName);
+        String keyName = this.getS3FileName(accountId, pkg);
+        log.debug("Fetching build artifact from S3 '{}' with key '{}'", bucketName, keyName);
         // The user have 5 min to download the file
-        Instant expiresAt = Instant.now().plusSeconds(60*5);
+        Instant expiresAt = Instant.now().plusSeconds(60 * 5);
         URL url = s3Client.generatePresignedUrl(bucketName, keyName, Date.from(expiresAt));
         return url.toString();
     }

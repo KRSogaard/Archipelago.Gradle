@@ -1,33 +1,20 @@
 package build.archipelago.versionsetservice.client.rest;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.*;
 import build.archipelago.common.clients.rest.OAuthRestClient;
-import build.archipelago.common.exceptions.MissingTargetPackageException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.exceptions.UnauthorizedException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
-import build.archipelago.common.versionset.Revision;
-import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.common.versionset.VersionSetRevision;
-import build.archipelago.versionsetservice.client.VersionSetServiceClient;
+import build.archipelago.common.rest.models.errors.ProblemDetailRestResponse;
+import build.archipelago.common.versionset.*;
+import build.archipelago.packageservice.client.PackageExceptionHandler;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
+import build.archipelago.versionsetservice.client.*;
 import build.archipelago.versionsetservice.client.models.CreateVersionSetRequest;
-import build.archipelago.versionsetservice.client.rest.models.RestCreateVersionSetRequest;
-import build.archipelago.versionsetservice.client.rest.models.RestCreateVersionSetRevisionRequest;
-import build.archipelago.versionsetservice.client.rest.models.RestCreateVersionSetRevisionResponse;
-import build.archipelago.versionsetservice.client.rest.models.RestVersionSetResponse;
-import build.archipelago.versionsetservice.client.rest.models.RestVersionSetRevisionResponse;
-import build.archipelago.versionsetservice.client.rest.models.RestVersionSetsResponse;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import build.archipelago.versionsetservice.exceptions.*;
+import build.archipelago.versionsetservice.models.rest.*;
+import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Instant;
-import java.util.ArrayList;
+import java.net.http.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,10 +32,10 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
     public List<VersionSet> getVersionSets(String accountId) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
 
-        RestVersionSetsResponse response;
+        VersionSetsRestResponse response;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-set")
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set")
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -56,77 +43,77 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call version set service to get a list of version sets for account '{}'", accountId);
             throw new RuntimeException(e);
         }
         switch (httpResponse.statusCode()) {
             case 200: // Ok
-                try {
-                    response = objectMapper.readValue(httpResponse.body(), RestVersionSetsResponse.class);
-                } catch (IOException e) {
-                    log.error(String.format("Failed to parse the string \"%s\" as a RestVersionSetResponse object", httpResponse.body()), e);
-                    throw new RuntimeException("Failed to parse RestVersionSetResponse", e);
-                }
+                response = this.parseOrThrow(httpResponse.body(), VersionSetsRestResponse.class);
                 break;
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Version set service");
                 throw new UnauthorizedException();
             default:
-                throw new RuntimeException("Was unable to get the version set revision with status code " + httpResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
 
-        List<VersionSet> versionSets = new ArrayList<>();
-        for (RestVersionSetResponse vs : response.getVersionSets()) {
-            versionSets.add(parseVersionSetFromRestResponse(vs));
-        }
-        return versionSets;
+        return response.getVersionSets().stream()
+                .map(VersionSetRestResponse::toInternal)
+                .collect(Collectors.toList());
     }
 
     @Override
     public void createVersionSet(String accountId, CreateVersionSetRequest request)
-            throws VersionSetExistsException, VersionSetDoseNotExistsException, PackageNotFoundException {
+            throws VersionSetDoseNotExistsException, VersionSetExistsException, PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkNotNull(request);
         request.validate();
 
-        RestCreateVersionSetRequest restRequest = new RestCreateVersionSetRequest(
-                request.getName(),
-                request.getTargets().stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()),
-                request.getParent() != null && request.getParent().isPresent() ? request.getParent().get() : null
-        );
+        CreateVersionSetRestRequest restRequest = CreateVersionSetRestRequest.builder()
+                .name(request.getName())
+                .targets(request.getTargets().stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()))
+                .parent(request.getParent() != null && request.getParent().isPresent() ? request.getParent().get() : null)
+                .build();
 
-        HttpResponse<Void> httpResponse;
+        HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-set")
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
-            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.discarding());
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (UnauthorizedException exp) {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call version set service to create a version set for account '{}'", accountId);
             throw new RuntimeException(e);
         }
+        ProblemDetailRestResponse problem;
         switch (httpResponse.statusCode()) {
-            case 200: // Ok
+            case 200:
                 break;
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Version set service");
                 throw new UnauthorizedException();
-            case 409: // Conflict
-                throw new VersionSetExistsException(request.getName());
-            case 404: // Not found
-                if (request.getParent() == null || request.getParent().isEmpty()) {
-                    log.error("Create version set returned version set not found status code, " +
-                            "but no parent this should not happen.");
-                    throw new RuntimeException("Create version set returned version set not found status code, " +
-                            "but no parent this should not happen.");
+            case 409:
+                log.warn("Got Conflict (409) response from Version set service with body: " + httpResponse.body());
+                problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (VersionSetExistsException) VersionSetExceptionHandler.createException(problem);
+            case 404:
+                log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
+                problem = ProblemDetailRestResponse.from(httpResponse.body());
+                switch (problem.getType()) {
+                    case VersionSetExceptionHandler.TYPE_VERSION_SET_NOT_FOUND:
+                        throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
+                    case PackageExceptionHandler.TYPE_PACKAGE_NOT_FOUND:
+                        throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
+                    default:
+                        throw new RuntimeException("The problem type " + problem.getType() + " was not known");
                 }
-                throw new VersionSetDoseNotExistsException(request.getParent().get());
-            case 406: // Not acceptable
-                if (request.getParent() != null && request.getParent().isPresent()) {
-                    throw new PackageNotFoundException(request.getParent().get());
-                }
-                throw new RuntimeException("Got not acceptable, but not parent was requested");
             default:
-                throw new RuntimeException("Was unable to create the version set with status code " + httpResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
     }
 
@@ -137,38 +124,48 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
         Preconditions.checkArgument(packages != null && packages.size() > 0, "Packages are required");
 
-        RestCreateVersionSetRevisionRequest restRequest = new RestCreateVersionSetRevisionRequest(
-                packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList())
-        );
+        CreateVersionSetRevisionRestRequest restRequest = CreateVersionSetRevisionRestRequest.builder()
+                .packages(packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList()))
+                .build();
 
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName)
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName)
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call version set service to create a version set revision for account '{}'", accountId);
             throw new RuntimeException(e);
         }
+        ProblemDetailRestResponse problem;
         switch (httpResponse.statusCode()) {
             case 200: // Ok
-                try {
-                    RestCreateVersionSetRevisionResponse response = objectMapper.readValue(httpResponse.body(), RestCreateVersionSetRevisionResponse.class);
-                    return response.getRevisionId();
-                } catch (IOException e) {
-                    log.error(String.format("Was unable to parse the string \"%s\" as a RestCreateVersionSetRevisionResponse object", httpResponse.body()), e);
-                    throw new RuntimeException("Was unable to parse the object as RestCreateVersionSetRevisionResponse", e);
-                }
+                return this.parseOrThrow(httpResponse.body(), CreateVersionSetRevisionRestResponse.class).getRevisionId();
+            case 400: // PRECONDITION FAILED
+                log.warn("Got 400 response from Version set service with body: " + httpResponse.body());
+                problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (MissingTargetPackageException) VersionSetExceptionHandler.createException(problem);
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Version set service");
                 throw new UnauthorizedException();
-            case 404: // Not found
-                throw new VersionSetDoseNotExistsException(versionSetName);
-            case 406: // Not acceptable
-                throw new PackageNotFoundException(httpResponse.body());
-            case 412: // PRECONDITION FAILED
-                throw new MissingTargetPackageException();
+            case 404:
+                log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
+                problem = ProblemDetailRestResponse.from(httpResponse.body());
+                switch (problem.getType()) {
+                    case VersionSetExceptionHandler.TYPE_VERSION_SET_NOT_FOUND:
+                        throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
+                    case PackageExceptionHandler.TYPE_PACKAGE_NOT_FOUND:
+                        throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
+                    default:
+                        throw new RuntimeException("The problem type " + problem.getType() + " was not known");
+                }
             default:
-                throw new RuntimeException("Was unable to create the version set revision with status code " + httpResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
     }
 
@@ -177,10 +174,10 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
 
-        RestVersionSetResponse response;
+        VersionSetRestResponse response;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName)
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName)
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -188,45 +185,26 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call version set service to get a version set from account '{}'", accountId);
             throw new RuntimeException(e);
         }
         switch (httpResponse.statusCode()) {
             case 200: // Ok
-                try {
-                    response = objectMapper.readValue(httpResponse.body(), RestVersionSetResponse.class);
-                } catch (IOException e) {
-                    log.error(String.format("Failed to parse the string \"%s\" as a RestVersionSetResponse object", httpResponse.body()), e);
-                    throw new RuntimeException("Failed to parse RestVersionSetResponse", e);
-                }
+                response = this.parseOrThrow(httpResponse.body(), VersionSetRestResponse.class);
                 break;
             case 401:
             case 403:
+                log.error("Got unauthorized response from Version set service");
                 throw new UnauthorizedException();
             case 404: // Not found
-                throw new VersionSetDoseNotExistsException(versionSetName);
+                log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
             default:
-                throw new RuntimeException("Was unable to get the version set revision with status code " + httpResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
 
-        return parseVersionSetFromRestResponse(response);
-    }
-
-    private VersionSet parseVersionSetFromRestResponse(RestVersionSetResponse response) {
-        return VersionSet.builder()
-                .name(response.getName())
-                .created(Instant.ofEpochMilli(response.getCreated()))
-                .parent(response.getParent())
-                .targets(response.getTargets().stream().map(ArchipelagoPackage::parse).collect(Collectors.toList()))
-                .revisions(response.getRevisions().stream().map(x ->
-                        Revision.builder()
-                                .revisionId(x.getRevisionId())
-                                .created(Instant.ofEpochMilli(x.getCreated()))
-                                .build()).collect(Collectors.toList()))
-                .latestRevision(response.getLatestRevision())
-                .latestRevisionCreated(response.getLatestRevisionCreated() != null ?
-                        Instant.ofEpochMilli(response.getLatestRevisionCreated()) :
-                        null)
-                .build();
+        return response.toInternal();
     }
 
     @Override
@@ -235,10 +213,10 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(revisionId), "Version set revision is required");
 
-        RestVersionSetRevisionResponse response;
+        VersionSetRevisionRestResponse response;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName + "/" + revisionId)
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName + "/" + revisionId)
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -246,29 +224,33 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call version set service to get the packages in version set {} from account '{}'", versionSetName, accountId);
             throw new RuntimeException(e);
         }
 
         switch (httpResponse.statusCode()) {
             case 200: // Ok
-                try {
-                    response = objectMapper.readValue(httpResponse.body(), RestVersionSetRevisionResponse.class);
-                } catch (IOException e) {
-                    log.error(String.format("Failed to parse the string \"%s\" as a RestVersionSetRevisionResponse object", httpResponse.body()), e);
-                    throw new RuntimeException("Failed to parse RestVersionSetRevisionResponse", e);
-                }
+                response = this.parseOrThrow(httpResponse.body(), VersionSetRevisionRestResponse.class);
                 break;
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Version set service");
                 throw new UnauthorizedException();
-            case 404: // Not found
-                throw new VersionSetDoseNotExistsException(versionSetName);
+            case 404:
+                log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
             default:
-                throw new RuntimeException("Was unable to create the version set revision with status code " + httpResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
 
-        return VersionSetRevision.builder()
-                .created(Instant.ofEpochMilli(response.getCreated()))
-                .packages(response.getPackages().stream().map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList()))
-                .build();
+        return response.toInternal();
+    }
+
+    private RuntimeException logAndReturnExceptionForUnknownStatusCode(HttpResponse<String> restResponse) {
+        log.error("Unknown response from Version set service status code " + restResponse.statusCode() +
+                " body: " + restResponse.body());
+        return new RuntimeException("Unknown response from Version set service status code " + restResponse.statusCode() +
+                " body: " + restResponse.body());
     }
 }

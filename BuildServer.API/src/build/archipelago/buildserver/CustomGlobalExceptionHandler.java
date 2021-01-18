@@ -1,36 +1,33 @@
 package build.archipelago.buildserver;
 
-import build.archipelago.common.exceptions.PackageArtifactExistsException;
-import build.archipelago.common.exceptions.PackageExistsException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import build.archipelago.common.rest.models.errors.*;
+import build.archipelago.packageservice.client.PackageExceptionHandler;
+import build.archipelago.packageservice.exceptions.*;
+import build.archipelago.versionsetservice.client.VersionSetExceptionHandler;
+import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
 
+@Slf4j
 @ControllerAdvice
-public class CustomGlobalExceptionHandler {
+public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
 
     @ExceptionHandler(PackageNotFoundException.class)
-    public void springHandlePackageNotFoundException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.NOT_FOUND.value(), ex.getMessage());
-    }
-
-    @ExceptionHandler(PackageArtifactExistsException.class)
-    public void springHandlePackageArtifactExistsException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.CONFLICT.value(), ex.getMessage());
+    public ResponseEntity<ProblemDetailRestResponse> springHandlePackageNotFoundException(HttpServletRequest req, Exception ex) throws IOException {
+        return createResponse(req, PackageExceptionHandler.from((PackageNotFoundException)ex));
     }
 
     @ExceptionHandler(PackageExistsException.class)
-    public void springHandlePackageExistsException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.CONFLICT.value(), ex.getMessage());
+    public ResponseEntity<ProblemDetailRestResponse> springHandlePackageExistsException(HttpServletRequest req, Exception ex) {
+        return createResponse(req, PackageExceptionHandler.from((PackageExistsException)ex));
     }
 
     @ExceptionHandler(VersionSetDoseNotExistsException.class)
-    public void springHandleVersionSetDoseNotExistsException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.CONFLICT.value(), ex.getMessage());
+    public ResponseEntity<ProblemDetailRestResponse> springHandleVersionSetDoseNotExistsException(HttpServletRequest req, Exception ex) {
+        return createResponse(req, VersionSetExceptionHandler.from((VersionSetDoseNotExistsException)ex));
     }
 }

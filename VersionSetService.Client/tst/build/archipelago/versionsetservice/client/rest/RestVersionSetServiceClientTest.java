@@ -1,13 +1,9 @@
 package build.archipelago.versionsetservice.client.rest;
 
-import build.archipelago.common.exceptions.MissingTargetPackageException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import build.archipelago.versionsetservice.exceptions.*;
+import org.junit.*;
 
 public class RestVersionSetServiceClientTest {
 

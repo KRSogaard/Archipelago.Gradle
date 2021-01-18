@@ -10,8 +10,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,20 +37,20 @@ public class BuildConfigSerializer {
                     .collect(Collectors.toList()));
         }
         if (bc.getBuildTools() != null) {
-        serializer.setBuildTools(bc.getBuildTools().stream().map(ArchipelagoPackage::getNameVersion)
-                .collect(Collectors.toList()));
+            serializer.setBuildTools(bc.getBuildTools().stream().map(ArchipelagoPackage::getNameVersion)
+                    .collect(Collectors.toList()));
         }
         if (bc.getTest() != null) {
-        serializer.setTest(bc.getTest().stream().map(ArchipelagoPackage::getNameVersion)
-                .collect(Collectors.toList()));
+            serializer.setTest(bc.getTest().stream().map(ArchipelagoPackage::getNameVersion)
+                    .collect(Collectors.toList()));
         }
         if (bc.getRuntime() != null) {
-        serializer.setRuntime(bc.getRuntime().stream().map(ArchipelagoPackage::getNameVersion)
-                .collect(Collectors.toList()));
+            serializer.setRuntime(bc.getRuntime().stream().map(ArchipelagoPackage::getNameVersion)
+                    .collect(Collectors.toList()));
         }
         if (bc.getRemoveDependencies() != null) {
-        serializer.setRemoveDependencies(bc.getRemoveDependencies().stream().map(ArchipelagoPackage::getNameVersion)
-                .collect(Collectors.toList()));
+            serializer.setRemoveDependencies(bc.getRemoveDependencies().stream().map(ArchipelagoPackage::getNameVersion)
+                    .collect(Collectors.toList()));
         }
         if (bc.getResolveConflicts() != null) {
             serializer.setResolveConflicts(bc.getResolveConflicts().stream().map(ArchipelagoPackage::getNameVersion)
@@ -99,7 +98,7 @@ public class BuildConfigSerializer {
 
         Path buildFilePath = packageRoot.resolve(WorkspaceConstants.BUILD_FILE_NAME);
         if (Files.exists(buildFilePath)) {
-            log.warn("Workspace file \"{}\" already exists, we will override it", buildFilePath.toString());
+            log.warn("Workspace file '{}' already exists, we will override it", buildFilePath.toString());
         }
 
         BuildConfigSerializer bcs = BuildConfigSerializer.convert(buildConfig);

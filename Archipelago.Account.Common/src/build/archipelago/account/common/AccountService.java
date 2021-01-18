@@ -1,21 +1,14 @@
 package build.archipelago.account.common;
 
-import build.archipelago.account.common.exceptions.AccountNotFoundException;
-import build.archipelago.account.common.exceptions.GitDetailsNotFound;
-import build.archipelago.account.common.models.AccountDetails;
-import build.archipelago.account.common.models.GitDetails;
+import build.archipelago.account.common.exceptions.*;
+import build.archipelago.account.common.models.*;
 import build.archipelago.common.dynamodb.AV;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
-import com.amazonaws.services.dynamodbv2.model.GetItemResult;
-import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import com.amazonaws.services.dynamodbv2.model.*;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 public class AccountService {

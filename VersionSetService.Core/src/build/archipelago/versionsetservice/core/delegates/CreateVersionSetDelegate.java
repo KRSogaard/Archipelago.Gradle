@@ -1,17 +1,16 @@
 package build.archipelago.versionsetservice.core.delegates;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
 import build.archipelago.versionsetservice.core.utils.NameUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import build.archipelago.versionsetservice.exceptions.*;
+import com.google.common.base.*;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.*;
 
 public class CreateVersionSetDelegate {
 
@@ -25,7 +24,7 @@ public class CreateVersionSetDelegate {
     }
 
     public void create(String accountId, String name, List<ArchipelagoPackage> targets, Optional<String> parent)
-            throws VersionSetExistsException, PackageNotFoundException {
+            throws VersionSetExistsException, PackageNotFoundException, VersionSetDoseNotExistsException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "An account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
         Preconditions.checkArgument(NameUtil.validateVersionSetName(name), "Version set name was invalid");
@@ -38,7 +37,7 @@ public class CreateVersionSetDelegate {
 
         PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(accountId, targets);
         if (!targetsVerified.isValid()) {
-            throw new PackageNotFoundException(targets);
+            throw new PackageNotFoundException(targetsVerified.getMissingPackages());
         }
 
         if (parent.isPresent()) {

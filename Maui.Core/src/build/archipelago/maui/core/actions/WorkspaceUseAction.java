@@ -1,8 +1,6 @@
 package build.archipelago.maui.core.actions;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
 import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.harbor.client.HarborClient;
@@ -10,7 +8,9 @@ import build.archipelago.maui.common.PackageSourceProvider;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.packageservice.models.PackageDetails;
+import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;

@@ -1,7 +1,6 @@
 package build.archipelago.common.github.models;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 @Data
 @Builder

@@ -1,29 +1,20 @@
 package build.archipelago.versionsetservice.core.delegates;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.MissingTargetPackageException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.versionset.Revision;
-import build.archipelago.common.versionset.VersionSet;
+import build.archipelago.common.*;
+import build.archipelago.common.versionset.*;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
+import build.archipelago.versionsetservice.exceptions.*;
 import com.google.common.collect.ImmutableList;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 public class CreateVersionSetRevisionDelegateTest {
 
@@ -51,7 +42,7 @@ public class CreateVersionSetRevisionDelegateTest {
         testVSName = UUID.randomUUID().toString().split("-", 2)[0];
         testAccountId = UUID.randomUUID().toString().split("-", 2)[0];
         List<ArchipelagoPackage> targets = List.of(pA, pB);
-        VersionSet vs = createVS(testVSName, targets);
+        VersionSet vs = this.createVS(testVSName, targets);
         when(versionSetService.get(eq(testAccountId), eq(testVSName))).thenReturn(vs);
     }
 
@@ -62,7 +53,7 @@ public class CreateVersionSetRevisionDelegateTest {
         String revisionId = "12345";
         List<ArchipelagoPackage> targets = List.of(pA, pB);
 
-        VersionSet vs = createVS(vsName, targets);
+        VersionSet vs = this.createVS(vsName, targets);
 
         when(versionSetService.get(eq(testAccountId), eq(vsName))).thenReturn(vs);
         when(versionSetService.createRevision(eq(testAccountId), eq(vsName), any())).thenReturn(revisionId);

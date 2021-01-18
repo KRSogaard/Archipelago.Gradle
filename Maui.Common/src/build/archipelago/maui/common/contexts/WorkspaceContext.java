@@ -1,33 +1,21 @@
 package build.archipelago.maui.common.contexts;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.LocalPackageMalformedException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.PackageNotInVersionSetException;
-import build.archipelago.common.exceptions.PackageNotLocalException;
-import build.archipelago.common.exceptions.VersionSetNotSyncedException;
+import build.archipelago.common.*;
+import build.archipelago.common.exceptions.*;
 import build.archipelago.common.versionset.VersionSetRevision;
 import build.archipelago.maui.common.WorkspaceConstants;
 import build.archipelago.maui.common.cache.PackageCacher;
-import build.archipelago.maui.common.models.BuildConfig;
-import build.archipelago.maui.common.models.Workspace;
-import build.archipelago.maui.common.serializer.VersionSetRevisionSerializer;
-import build.archipelago.maui.common.serializer.WorkspaceSerializer;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import lombok.Getter;
+import build.archipelago.maui.common.models.*;
+import build.archipelago.maui.common.serializer.*;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
+import com.github.benmanes.caffeine.cache.*;
+import com.google.common.base.*;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 
 @Slf4j
 public class WorkspaceContext extends Workspace {
@@ -61,6 +49,7 @@ public class WorkspaceContext extends Workspace {
         this.setVersionSet(ws.getVersionSet());
         this.setLocalPackages(ws.getLocalPackages());
     }
+
     public void save() throws IOException {
         WorkspaceSerializer.save(this, root);
     }
@@ -73,14 +62,15 @@ public class WorkspaceContext extends Workspace {
     public Path getPackageRoot(ArchipelagoPackage pkg) throws PackageNotLocalException {
         Path packagePath = root.resolve(pkg.getName());
         if (!Files.exists(packagePath)) {
-            log.warn("The requested package \"{}\" is not in the workspaces root \"{}\"",
+            log.warn("The requested package '{}' is not in the workspaces root '{}'",
                     pkg.getNameVersion(), root);
             throw new PackageNotLocalException(pkg);
         }
         return packagePath;
     }
+
     public Path getPackageBuildPath(ArchipelagoPackage pkg) throws PackageNotLocalException {
-        return getPackageRoot(pkg).resolve(WorkspaceConstants.BUILD_DIR);
+        return this.getPackageRoot(pkg).resolve(WorkspaceConstants.BUILD_DIR);
     }
 
     public void saveRevisionCache(VersionSetRevision vsRevision) throws IOException {
@@ -102,12 +92,12 @@ public class WorkspaceContext extends Workspace {
     public boolean isPackageInVersionSet(ArchipelagoPackage targetPackage) throws IOException, VersionSetNotSyncedException {
         Preconditions.checkNotNull(targetPackage);
 
-        for (ArchipelagoBuiltPackage pkg : getVersionSetRevision().getPackages()) {
+        for (ArchipelagoBuiltPackage pkg : this.getVersionSetRevision().getPackages()) {
             if (pkg.equals(targetPackage)) {
                 return true;
             }
         }
-        for (ArchipelagoPackage pkg : getLocalArchipelagoPackages()) {
+        for (ArchipelagoPackage pkg : this.getLocalArchipelagoPackages()) {
             if (pkg.equals(targetPackage)) {
                 return true;
             }
@@ -125,10 +115,10 @@ public class WorkspaceContext extends Workspace {
         }
 
         // The Load archipelago packages command will load the configs to get the version number
-        if (getLocalArchipelagoPackages().stream().anyMatch(lPKG -> lPKG.equals(pkg))) {
-            buildConfig = provideLocalConfig(pkg);
+        if (this.getLocalArchipelagoPackages().stream().anyMatch(lPKG -> lPKG.equals(pkg))) {
+            buildConfig = this.provideLocalConfig(pkg);
         } else {
-            buildConfig = provideCacheConfig(pkg);
+            buildConfig = this.provideCacheConfig(pkg);
         }
         configCache.put(pkg.getNameVersion(), buildConfig);
         return buildConfig;
@@ -137,10 +127,10 @@ public class WorkspaceContext extends Workspace {
     private BuildConfig provideLocalConfig(ArchipelagoPackage pkg) throws PackageNotLocalException, IOException, LocalPackageMalformedException {
         Preconditions.checkNotNull(pkg);
 
-        Path root = getPackageRoot(pkg);
+        Path root = this.getPackageRoot(pkg);
         Path configFile = root.resolve(WorkspaceConstants.BUILD_FILE_NAME);
         if (!Files.exists(configFile)) {
-            log.error("Found the package root \"{}\" but it did not contain a config file \"{}\"",
+            log.error("Found the package root '{}' but it did not contain a config file '{}'",
                     root, WorkspaceConstants.BUILD_FILE_NAME);
             throw new LocalPackageMalformedException(pkg);
         }
@@ -152,14 +142,14 @@ public class WorkspaceContext extends Workspace {
             PackageNotLocalException, IOException, VersionSetNotSyncedException, PackageNotInVersionSetException {
         Preconditions.checkNotNull(pkg);
 
-        val buildPackage = getVersionSetRevision().getPackages().stream().filter(p -> p.equals(pkg)).findFirst();
+        val buildPackage = this.getVersionSetRevision().getPackages().stream().filter(p -> p.equals(pkg)).findFirst();
         if (buildPackage.isEmpty()) {
             throw new PackageNotInVersionSetException(pkg);
         }
         Path root = packageCacher.getCachePath(buildPackage.get());
         Path configFile = root.resolve(WorkspaceConstants.BUILD_FILE_NAME);
         if (!Files.exists(configFile)) {
-            log.error("Found the package root \"{}\" but it did not contain a config file \"{}\"",
+            log.error("Found the package root '{}' but it did not contain a config file '{}'",
                     root, WorkspaceConstants.BUILD_FILE_NAME);
             throw new PackageNotLocalException(pkg);
         }
@@ -170,7 +160,7 @@ public class WorkspaceContext extends Workspace {
     public List<ArchipelagoPackage> getLocalArchipelagoPackages() {
         if (localArchipelagoPackages == null) {
             localArchipelagoPackages = new ArrayList<>();
-            for (String packageName : getLocalPackages()) {
+            for (String packageName : this.getLocalPackages()) {
                 Path pkgDir = root.resolve(packageName);
                 if (!Files.exists(pkgDir) || !Files.isDirectory(pkgDir)) {
                     continue;

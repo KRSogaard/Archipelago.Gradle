@@ -3,21 +3,16 @@ package build.archipelago.buildserver.api.client.rest;
 import build.archipelago.buildserver.api.client.BuildServerAPIClient;
 import build.archipelago.buildserver.models.BuildPackageDetails;
 import build.archipelago.buildserver.models.client.Builds;
-import build.archipelago.buildserver.models.rest.BuildPackageRestRequest;
-import build.archipelago.buildserver.models.rest.BuildRestResponse;
-import build.archipelago.buildserver.models.rest.BuildsRestResponse;
-import build.archipelago.buildserver.models.rest.NewBuildRestRequest;
-import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.buildserver.models.rest.*;
 import build.archipelago.common.clients.rest.OAuthRestClient;
 import build.archipelago.common.exceptions.UnauthorizedException;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
+import build.archipelago.common.rest.models.errors.ProblemDetailRestResponse;
+import build.archipelago.versionsetservice.client.VersionSetExceptionHandler;
+import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
+import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.net.http.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,8 +27,8 @@ public class RestBuildServerAPIClient extends OAuthRestClient implements BuildSe
     }
 
     @Override
-    public String startBuild(String accountId, String versionSet, boolean dryRun, List<BuildPackageDetails> packages) {
-        HttpResponse<String> restResponse;
+    public String startBuild(String accountId, String versionSet, boolean dryRun, List<BuildPackageDetails> packages) throws VersionSetDoseNotExistsException {
+        HttpResponse<String> httpResponse;
         try {
             NewBuildRestRequest restRequest = NewBuildRestRequest.builder()
                     .versionSet(versionSet)
@@ -41,51 +36,63 @@ public class RestBuildServerAPIClient extends OAuthRestClient implements BuildSe
                     .buildPackages(packages.stream().map(BuildPackageRestRequest::from).collect(Collectors.toList()))
                     .build();
 
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/build")
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/build")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
-            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (UnauthorizedException exp) {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call Build service to start a build for version set '{}' and account " +
+                    "'{}'", versionSet, accountId);
             throw new RuntimeException(e);
         }
-        switch (restResponse.statusCode()) {
-            case 200: // Ok
-                return restResponse.body();
+
+        switch (httpResponse.statusCode()) {
+            case 200:
+                return httpResponse.body();
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Package service");
                 throw new UnauthorizedException();
+            case 404:
+                log.warn("Got Not Found (404) response from Build service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
             default:
-                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
     }
 
+    @Override
     public Builds getBuilds(String accountId) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 
         BuildsRestResponse response;
-        HttpResponse<String> restResponse;
+        HttpResponse<String> httpResponse;
         try {
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/build")
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/build")
                     .GET()
                     .build();
-            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call Build service get builds for account '{}'", accountId);
             throw new RuntimeException(e);
         }
-        switch (restResponse.statusCode()) {
-            case 401:
-                throw new UnauthorizedException();
-            case 200: // Ok
-                try {
-                    response = objectMapper.readValue(restResponse.body(), BuildsRestResponse.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+        switch (httpResponse.statusCode()) {
+            case 200:
+                response = this.parseOrThrow(httpResponse.body(), BuildsRestResponse.class);
                 break;
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Package service");
+                throw new UnauthorizedException();
             default:
-                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
 
         return Builds.builder()
@@ -96,5 +103,12 @@ public class RestBuildServerAPIClient extends OAuthRestClient implements BuildSe
                 .pastBuilds(response.getPastBuilds().stream()
                         .map(BuildRestResponse::toArchipelagoBuild).collect(Collectors.toList()))
                 .build();
+    }
+
+    private RuntimeException logAndReturnExceptionForUnknownStatusCode(HttpResponse<String> restResponse) {
+        log.error("Unknown response from Build service status code " + restResponse.statusCode() +
+                " body: " + restResponse.body());
+        return new RuntimeException("Unknown response from Build service status code " + restResponse.statusCode() +
+                " body: " + restResponse.body());
     }
 }

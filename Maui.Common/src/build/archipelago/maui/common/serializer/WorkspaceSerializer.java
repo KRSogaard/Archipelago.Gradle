@@ -7,12 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 
 @Slf4j
 @Data
@@ -22,10 +19,11 @@ public class WorkspaceSerializer {
     private String versionSet;
     private List<String> localPackages;
 
-    public WorkspaceSerializer() {}
+    public WorkspaceSerializer() {
+    }
 
     private static WorkspaceSerializer convert(Workspace ws) {
-        List<String> localPackages = new ArrayList<String>();
+        List<String> localPackages = new ArrayList<>();
         for (String name : ws.getLocalPackages()) {
             localPackages.add(name);
         }
@@ -50,7 +48,7 @@ public class WorkspaceSerializer {
 
         Path workspaceFilePath = workspaceRoot.resolve(WorkspaceConstants.WORKSPACE_FILE_NAME);
         if (Files.exists(workspaceFilePath)) {
-            log.warn("Workspace file \"{}\" already exists, we will override it", workspaceFilePath.toString());
+            log.warn("Workspace file '{}' already exists, we will override it", workspaceFilePath.toString());
         }
 
         WorkspaceSerializer wss = WorkspaceSerializer.convert(workspace);

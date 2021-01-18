@@ -1,10 +1,6 @@
 package build.archipelago.common.concurrent;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class BlockingExecutorServiceFactory implements ExecutorServiceFactory {
 
@@ -19,9 +15,9 @@ public class BlockingExecutorServiceFactory implements ExecutorServiceFactory {
 
     @Override
     public ExecutorService create() {
-        return new ThreadPoolExecutor(getMaximumPoolSize(), getMaximumPoolSize(),
+        return new ThreadPoolExecutor(this.getMaximumPoolSize(), this.getMaximumPoolSize(),
                 DEFAULT_KEEP_ALIVE_SECS, TimeUnit.SECONDS,
-                new RealBlockingQueue<Runnable>(getQueueCapacity(), blockTimeout, blockTimeoutUnit),
+                new RealBlockingQueue<>(this.getQueueCapacity(), blockTimeout, blockTimeoutUnit),
                 threadFactory);
     }
 
@@ -64,7 +60,7 @@ public class BlockingExecutorServiceFactory implements ExecutorServiceFactory {
      * The timeout to accept a new task when it is submitted to the executor. Applied when the queue of the
      * executor is full, the executor will wait this much time before throwing
      * a {@link java.util.concurrent.RejectedExecutionException}.
-     *
+     * <p>
      * If it's greater than 0, the timeout will be applied, otherwise the queue will block
      * indefinitely if it's full and we try to insert an item.
      */

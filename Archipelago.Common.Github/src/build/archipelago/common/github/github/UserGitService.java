@@ -2,8 +2,7 @@ package build.archipelago.common.github.github;
 
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.github.GitService;
-import build.archipelago.common.github.exceptions.GitRepoExistsException;
-import build.archipelago.common.github.exceptions.RepoNotFoundException;
+import build.archipelago.common.github.exceptions.*;
 import build.archipelago.common.github.models.GitRepo;
 
 import java.nio.file.Path;

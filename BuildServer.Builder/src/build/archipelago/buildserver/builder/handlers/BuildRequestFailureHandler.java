@@ -3,8 +3,7 @@ package build.archipelago.buildserver.builder.handlers;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
 import com.wewelo.sqsconsumer.SqsMessageProcessingFailureHandler;
-import com.wewelo.sqsconsumer.exceptions.PermanentMessageProcessingException;
-import com.wewelo.sqsconsumer.exceptions.TemporaryMessageProcessingException;
+import com.wewelo.sqsconsumer.exceptions.*;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

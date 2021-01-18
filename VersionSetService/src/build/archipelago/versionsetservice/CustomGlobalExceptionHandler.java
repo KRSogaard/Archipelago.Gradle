@@ -1,43 +1,42 @@
 package build.archipelago.versionsetservice;
 
-import build.archipelago.common.exceptions.MissingTargetPackageException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
+import build.archipelago.common.rest.models.errors.*;
+import build.archipelago.packageservice.client.PackageExceptionHandler;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
+import build.archipelago.versionsetservice.client.VersionSetExceptionHandler;
+import build.archipelago.versionsetservice.exceptions.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
 
 @ControllerAdvice
 @Slf4j
-public class CustomGlobalExceptionHandler {
+public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public void springHandleIllegalArgumentException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+    public ResponseEntity<ProblemDetailRestResponse> springHandleIllegalArgumentException(HttpServletRequest req, Exception ex) {
+        return createResponse(req, CommonExceptionHandler.from((IllegalArgumentException)ex));
     }
 
     @ExceptionHandler(VersionSetDoseNotExistsException.class)
-    public void stringHandleVersionSetDoseNotExistsException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.NOT_FOUND.value(), ex.getMessage());
+    public ResponseEntity<ProblemDetailRestResponse> springHandleVersionSetDoseNotExistsException(HttpServletRequest req, Exception ex) {
+        return createResponse(req, VersionSetExceptionHandler.from((VersionSetDoseNotExistsException)ex));
     }
 
     @ExceptionHandler(VersionSetExistsException.class)
-    public void stringHandleVersionSetExistsException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.CONFLICT.value(), ex.getMessage());
+    public ResponseEntity<ProblemDetailRestResponse> springHandleVersionSetExistsException(HttpServletRequest req, Exception ex) {
+        return createResponse(req, VersionSetExceptionHandler.from((VersionSetExistsException)ex));
     }
 
     @ExceptionHandler(PackageNotFoundException.class)
-    public void stringHandlePackageNotFoundException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.NOT_ACCEPTABLE.value(), ((PackageNotFoundException)ex).getPackageName());
+    public ResponseEntity<ProblemDetailRestResponse> springHandlePackageNotFoundException(HttpServletRequest req, Exception ex){
+        return createResponse(req, PackageExceptionHandler.from((PackageNotFoundException)ex));
     }
 
     @ExceptionHandler(MissingTargetPackageException.class)
-    public void stringHandleMissingTargetPackageException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.PRECONDITION_FAILED.value(), ex.getMessage());
+    public ResponseEntity<ProblemDetailRestResponse> stringHandleMissingTargetPackageException(HttpServletRequest req, Exception ex) {
+        return createResponse(req, VersionSetExceptionHandler.from((MissingTargetPackageException)ex));
     }
 }

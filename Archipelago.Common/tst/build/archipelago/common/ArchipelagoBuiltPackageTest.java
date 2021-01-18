@@ -1,7 +1,6 @@
 package build.archipelago.common;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.UUID;
 

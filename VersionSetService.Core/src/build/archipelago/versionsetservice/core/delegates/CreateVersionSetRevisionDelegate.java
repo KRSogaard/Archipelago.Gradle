@@ -1,17 +1,14 @@
 package build.archipelago.versionsetservice.core.delegates;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.MissingTargetPackageException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.common.*;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
 import build.archipelago.versionsetservice.core.utils.NameUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import build.archipelago.versionsetservice.exceptions.*;
+import com.google.common.base.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,7 +19,7 @@ public class CreateVersionSetRevisionDelegate {
     private PackageServiceClient packageServiceClient;
 
     public CreateVersionSetRevisionDelegate(VersionSetService versionSetService,
-                                    PackageServiceClient packageServiceClient) {
+                                            PackageServiceClient packageServiceClient) {
         this.versionSetService = versionSetService;
         this.packageServiceClient = packageServiceClient;
     }
@@ -34,8 +31,8 @@ public class CreateVersionSetRevisionDelegate {
         Preconditions.checkArgument(NameUtil.validateVersionSetName(versionSetName), "Version set name was invalid");
         Preconditions.checkArgument(packages.size() > 0, "At least 1 package is required for a revision");
 
-        validateVersionSetTargets(accountId, versionSetName, packages);
-        validatePackages(accountId, packages);
+        this.validateVersionSetTargets(accountId, versionSetName, packages);
+        this.validatePackages(accountId, packages);
 
         return versionSetService.createRevision(accountId, versionSetName, packages);
     }
@@ -57,9 +54,8 @@ public class CreateVersionSetRevisionDelegate {
                 packageServiceClient.verifyBuildsExists(accountId, parsePackages);
         if (!pkgVerification.isValid()) {
             // Wierd that i have to do this? The PackageNotFoundException will not accept the ArchipelagoBuiltPackage
-            List<ArchipelagoPackage> packages = pkgVerification.getMissingPackages()
-                    .stream().map(x -> (ArchipelagoPackage)x).collect(Collectors.toList());
-            throw new PackageNotFoundException(packages);
+            throw new PackageNotFoundException(pkgVerification.getMissingPackages()
+                    .stream().map(x -> (ArchipelagoPackage) x).collect(Collectors.toList()));
         }
     }
 }

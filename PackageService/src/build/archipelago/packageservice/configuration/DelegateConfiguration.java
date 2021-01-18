@@ -16,9 +16,7 @@ import build.archipelago.packageservice.core.delegates.verifyPackageExists.Verif
 import build.archipelago.packageservice.core.storage.PackageStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.*;
 
 @Configuration
 @Slf4j

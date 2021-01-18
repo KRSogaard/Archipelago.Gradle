@@ -1,34 +1,19 @@
 package build.archipelago.harbor.controllers;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
-import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.common.versionset.VersionSetRevision;
+import build.archipelago.common.*;
+import build.archipelago.common.versionset.*;
 import build.archipelago.harbor.filters.AccountIdFilter;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.client.models.CreateVersionSetRequest;
-import build.archipelago.versionsetservice.models.CreateVersionSetRestRequest;
-import build.archipelago.versionsetservice.models.VersionSetRestResponse;
-import build.archipelago.versionsetservice.models.VersionSetRevisionRestResponse;
-import build.archipelago.versionsetservice.models.VersionSetsRestResponse;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import build.archipelago.versionsetservice.exceptions.*;
+import build.archipelago.versionsetservice.models.rest.*;
+import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -59,14 +44,14 @@ public class VersionSetController {
     @GetMapping("{versionSet}")
     public VersionSetRestResponse getVersionSet(@RequestAttribute(AccountIdFilter.Key) String accountId,
                                                 @PathVariable("versionSet") String versionSetName) throws VersionSetDoseNotExistsException {
-        log.info("Request to get version set \"{}\"", versionSetName);
+        log.info("Request to get version set '{}'", versionSetName);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
                 "Version Set name is required");
 
         VersionSet vs = versionSetServiceClient.getVersionSet(accountId, versionSetName);
         VersionSetRestResponse response = VersionSetRestResponse.fromVersionSet(vs);
-        log.debug("Returning version set \"{}\": {}", versionSetName, response);
+        log.debug("Returning version set '{}': {}", versionSetName, response);
         return response;
     }
 
@@ -76,7 +61,7 @@ public class VersionSetController {
             @PathVariable("versionSet") String versionSetName,
             @PathVariable("revision") String revisionId)
             throws VersionSetDoseNotExistsException {
-        log.info("Request to get version set packages for \"{}\" revision \"{}\"", versionSetName, revisionId);
+        log.info("Request to get version set packages for '{}' revision '{}'", versionSetName, revisionId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
                 "Version Set name is required");

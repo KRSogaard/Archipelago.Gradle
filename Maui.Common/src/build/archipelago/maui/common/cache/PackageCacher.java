@@ -1,7 +1,7 @@
 package build.archipelago.maui.common.cache;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 
 import java.nio.file.Path;
 

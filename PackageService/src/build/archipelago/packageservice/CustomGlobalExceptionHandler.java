@@ -1,44 +1,36 @@
 package build.archipelago.packageservice;
 
 import build.archipelago.account.common.exceptions.GitDetailsNotFound;
-import build.archipelago.common.exceptions.PackageArtifactExistsException;
-import build.archipelago.common.exceptions.PackageExistsException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.common.rest.models.errors.*;
+import build.archipelago.packageservice.client.PackageExceptionHandler;
+import build.archipelago.packageservice.exceptions.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
 
 @Slf4j
 @ControllerAdvice
-public class CustomGlobalExceptionHandler {
+public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
 
     @ExceptionHandler(PackageNotFoundException.class)
-    public void springHandlePackageNotFoundException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.NOT_FOUND.value(), formatErrorMessage("PackageNotFound", ex.getMessage()));
-    }
-
-    @ExceptionHandler(PackageArtifactExistsException.class)
-    public void springHandlePackageArtifactExistsException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.CONFLICT.value(), formatErrorMessage("PackageArtifactExists", ex.getMessage()));
+    public ResponseEntity<ProblemDetailRestResponse> springHandlePackageNotFoundException(HttpServletRequest req, Exception ex) throws IOException {
+        return createResponse(req, PackageExceptionHandler.from((PackageNotFoundException)ex));
     }
 
     @ExceptionHandler(PackageExistsException.class)
-    public void springHandlePackageExistsException(Exception ex, HttpServletResponse response) throws IOException {
-        response.sendError(HttpStatus.CONFLICT.value(), formatErrorMessage("PackageExists", ex.getMessage()));
+    public ResponseEntity<ProblemDetailRestResponse> springHandlePackageExistsException(HttpServletRequest req, Exception ex) {
+        return createResponse(req, PackageExceptionHandler.from((PackageExistsException)ex));
     }
 
     @ExceptionHandler(GitDetailsNotFound.class)
-    public void springHandleGitDetailsNotFound(Exception ex, HttpServletResponse response) throws IOException {
-        log.error("The user did not have git details, so we could not execute the command");
-        response.sendError(HttpStatus.BAD_REQUEST.value(), formatErrorMessage("GitDetailsNotFound", ex.getMessage()));
+    public ResponseEntity<ProblemDetailRestResponse> springHandleGitDetailsNotFound(HttpServletRequest req, Exception ex) {
+        return createResponse(req, ProblemDetailRestResponse.builder()
+                        .type("git/detailsNotFound")
+                        .title("No git details was found for the account")
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .detail(ex.getMessage()));
     }
-
-    private String formatErrorMessage(String code, String message) {
-        return String.format("{ \"code\": \"%s\", \"message\": \"%s\"}", code, message);
-    }
-
 }

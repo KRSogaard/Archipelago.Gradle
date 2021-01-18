@@ -4,20 +4,15 @@ import build.archipelago.common.exceptions.UnauthorizedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.net.*;
+import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.HashMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-public abstract class OAuthRestClient {
+public abstract class OAuthRestClient extends BaseRestClient {
 
     private String oauthToken;
     private Instant expires;
@@ -31,8 +26,6 @@ public abstract class OAuthRestClient {
 
     protected HttpClient client;
     protected String baseUrl;
-    protected com.fasterxml.jackson.databind.ObjectMapper objectMapper
-            = new com.fasterxml.jackson.databind.ObjectMapper();
 
     public OAuthRestClient(String baseUrl, String tokenUrl, String clientId, String clientSecret, String scopes) {
         this.tokenUrl = tokenUrl;
@@ -50,6 +43,7 @@ public abstract class OAuthRestClient {
                 .newBuilder()
                 .build();
     }
+
     public OAuthRestClient(String baseUrl, String tokenUrl, String oauthToken, String scopes) {
         this.tokenUrl = tokenUrl;
         this.oauthToken = oauthToken;
@@ -74,11 +68,12 @@ public abstract class OAuthRestClient {
 
     protected HttpRequest.Builder getOAuthRequest(String url) throws UnauthorizedException, URISyntaxException {
         log.debug("Creating OAuth request to " + baseUrl + url);
-        return addOauth(getBaseJSONRequest(baseUrl + url));
+        return this.addOauth(this.getBaseJSONRequest(baseUrl + url));
     }
+
     protected HttpRequest.Builder addOauth(HttpRequest.Builder request) throws UnauthorizedException {
         if (oauthToken == null || Instant.now().isAfter(expires)) {
-            renewToken();
+            this.renewToken();
         }
 
         return request.header("authorization", "Bearer " + oauthToken);

@@ -1,42 +1,22 @@
 package build.archipelago.packageservice.client.rest;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.clients.rest.MultiPartBodyPublisher;
-import build.archipelago.common.clients.rest.OAuthRestClient;
-import build.archipelago.common.exceptions.PackageExistsException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
+import build.archipelago.common.*;
+import build.archipelago.common.clients.rest.*;
 import build.archipelago.common.exceptions.UnauthorizedException;
-import build.archipelago.packageservice.client.PackageServiceClient;
-import build.archipelago.packageservice.client.models.CreatePackageRequest;
-import build.archipelago.packageservice.client.models.PackageVerificationResult;
-import build.archipelago.packageservice.client.models.UploadPackageRequest;
-import build.archipelago.packageservice.models.BuiltPackageDetails;
-import build.archipelago.packageservice.models.PackageDetails;
-import build.archipelago.packageservice.models.VersionBuildDetails;
-import build.archipelago.packageservice.models.rest.ArchipelagoBuiltPackageRestResponse;
-import build.archipelago.packageservice.models.rest.ArtifactUploadRestResponse;
-import build.archipelago.packageservice.models.rest.CreatePackageRestRequest;
-import build.archipelago.packageservice.models.rest.GetBuildArtifactRestResponse;
-import build.archipelago.packageservice.models.rest.GetPackageBuildRestResponse;
-import build.archipelago.packageservice.models.rest.GetPackageBuildsRestResponse;
-import build.archipelago.packageservice.models.rest.GetPackageRestResponse;
-import build.archipelago.packageservice.models.rest.GetPackagesRestResponse;
-import build.archipelago.packageservice.models.rest.VerificationRestRequest;
-import build.archipelago.packageservice.models.rest.VerificationRestResponse;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import build.archipelago.common.rest.models.errors.ProblemDetailRestResponse;
+import build.archipelago.packageservice.client.*;
+import build.archipelago.packageservice.client.models.*;
+import build.archipelago.packageservice.exceptions.*;
+import build.archipelago.packageservice.models.*;
+import build.archipelago.packageservice.models.rest.*;
+import com.google.common.base.*;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.http.*;
+import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,30 +42,34 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                 .description(request.getDescription())
                 .build();
 
-        HttpResponse<String> response;
+        HttpResponse<String> restResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/account/" + accountId + "/package")
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/package")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .header("accept", "application/json")
                     .build();
-            response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            restResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (UnauthorizedException exp) {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to create a package");
             throw new RuntimeException(e);
         }
 
-        switch (response.statusCode()) {
-            case 401:
-            case 403:
-                throw new UnauthorizedException();
-            case 409: // Conflict
-                throw new PackageExistsException(request.getName());
+        switch (restResponse.statusCode()) {
             case 200: // Ok
                 return;
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Package service");
+                throw new UnauthorizedException();
+            case 409:
+                log.warn("Got Conflict (409) response from Package service with body: " + restResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(restResponse.body());
+                throw (PackageExistsException) PackageExceptionHandler.createException(problem);
             default:
-                throw new RuntimeException("Unknown response " + response.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
         }
     }
 
@@ -97,27 +81,32 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         GetPackageRestResponse response;
         HttpResponse<String> restResponse;
         try {
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + name)
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/package/" + name)
                     .GET()
                     .build();
 
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to get package '{}' for account '{}'", name, accountId);
             throw new RuntimeException(e);
         }
-        response = validateResponse(restResponse, name, GetPackageRestResponse.class);
+        response = this.validateResponse(restResponse, GetPackageRestResponse.class);
         return response.toInternal();
     }
 
     @Override
-    public ImmutableList<VersionBuildDetails> getPackageBuilds(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException, UnauthorizedException {
+    public ImmutableList<VersionBuildDetails> getPackageBuilds(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException,
+            UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(pkg);
 
         GetPackageBuildsRestResponse response;
         HttpResponse<String> restResponse;
         try {
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + pkg.getName() + "/" + pkg.getVersion())
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/package/" + pkg.getName() + "/" + pkg.getVersion())
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -125,9 +114,11 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to get builds for package '{}' and account '{}'",
+                    pkg.getNameVersion(), accountId);
             throw new RuntimeException(e);
         }
-        response = validateResponse(restResponse, pkg.toString(), GetPackageBuildsRestResponse.class);
+        response = this.validateResponse(restResponse, GetPackageBuildsRestResponse.class);
         return response.toInternal();
     }
 
@@ -139,7 +130,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         GetPackageBuildRestResponse response;
         HttpResponse<String> restResponse;
         try {
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -147,10 +138,11 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to package service build details for package '{}' and account '{}'",
+                    pkg.getBuiltPackageName(), accountId);
             throw new RuntimeException(e);
         }
-        response = validateResponse(restResponse, pkg.toString(), GetPackageBuildRestResponse.class);
-
+        response = this.validateResponse(restResponse, GetPackageBuildRestResponse.class);
         return response.toInternal();
     }
 
@@ -163,7 +155,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         ArchipelagoBuiltPackageRestResponse response;
         HttpResponse<String> restResponse;
         try {
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/" + packageName + "/git/" + commit)
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/package/" + packageName + "/git/" + commit)
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -171,11 +163,11 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to get package {} by git commit '{}' and account '{}'",
+                    packageName, commit, accountId);
             throw new RuntimeException(e);
         }
-        response = validateResponse(restResponse,
-                packageName + " (C:" + commit + ")",
-                ArchipelagoBuiltPackageRestResponse.class);
+        response = this.validateResponse(restResponse, ArchipelagoBuiltPackageRestResponse.class);
         return response.toInternal();
     }
 
@@ -188,7 +180,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         HttpResponse<String> restResponse;
         try {
             VerificationRestRequest restRequest = VerificationRestRequest.from(packages);
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/verify-packages")
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/package/verify-packages")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -196,20 +188,19 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to verify package for account '{}'", accountId);
             throw new RuntimeException(e);
         }
         switch (restResponse.statusCode()) {
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Package service");
                 throw new UnauthorizedException();
             case 200: // Ok
-                try {
-                    response = objectMapper.readValue(restResponse.body(), VerificationRestResponse.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                response = this.parseOrThrow(restResponse.body(), VerificationRestResponse.class);
                 break;
             default:
-                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
         }
 
         return PackageVerificationResult.<ArchipelagoPackage>builder()
@@ -228,7 +219,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         HttpResponse<String> restResponse;
         try {
             VerificationRestRequest restRequest = VerificationRestRequest.fromBuilt(packages);
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package/verify-builds")
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/package/verify-builds")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -236,20 +227,19 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service verify builds for account '{}'", accountId);
             throw new RuntimeException(e);
         }
         switch (restResponse.statusCode()) {
             case 200: // Ok
-                try {
-                    response = objectMapper.readValue(restResponse.body(), VerificationRestResponse.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                response = this.parseOrThrow(restResponse.body(), VerificationRestResponse.class);
                 break;
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Package service");
                 throw new UnauthorizedException();
             default:
-                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
         }
 
         return PackageVerificationResult.<ArchipelagoBuiltPackage>builder()
@@ -276,7 +266,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         HttpResponse<String> restResponse;
         try {
             String url = baseUrl + "/account/" + accountId + "/artifact/" + request.getPkg().getName() + "/" + request.getPkg().getVersion();
-            HttpRequest restTequest = addOauth(HttpRequest.newBuilder(new URI(url)))
+            HttpRequest restTequest = this.addOauth(HttpRequest.newBuilder(new URI(url)))
                     .header("content-type", "multipart/form-data; boundary=" + publisher.getBoundary())
                     .header("accept", "application/json")
                     .POST(publisher.build())
@@ -286,9 +276,10 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to upload artifact for account '{}'", accountId);
             throw new RuntimeException(e);
         }
-        response = validateResponse(restResponse, request.getPkg().toString(), ArtifactUploadRestResponse.class);
+        response = this.validateResponse(restResponse, ArtifactUploadRestResponse.class);
         return response.getHash();
     }
 
@@ -303,65 +294,76 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                 String.format("%s.zip", java.util.UUID.randomUUID().toString()));
 
         if (!Files.isDirectory(directory)) {
-            log.info("Creating directory \"%s\"", directory.toString());
+            log.info("Creating directory '{}'", directory.toString());
             try {
                 Files.createDirectories(directory);
             } catch (IOException e) {
+                log.error("Got unknown error when trying to create the directory '" + directory.toString() + "'", e);
                 throw new RuntimeException(e);
             }
         }
 
-        GetBuildArtifactRestResponse restResponse;
-        HttpResponse<String> restStringResponse;
-        try {
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/artifact/" +
-                    pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
-                    .GET()
-                    .build();
-            restStringResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException exp) {
-            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
-            throw exp;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        switch (restStringResponse.statusCode()) {
-            case 401:
-                throw new UnauthorizedException();
-            case 404: // Not found
-                throw new PackageNotFoundException(pkg);
-            case 200: // Ok
-                try {
-                    restResponse = objectMapper.readValue(restStringResponse.body(), GetBuildArtifactRestResponse.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                break;
-            default:
-                throw new RuntimeException("Unknown response " + restStringResponse.statusCode());
-        }
+        GetBuildArtifactResponse response = this.getBuildArtifact(accountId, pkg);
 
+        log.debug("Got a signed url from package service to download the artifact for '{}', url '{}'",
+                pkg.getBuiltPackageName(), response.getUrl());
         HttpResponse<Path> restPathResponse;
         try {
-            HttpRequest request = HttpRequest.newBuilder(new URI(restResponse.getUrl()))
+            HttpRequest request = HttpRequest.newBuilder(new URI(response.getUrl()))
                     .GET()
                     .build();
             restPathResponse = client.send(request, HttpResponse.BodyHandlers.ofFile(filePath));
+        } catch (Exception e) {
+            log.error("Got an unknown error when we tried to download a package artifact for '{}' from S3", pkg.getBuiltPackageName());
+            throw new RuntimeException(e);
+        }
+        switch (restPathResponse.statusCode()) {
+            case 200: // Ok
+                return restPathResponse.body();
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from S3");
+                throw new UnauthorizedException();
+            case 404:
+                throw new PackageNotFoundException(pkg);
+            default:
+                log.error("Unknown response from S3 when we tried to fetch the file, status code " + restPathResponse.statusCode());
+                throw new RuntimeException("Unknown response from S3 when we tried to fetch the file, status code " + restPathResponse.statusCode());
+        }
+    }
+
+    @Override
+    public GetBuildArtifactResponse getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException, UnauthorizedException {
+        GetBuildArtifactRestResponse restResponse;
+        HttpResponse<String> httpResponse;
+        try {
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/artifact/" +
+                    pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash())
+                    .GET()
+                    .build();
+            httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (UnauthorizedException exp) {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to get download url for artifact '{}' account '{}'",
+                    pkg.getBuiltPackageName(), accountId);
             throw new RuntimeException(e);
         }
-        switch (restPathResponse.statusCode()) {
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                restResponse = this.parseOrThrow(httpResponse.body(), GetBuildArtifactRestResponse.class);
+                return restResponse.toInternal();
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Package service");
                 throw new UnauthorizedException();
             case 404: // Not found
-                throw new PackageNotFoundException(pkg);
-            case 200: // Ok
-                return restPathResponse.body();
+                log.warn("Got Not Found (404) response from Package service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
             default:
-                throw new RuntimeException("Unknown response " + restPathResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
     }
 
@@ -371,7 +373,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
 
         HttpResponse<String> restResponse;
         try {
-            HttpRequest request = getOAuthRequest("/account/" + accountId + "/package")
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/package")
                     .GET()
                     .build();
             restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -379,45 +381,48 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to get all packages for account '{}'", accountId);
             throw new RuntimeException(e);
         }
         switch (restResponse.statusCode()) {
-            case 401:
-                throw new UnauthorizedException();
             case 200: // Ok
-                try {
-                    GetPackagesRestResponse restObj = objectMapper.readValue(restResponse.body(),
-                            GetPackagesRestResponse.class);
-                    return restObj.getPackages().stream().map(GetPackageRestResponse::toInternal)
-                            .collect(ImmutableList.toImmutableList());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                this.parseOrThrow(restResponse.body(), GetPackagesRestResponse.class)
+                        .getPackages().stream().map(GetPackageRestResponse::toInternal)
+                        .collect(ImmutableList.toImmutableList());
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Package service");
+                throw new UnauthorizedException();
             default:
-                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
         }
     }
 
-    private <T> T validateResponse(HttpResponse<String> response, String packageName, Function<String, T> onOk) throws PackageNotFoundException, UnauthorizedException {
-
+    private <T> T validateResponse(HttpResponse<String> response, Function<String, T> onOk) throws PackageNotFoundException, UnauthorizedException {
         switch (response.statusCode()) {
-            case 401:
-                throw new UnauthorizedException();
-            case 404: // Not found
-                throw new PackageNotFoundException(packageName);
             case 200: // Ok
                 return onOk.apply(response.body());
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Package service");
+                throw new UnauthorizedException();
+            case 404: // Not found
+                log.warn("Got Not Found (404) response from Package service with body: " + response.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(response.body());
+                throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
             default:
-                throw new RuntimeException("Unknown response " + response.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(response);
         }
     }
-    private <T> T validateResponse(HttpResponse<String> response, String packageName, Class<T> outputCalls) throws PackageNotFoundException, UnauthorizedException {
-        return validateResponse(response, packageName, s -> {
-            try {
-                return objectMapper.readValue(response.body(), outputCalls);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+
+    private <T> T validateResponse(HttpResponse<String> response, Class<T> outputCalls) throws PackageNotFoundException, UnauthorizedException {
+        return this.validateResponse(response, s -> this.parseOrThrow(response.body(), outputCalls));
+    }
+
+    private RuntimeException logAndReturnExceptionForUnknownStatusCode(HttpResponse<String> restResponse) {
+        log.error("Unknown response from package service status code " + restResponse.statusCode() +
+                " body: " + restResponse.body());
+        return new RuntimeException("Unknown response from package service status code " + restResponse.statusCode() +
+                " body: " + restResponse.body());
     }
 }

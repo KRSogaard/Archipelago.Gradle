@@ -1,28 +1,21 @@
 package build.archipelago.versionsetservice.core.delegates;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
-import build.archipelago.common.versionset.Revision;
-import build.archipelago.common.versionset.VersionSet;
+import build.archipelago.common.versionset.*;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
 import build.archipelago.versionsetservice.core.utils.RevisionUtil;
+import build.archipelago.versionsetservice.exceptions.*;
 import com.google.common.collect.ImmutableList;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 public class CreateVersionSetDelegateTest {
 
@@ -52,7 +45,7 @@ public class CreateVersionSetDelegateTest {
             VersionSetDoseNotExistsException, PackageNotFoundException {
         when(packageServiceClient.verifyPackagesExists(eq(testAccountId), any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoPackage>builder().missingPackages(ImmutableList.of()).build());
-        when(versionSetService.get(eq(testAccountId), eq(parentVSName))).thenReturn(createVS(parentVSName, List.of(pA)));
+        when(versionSetService.get(eq(testAccountId), eq(parentVSName))).thenReturn(this.createVS(parentVSName, List.of(pA)));
 
         delegate.create(testAccountId, testVSName, List.of(pA, pB), Optional.of(parentVSName));
     }
@@ -70,20 +63,20 @@ public class CreateVersionSetDelegateTest {
             VersionSetDoseNotExistsException, PackageNotFoundException {
         when(packageServiceClient.verifyPackagesExists(eq(testAccountId), any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoPackage>builder().missingPackages(ImmutableList.of()).build());
-        when(versionSetService.get(eq(testAccountId), eq(testVSName))).thenReturn(createVS(testVSName, List.of(pA, pB)));
+        when(versionSetService.get(eq(testAccountId), eq(testVSName))).thenReturn(this.createVS(testVSName, List.of(pA, pB)));
         delegate.create(testAccountId, testVSName, List.of(pA, pB), Optional.empty());
 
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateVersionWithoutTargetsShouldFail() throws VersionSetExistsException,
-            VersionSetDoseNotExistsException, PackageNotFoundException  {
+            VersionSetDoseNotExistsException, PackageNotFoundException {
         delegate.create(testAccountId, testVSName, new ArrayList<>(), Optional.empty());
     }
 
     @Test(expected = PackageNotFoundException.class)
     public void testCreateVersionWithTargetThatDoseNotExistsShouldFail() throws VersionSetExistsException,
-            VersionSetDoseNotExistsException, PackageNotFoundException  {
+            VersionSetDoseNotExistsException, PackageNotFoundException {
         String packageName = "DoseNotExists-1.0";
         when(packageServiceClient.verifyPackagesExists(eq(testAccountId), any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoPackage>builder().missingPackages(

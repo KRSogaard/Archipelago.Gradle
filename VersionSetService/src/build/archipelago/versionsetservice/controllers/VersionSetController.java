@@ -1,38 +1,18 @@
 package build.archipelago.versionsetservice.controllers;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.MissingTargetPackageException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetExistsException;
-import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.common.versionset.VersionSetRevision;
-import build.archipelago.versionsetservice.core.delegates.CreateVersionSetDelegate;
-import build.archipelago.versionsetservice.core.delegates.CreateVersionSetRevisionDelegate;
-import build.archipelago.versionsetservice.core.delegates.GetVersionSetDelegate;
-import build.archipelago.versionsetservice.core.delegates.GetVersionSetPackagesDelegate;
-import build.archipelago.versionsetservice.core.delegates.GetVersionSetsDelegate;
-import build.archipelago.versionsetservice.models.CreateVersionSetRestRequest;
-import build.archipelago.versionsetservice.models.CreateVersionSetRevisionRestRequest;
-import build.archipelago.versionsetservice.models.CreateVersionSetRevisionRestResponse;
-import build.archipelago.versionsetservice.models.VersionSetRestResponse;
-import build.archipelago.versionsetservice.models.VersionSetRevisionRestResponse;
-import build.archipelago.versionsetservice.models.VersionSetsRestResponse;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import build.archipelago.common.*;
+import build.archipelago.common.versionset.*;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
+import build.archipelago.versionsetservice.core.delegates.*;
+import build.archipelago.versionsetservice.exceptions.*;
+import build.archipelago.versionsetservice.models.rest.*;
+import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -57,8 +37,6 @@ public class VersionSetController {
         this.getVersionSetPackagesDelegate = getVersionSetPackagesDelegate;
         this.getVersionSetsDelegate = getVersionSetsDelegate;
     }
-
-
 
     @GetMapping
     public VersionSetsRestResponse getVersionSets(@PathVariable("accountId") String accountId) {
@@ -89,7 +67,7 @@ public class VersionSetController {
             parent = Optional.of(request.getParent());
         }
         createVersionSetDelegate.create(accountId, request.getName(), targets, parent);
-        log.debug("Version set \"{}\" was successfully installed", request.getName());
+        log.debug("Version set '{}' was successfully installed", request.getName());
     }
 
     @PostMapping("/{versionSet}")
@@ -99,7 +77,7 @@ public class VersionSetController {
             @PathVariable("versionSet") String versionSetName,
             @RequestBody CreateVersionSetRevisionRestRequest request) throws VersionSetDoseNotExistsException,
             MissingTargetPackageException, PackageNotFoundException {
-        log.info("Request to created revision for version set \"{}\": {}", versionSetName, request);
+        log.info("Request to created revision for version set '{}': {}", versionSetName, request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName));
         request.validate();
@@ -110,7 +88,7 @@ public class VersionSetController {
         String revisionId = createVersionSetRevisionDelegate.createRevision(
                 accountId, versionSetName, packages);
 
-        log.debug("New revision \"{}\" was created for version set \"{}\"", revisionId, versionSetName);
+        log.debug("New revision '{}' was created for version set '{}'", revisionId, versionSetName);
         return CreateVersionSetRevisionRestResponse.builder()
                 .revisionId(revisionId)
                 .build();
@@ -122,7 +100,7 @@ public class VersionSetController {
             @PathVariable("accountId") String accountId,
             @PathVariable("versionSet") String versionSetName)
             throws VersionSetDoseNotExistsException {
-        log.info("Request to get version set \"{}\"", versionSetName);
+        log.info("Request to get version set '{}'", versionSetName);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
                 "Version Set name is required");
@@ -130,7 +108,7 @@ public class VersionSetController {
         VersionSet vs = getVersionSetDelegate.getVersionSet(accountId, versionSetName);
 
         VersionSetRestResponse response = VersionSetRestResponse.fromVersionSet(vs);
-        log.debug("Returning version set \"{}\": {}", versionSetName, response);
+        log.debug("Returning version set '{}': {}", versionSetName, response);
         return response;
     }
 
@@ -141,7 +119,7 @@ public class VersionSetController {
             @PathVariable("versionSet") String versionSetName,
             @PathVariable("revision") String revisionId)
             throws VersionSetDoseNotExistsException {
-        log.info("Request to get version set packages for \"{}\" revision \"{}\"", versionSetName, revisionId);
+        log.info("Request to get version set packages for '{}' revision '{}'", versionSetName, revisionId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
                 "Version Set name is required");

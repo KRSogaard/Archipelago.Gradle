@@ -2,22 +2,15 @@ package build.archipelago.harbor.controllers;
 
 import build.archipelago.account.common.AccountService;
 import build.archipelago.account.common.models.GitDetails;
-import build.archipelago.common.github.GitService;
-import build.archipelago.common.github.GitServiceFactory;
+import build.archipelago.common.github.*;
 import build.archipelago.harbor.filters.AccountIdFilter;
 import build.archipelago.harbor.models.git.GitAccessRequest;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("git")

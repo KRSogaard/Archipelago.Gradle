@@ -30,8 +30,8 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java'
     apply plugin: 'maven'
+    apply plugin: 'java-library'
 
     sourceCompatibility = 11
     targetCompatibility = 11
@@ -65,14 +65,26 @@ subprojects {
 }
 
 project(':Archipelago.Common') {
+    apply plugin: 'java-library'
+}
+project(':Archipelago.Common.REST') {
+    apply plugin: 'java-library'
+
+    dependencies {
+        implementation 'org.springframework:spring-web:5.2.5.RELEASE'
+        implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.33'
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    }
 }
 project(':Archipelago.Common.Concurrent') {
+    apply plugin: 'java-library'
 }
 project(':Archipelago.Common.Github') {
+    apply plugin: 'java-library'
 }
 
 project(':Archipelago.Common.DynamoDB') {
-    apply plugin: 'maven-publish'
+    apply plugin: 'java-library'
 
     dependencies {
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
@@ -80,6 +92,7 @@ project(':Archipelago.Common.DynamoDB') {
 }
 
 project(':Maui') {
+    apply plugin: 'java'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
@@ -87,16 +100,12 @@ project(':Maui') {
     mainClassName = 'build.archipelago.maui.Application'
 
     dependencies {
-        implementation project(':Maui.Core')
-        implementation project(":Maui.Common")
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.Concurrent')
-        implementation project(':Maui.Common')
-        implementation project(':Maui.Path')
-        implementation project(':Maui.Graph')
-        implementation project(':Harbor.Client')
-        implementation project(':Archipelago.Common.Clients')
-        implementation project(':VersionSetService.Client.Models')
+        api project(':Maui.Core')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.Concurrent')
+        api project(':Harbor.Client')
+        api project(':PackageService.Models')
+        api project(':VersionSetService.Models')
 
         implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
         implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
@@ -126,51 +135,57 @@ project(':Maui') {
 }
 
 project(':Maui.Core') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.Concurrent')
-        implementation project(':Maui.Common')
-        implementation project(':Maui.Path')
-        implementation project(':Maui.Graph')
-        implementation project(':VersionSetService.Client')
-        implementation project(':PackageService.Client')
-        implementation project(':PackageService.Models')
-        implementation project(':Harbor.Client')
-        implementation project(':VersionSetService.Client.Models')
-        implementation project(':Archipelago.Common.Github')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.Concurrent')
+        api project(':Maui.Common')
+        api project(':Maui.Path')
+        api project(':Maui.Graph')
+        api project(':VersionSetService.Client')
+        api project(':PackageService.Client')
+        api project(':Harbor.Client')
+        api project(':Archipelago.Common.Github')
 
         implementation 'org.slf4j:slf4j-api:1.7.30'
     }
 }
 
 project(':Maui.Path') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Maui.Common')
-        implementation project(':Maui.Graph')
+        api project(':Archipelago.Common')
+        api project(':Maui.Common')
+        api project(':Maui.Graph')
+        api project(':PackageService.Models')
 
         implementation 'org.jgrapht:jgrapht-core:1.5.0'
     }
 }
 
 project(':Maui.Graph') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Maui.Common')
+        api project(':Archipelago.Common')
+        api project(':Maui.Common')
+        api project(':PackageService.Models')
 
         implementation 'org.jgrapht:jgrapht-core:1.5.0'
     }
 }
 
 project(':Maui.Common') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.Concurrent')
-        implementation project(':VersionSetService.Client')
-        implementation project(':PackageService.Client')
-        implementation project(':Harbor.Client')
-        implementation project(':PackageService.Models')
-        implementation project(':Archipelago.Common.Github')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.Concurrent')
+        api project(':Harbor.Client')
+        api project(':PackageService.Models')
+        api project(':Archipelago.Common.Github')
 
         implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
@@ -180,6 +195,7 @@ project(':Maui.Common') {
 }
 
 project(':PackageService') {
+    apply plugin: 'java'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
@@ -193,11 +209,13 @@ project(':PackageService') {
     }
 
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':PackageService.Core')
-        implementation project(':PackageService.Models')
-        implementation project(':Archipelago.Account.Common')
-        implementation project(':Archipelago.Common.Github')
+        api project(':Archipelago.Common')
+        api project(':PackageService.Core')
+        api project(':PackageService.Models')
+        api project(':PackageService.Client')
+        api project(':Archipelago.Account.Common')
+        api project(':Archipelago.Common.Github')
+        api project(':Archipelago.Common.REST')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -229,12 +247,14 @@ project(':PackageService') {
     runlocal.finalizedBy run
 }
 project(':PackageService.Core') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.DynamoDB')
-        implementation project(':PackageService.Models')
-        implementation project(':Archipelago.Account.Common')
-        implementation project(':Archipelago.Common.Github')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.DynamoDB')
+        api project(':PackageService.Models')
+        api project(':Archipelago.Account.Common')
+        api project(':Archipelago.Common.Github')
 
         implementation 'com.amazonaws:aws-java-sdk-s3:1.11.880'
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
@@ -245,22 +265,28 @@ project(':PackageService.Core') {
     }
 }
 project(':PackageService.Models') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
+        api project(':Archipelago.Common')
     }
 }
 
 project(':PackageService.Client') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.Clients')
-        implementation project(':PackageService.Models')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.Clients')
+        api project(':PackageService.Models')
+        api project(':Archipelago.Common.REST')
 
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 }
 
 project(':VersionSetService') {
+    apply plugin: 'java'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
@@ -274,13 +300,13 @@ project(':VersionSetService') {
     }
 
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':VersionSetService.Client')
-        implementation project(':VersionSetService.Core')
-        implementation project(':PackageService.Client')
-        implementation project(':PackageService.Core')
-        implementation project(':Archipelago.Common.Clients')
-        implementation project(':VersionSetService.Models')
+        api project(':Archipelago.Common')
+        api project(':VersionSetService.Core')
+        api project(':VersionSetService.Client')
+        api project(':PackageService.Client')
+        api project(':Archipelago.Common.Clients')
+        api project(':VersionSetService.Models')
+        api project(':Archipelago.Common.REST')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -316,12 +342,14 @@ project(':VersionSetService') {
 }
 
 project(':VersionSetService.Core') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.DynamoDB')
-        implementation project(':VersionSetService.Client')
-        implementation project(':PackageService.Client')
-        implementation project(':Archipelago.Common.Clients')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.DynamoDB')
+        api project(':VersionSetService.Models')
+        api project(':PackageService.Client')
+        api project(':Archipelago.Common.Clients')
 
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
 
@@ -329,32 +357,33 @@ project(':VersionSetService.Core') {
         testImplementation 'com.amazonaws:DynamoDBLocal:1.12.0'
         testImplementation 'com.almworks.sqlite4java:sqlite4java:1.0.392'
     }
-    
+
 }
 project(':VersionSetService.Models') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
+        api project(':Archipelago.Common')
     }
 }
 
 project(':VersionSetService.Client') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.Clients')
-        implementation project(':VersionSetService.Client.Models')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.Clients')
+        api project(':VersionSetService.Models')
+        api project(':PackageService.Models')
+        implementation project(':PackageService.Client')
+        api project(':Archipelago.Common.REST')
 
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 }
 
-
-project(':VersionSetService.Client.Models') {
-    dependencies {
-        implementation project(':Archipelago.Common')
-    }
-}
-
 project(':BuildServer.API') {
+    apply plugin: 'java'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
@@ -368,14 +397,15 @@ project(':BuildServer.API') {
     }
 
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.DynamoDB')
-        implementation project(':Archipelago.Common.Clients')
-        implementation project(':VersionSetService.Client')
-        implementation project(':PackageService.Client')
-        implementation project(':Maui.Core')
-        implementation project(':BuildServer.Common')
-        implementation project(':BuildServer.Models')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.DynamoDB')
+        api project(':Archipelago.Common.Clients')
+        api project(':VersionSetService.Client')
+        api project(':PackageService.Client')
+        api project(':Maui.Core')
+        api project(':BuildServer.Common')
+        api project(':BuildServer.Models')
+        api project(':Archipelago.Common.REST')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -408,6 +438,7 @@ project(':BuildServer.API') {
 }
 
 project(':BuildServer.Builder') {
+    apply plugin: 'java'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
@@ -415,22 +446,17 @@ project(':BuildServer.Builder') {
     mainClassName = 'build.archipelago.buildserver.builder.BuilderApplication'
 
     dependencies {
-        implementation project(":Maui.Core")
-        implementation project(":Maui.Common")
-        implementation project(":Maui.Path")
-        implementation project(":Maui.Graph")
-        implementation project(':VersionSetService.Client')
-        implementation project(':PackageService.Client')
-        implementation project(':PackageService.Models')
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.Clients')
-        implementation project(':Archipelago.Common.Concurrent')
-        implementation project(':BuildServer.Common')
-        implementation project(':Archipelago.Account.Common')
-        implementation project(':Harbor.Client')
-        implementation project(':VersionSetService.Client.Models')
-        implementation project(':BuildServer.Models')
-        implementation project(':Archipelago.Common.Github')
+        api project(":Maui.Core")
+        api project(':VersionSetService.Client')
+        api project(':PackageService.Client')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.Clients')
+        api project(':Archipelago.Common.Concurrent')
+        api project(':BuildServer.Common')
+        api project(':Archipelago.Account.Common')
+        api project(':Harbor.Client')
+        api project(':BuildServer.Models')
+        api project(':Archipelago.Common.Github')
 
         implementation 'com.wewelo:SQSConsumer:1.1'
         implementation 'org.springframework.boot:spring-boot-starter'
@@ -453,14 +479,15 @@ project(':BuildServer.Builder') {
 }
 
 project(':BuildServer.Common') {
+    apply plugin: 'java-library'
 
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.DynamoDB')
-        implementation project(':VersionSetService.Client')
-        implementation project(':PackageService.Client')
-        implementation project(':Maui.Core')
-        implementation project(':BuildServer.Models')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.DynamoDB')
+        api project(':VersionSetService.Client')
+        api project(':PackageService.Client')
+        api project(':Maui.Core')
+        api project(':BuildServer.Models')
 
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
         implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
@@ -468,54 +495,72 @@ project(':BuildServer.Common') {
 }
 
 project(':BuildServer.API.Client') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':BuildServer.Models')
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.Clients')
+        api project(':BuildServer.Models')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.Clients')
+        api project(':Archipelago.Common.REST')
+        api project(':VersionSetService.Models')
+        api project(':PackageService.Models')
+
+        api project(':VersionSetService.Client') // TODO: Remove this
+        api project(':PackageService.Client') // TODO: Remove this
 
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 }
 
 project(':BuildServer.Models') {
+    apply plugin: 'java-library'
+
     dependencies {
     }
 }
 
 project(':Archipelago.Account.Common') {
+    apply plugin: 'java-library'
 
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':Archipelago.Common.DynamoDB')
-        implementation project(':VersionSetService.Client')
-        implementation project(':PackageService.Client')
-        implementation project(':Maui.Core')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.DynamoDB')
+        api project(':VersionSetService.Client')
+        api project(':PackageService.Client')
+        api project(':Maui.Core')
 
         implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
     }
 }
 
 project(':Archipelago.Common.Clients') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.REST')
 
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 }
 
 project(':Harbor.Client') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':VersionSetService.Client')
-        implementation project(':PackageService.Client')
-        implementation project(':PackageService.Models')
-        implementation project(':VersionSetService.Client.Models')
-        implementation project(':Archipelago.Common.Clients')
+        api project(':Archipelago.Common')
+        api project(':VersionSetService.Client') // TODO: Remove this
+        api project(':PackageService.Client') // TODO: Remove this
+        api project(':VersionSetService.Models')
+        api project(':PackageService.Models')
+        api project(':Archipelago.Common.Clients')
+        api project(':Archipelago.Common.REST')
 
         implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
     }
 }
 project(':HarborService') {
+    apply plugin: 'java'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'application'
@@ -529,18 +574,14 @@ project(':HarborService') {
     }
 
     dependencies {
-        implementation project(':Archipelago.Common')
-        implementation project(':VersionSetService.Client')
-        implementation project(':VersionSetService.Models')
-        implementation project(':PackageService.Client')
-        implementation project(':Archipelago.Common.Clients')
-        implementation project(':VersionSetService.Client.Models')
-        implementation project(':PackageService.Models')
-        implementation project(':VersionSetService.Models')
-        implementation project(':Archipelago.Account.Common')
-        implementation project(':Archipelago.Common.Github')
-        implementation project(':BuildServer.API.Client')
-        implementation project(':BuildServer.Models')
+        api project(':Archipelago.Common')
+        api project(':Archipelago.Common.Clients')
+        api project(':Archipelago.Account.Common')
+        api project(':Archipelago.Common.Github')
+        api project(':VersionSetService.Client')
+        api project(':PackageService.Client')
+        api project(':BuildServer.API.Client')
+        api project(':Archipelago.Common.REST')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -574,8 +615,10 @@ project(':HarborService') {
 }
 
 project(':Archipelago.Common.Github') {
+    apply plugin: 'java-library'
+
     dependencies {
-        implementation project(':Archipelago.Common')
+        api project(':Archipelago.Common')
         implementation "net.minidev:json-smart:2.3"
     }
 }

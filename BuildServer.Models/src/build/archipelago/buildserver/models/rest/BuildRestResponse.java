@@ -1,13 +1,7 @@
 package build.archipelago.buildserver.models.rest;
 
-import build.archipelago.buildserver.models.ArchipelagoBuild;
-import build.archipelago.buildserver.models.BuildPackageDetails;
-import build.archipelago.buildserver.models.BuildStatus;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import build.archipelago.buildserver.models.*;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.List;

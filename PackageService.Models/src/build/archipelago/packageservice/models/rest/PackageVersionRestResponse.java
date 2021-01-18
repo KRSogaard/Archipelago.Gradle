@@ -1,11 +1,7 @@
 package build.archipelago.packageservice.models.rest;
 
 import build.archipelago.packageservice.models.PackageDetailsVersion;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -32,17 +28,17 @@ public class PackageVersionRestResponse {
 
     public PackageDetailsVersion toInternal() {
         return PackageDetailsVersion.builder()
-                .version(getVersion())
-                .latestBuildHash(getLatestBuildHash())
-                .latestBuildTime(Instant.ofEpochMilli(getLatestBuildTime()))
+                .version(this.getVersion())
+                .latestBuildHash(this.getLatestBuildHash())
+                .latestBuildTime(Instant.ofEpochMilli(this.getLatestBuildTime()))
                 .build();
     }
 
     public static PackageVersionRestResponse from(PackageDetailsVersion version) {
         return PackageVersionRestResponse.builder()
-            .version(version.getVersion())
-            .latestBuildHash(version.getLatestBuildHash())
-            .latestBuildTime(version.getLatestBuildTime().toEpochMilli())
-            .build();
+                .version(version.getVersion())
+                .latestBuildHash(version.getLatestBuildHash())
+                .latestBuildTime(version.getLatestBuildTime().toEpochMilli())
+                .build();
     }
 }

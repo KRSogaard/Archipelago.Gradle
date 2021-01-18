@@ -1,7 +1,6 @@
 package build.archipelago.common.github;
 
-import build.archipelago.common.github.github.OrgGitService;
-import build.archipelago.common.github.github.UserGitService;
+import build.archipelago.common.github.github.*;
 
 public class GitServiceFactory {
     public GitService getGitService(String accountType, String username, String accessToken) {

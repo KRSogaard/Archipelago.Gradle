@@ -1,8 +1,7 @@
 package build.archipelago.maui.common.contexts;
 
 import build.archipelago.maui.common.cache.PackageCacher;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.*;
 
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;

@@ -2,11 +2,7 @@ package build.archipelago.packageservice.models.rest;
 
 import build.archipelago.packageservice.models.PackageDetails;
 import com.google.common.collect.ImmutableList;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.List;
@@ -29,14 +25,14 @@ public class GetPackageRestResponse {
 
     public PackageDetails toInternal() {
         return PackageDetails.builder()
-                .name(getName())
-                .description(getDescription())
-                .gitCloneUrl(getGitCloneUrl())
-                .gitUrl(getGitUrl())
-                .gitRepoName(getGitRepoName())
-                .gitRepoFullName(getGitRepoFullName())
-                .created(Instant.ofEpochMilli(getCreated()))
-                .versions(getVersions().stream().map(PackageVersionRestResponse::toInternal)
+                .name(this.getName())
+                .description(this.getDescription())
+                .gitCloneUrl(this.getGitCloneUrl())
+                .gitUrl(this.getGitUrl())
+                .gitRepoName(this.getGitRepoName())
+                .gitRepoFullName(this.getGitRepoFullName())
+                .created(Instant.ofEpochMilli(this.getCreated()))
+                .versions(this.getVersions().stream().map(PackageVersionRestResponse::toInternal)
                         .collect(ImmutableList.toImmutableList()))
                 .build();
     }

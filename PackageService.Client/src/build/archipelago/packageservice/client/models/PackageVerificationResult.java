@@ -1,8 +1,7 @@
 package build.archipelago.packageservice.client.models;
 
 import com.google.common.collect.ImmutableList;
-import lombok.Builder;
-import lombok.Value;
+import lombok.*;
 
 @Builder
 @Value

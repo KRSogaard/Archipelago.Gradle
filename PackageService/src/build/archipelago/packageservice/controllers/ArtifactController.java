@@ -1,27 +1,15 @@
 package build.archipelago.packageservice.controllers;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.exceptions.PackageExistsException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.packageservice.core.delegates.getBuildArtifact.GetBuildArtifactDelegate;
-import build.archipelago.packageservice.core.delegates.getBuildArtifact.GetBuildArtifactResponse;
-import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.UploadBuildArtifactDelegate;
-import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.UploadBuildArtifactDelegateRequest;
+import build.archipelago.packageservice.core.delegates.getBuildArtifact.*;
+import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.*;
+import build.archipelago.packageservice.exceptions.*;
 import build.archipelago.packageservice.models.UploadPackageRestRequest;
-import build.archipelago.packageservice.models.rest.ArtifactUploadRestResponse;
-import build.archipelago.packageservice.models.rest.GetBuildArtifactRestResponse;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import build.archipelago.packageservice.models.rest.*;
+import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;

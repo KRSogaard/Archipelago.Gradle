@@ -1,11 +1,7 @@
 package build.archipelago.packageservice.models.rest;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Builder
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -25,6 +21,6 @@ public class ArchipelagoBuiltPackageRestResponse {
     }
 
     public ArchipelagoBuiltPackage toInternal() {
-        return new ArchipelagoBuiltPackage(getName(), getVersion(), getHash());
+        return new ArchipelagoBuiltPackage(this.getName(), this.getVersion(), this.getHash());
     }
 }

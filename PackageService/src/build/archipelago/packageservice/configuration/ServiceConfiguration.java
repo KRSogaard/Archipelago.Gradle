@@ -2,21 +2,15 @@ package build.archipelago.packageservice.configuration;
 
 import build.archipelago.account.common.AccountService;
 import build.archipelago.common.github.GitServiceFactory;
-import build.archipelago.packageservice.core.data.DynamoDBPackageConfig;
-import build.archipelago.packageservice.core.data.DynamoDBPackageData;
-import build.archipelago.packageservice.core.data.PackageData;
-import build.archipelago.packageservice.core.storage.PackageStorage;
-import build.archipelago.packageservice.core.storage.S3PackageStorage;
+import build.archipelago.packageservice.core.data.*;
+import build.archipelago.packageservice.core.storage.*;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.s3.AmazonS3;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.*;
 
 @Configuration
 @Slf4j
@@ -26,7 +20,7 @@ public class ServiceConfiguration {
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public PackageStorage packageStorage(AmazonS3 amazonS3,
                                          @Value("${s3.packages}") String bucketName) {
-        log.info("Creating S3PackageStorage using bucket \"{}\"",
+        log.info("Creating S3PackageStorage using bucket '{}'",
                 bucketName);
         return new S3PackageStorage(amazonS3, bucketName);
     }
@@ -51,7 +45,7 @@ public class ServiceConfiguration {
                 .packagesBuildsGitTableName(packageBuildsGitTable)
                 .build();
 
-        log.info("Creating DynamoDBPackageData with config \"{}\"",
+        log.info("Creating DynamoDBPackageData with config '{}'",
                 config.toString());
         return new DynamoDBPackageData(dynamoDB, config);
     }

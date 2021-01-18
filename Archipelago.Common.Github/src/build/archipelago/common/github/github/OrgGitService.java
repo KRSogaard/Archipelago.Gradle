@@ -2,23 +2,16 @@ package build.archipelago.common.github.github;
 
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.github.GitService;
-import build.archipelago.common.github.exceptions.GitRepoExistsException;
-import build.archipelago.common.github.exceptions.RepoNotFoundException;
+import build.archipelago.common.github.exceptions.*;
 import build.archipelago.common.github.models.GitRepo;
 import net.minidev.json.JSONObject;
-import net.minidev.json.parser.JSONParser;
-import net.minidev.json.parser.ParseException;
+import net.minidev.json.parser.*;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.net.*;
+import java.net.http.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Base64;
-import java.util.Optional;
+import java.nio.file.*;
+import java.util.*;
 
 // https://docs.github.com/en/free-pro-team@latest/rest/reference/permissions-required-for-github-apps
 public class OrgGitService implements GitService {
@@ -64,7 +57,7 @@ public class OrgGitService implements GitService {
     public boolean hasRep(String name) throws UnauthorizedException {
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getGithubRequest("/repos/" + username + "/" + name)
+            HttpRequest httpRequest = this.getGithubRequest("/repos/" + username + "/" + name)
                     .GET()
                     .build();
 
@@ -90,7 +83,7 @@ public class OrgGitService implements GitService {
     public GitRepo getRepo(String name) throws RepoNotFoundException, UnauthorizedException {
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getGithubRequest("/repos/" + username + "/" + name)
+            HttpRequest httpRequest = this.getGithubRequest("/repos/" + username + "/" + name)
                     .GET()
                     .build();
 
@@ -101,7 +94,7 @@ public class OrgGitService implements GitService {
 
         switch (httpResponse.statusCode()) {
             case 200:
-                return parseToGitRepo(httpResponse.body());
+                return this.parseToGitRepo(httpResponse.body());
             case 404:
                 throw new RepoNotFoundException(name);
             case 401:
@@ -121,7 +114,7 @@ public class OrgGitService implements GitService {
             jsonObject.put("description", description);
             jsonObject.put("private", privateRepo);
 
-            HttpRequest httpRequest = getGithubRequest("/orgs/" + username + "/repos")
+            HttpRequest httpRequest = this.getGithubRequest("/orgs/" + username + "/repos")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonObject.toJSONString()))
                     .build();
 
@@ -133,7 +126,7 @@ public class OrgGitService implements GitService {
         switch (httpResponse.statusCode()) {
             case 200:
             case 201:
-                return parseToGitRepo(httpResponse.body());
+                return this.parseToGitRepo(httpResponse.body());
             case 422:
                 throw new GitRepoExistsException(name);
             case 401:
@@ -150,7 +143,7 @@ public class OrgGitService implements GitService {
         try {
             String url = String.format("https://github.com/%s/archive/%s.zip", gitRepoFullName, commit);
 
-            HttpRequest httpRequest = getGithubRequest(url, false)
+            HttpRequest httpRequest = this.getGithubRequest(url, false)
                     .GET().build();
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofFile(filePath));
         } catch (Exception e) {
@@ -164,7 +157,7 @@ public class OrgGitService implements GitService {
                 Optional<String> location = response.headers().firstValue("location");
                 if (location.isPresent()) {
                     try {
-                        HttpRequest httpRequest = getGithubRequest(location.get(), false)
+                        HttpRequest httpRequest = this.getGithubRequest(location.get(), false)
                                 .GET().build();
                         response = client.send(httpRequest, HttpResponse.BodyHandlers.ofFile(filePath));
                         if (response.statusCode() != 200) {
@@ -219,8 +212,9 @@ public class OrgGitService implements GitService {
 //    }
 
     private HttpRequest.Builder getGithubRequest(String url) throws URISyntaxException {
-        return getGithubRequest(url, true);
+        return this.getGithubRequest(url, true);
     }
+
     private HttpRequest.Builder getGithubRequest(String url, boolean prepend) throws URISyntaxException {
         String auth = username + ":" + accessToken;
         String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));

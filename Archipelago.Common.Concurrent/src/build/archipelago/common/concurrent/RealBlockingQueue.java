@@ -1,12 +1,11 @@
 package build.archipelago.common.concurrent;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * A blocking queue implementation that turns also the offer() method
  * calls into put() or offer(e, timeout) calls.
- *
+ * <p>
  * The main purpose is to easily turn a ThreadPoolExecutor into a real
  * blocking executor that blocks on the submit(Runnable) calls (if all the
  * workers are busy and the queue is full) instead of throwing a
@@ -28,10 +27,9 @@ public class RealBlockingQueue<E> extends ArrayBlockingQueue<E> {
     }
 
     /**
-     *
-     * @param capacity The capacity of the queue.
-     * @param offerTimeout If it's less than or equal to 0 the offer() method call will block without a timeout,
-     *                     otherwise the timeout will apply.
+     * @param capacity         The capacity of the queue.
+     * @param offerTimeout     If it's less than or equal to 0 the offer() method call will block without a timeout,
+     *                         otherwise the timeout will apply.
      * @param offerTimeoutUnit Units of the timeout specified.
      */
     public RealBlockingQueue(int capacity, int offerTimeout, TimeUnit offerTimeoutUnit) {
@@ -44,10 +42,10 @@ public class RealBlockingQueue<E> extends ArrayBlockingQueue<E> {
     public boolean offer(E e) {
         // turn offer() and add() into blocking calls (unless interrupted)
         try {
-            if (hasTimeoutOnOffer()) {
-                return offer(e, offerTimeout, offerTimeoutUnit);
+            if (this.hasTimeoutOnOffer()) {
+                return this.offer(e, offerTimeout, offerTimeoutUnit);
             } else {
-                put(e);
+                this.put(e);
                 return true;
             }
         } catch (InterruptedException ie) {

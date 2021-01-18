@@ -1,10 +1,8 @@
 package build.archipelago.packageservice.client;
 
-import build.archipelago.common.exceptions.PackageExistsException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.exceptions.UnauthorizedException;
-import org.junit.Assert;
-import org.junit.Test;
+import build.archipelago.packageservice.exceptions.*;
+import org.junit.*;
 
 import java.io.IOException;
 

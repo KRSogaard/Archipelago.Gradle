@@ -1,33 +1,25 @@
 package build.archipelago.harbor.client;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.clients.rest.OAuthRestClient;
-import build.archipelago.common.exceptions.PackageExistsException;
-import build.archipelago.common.exceptions.PackageNotFoundException;
 import build.archipelago.common.exceptions.UnauthorizedException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.versionset.Revision;
-import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.common.versionset.VersionSetRevision;
-import build.archipelago.packageservice.client.models.CreatePackageRequest;
-import build.archipelago.packageservice.models.PackageDetails;
-import build.archipelago.packageservice.models.rest.CreatePackageRestRequest;
-import build.archipelago.packageservice.models.rest.GetPackageRestResponse;
-import build.archipelago.versionsetservice.client.rest.models.RestVersionSetResponse;
-import build.archipelago.versionsetservice.client.rest.models.RestVersionSetRevisionResponse;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import build.archipelago.common.rest.models.errors.ProblemDetailRestResponse;
+import build.archipelago.common.versionset.*;
+import build.archipelago.harbor.client.models.CreatePackageRequest;
+import build.archipelago.packageservice.client.PackageExceptionHandler;
+import build.archipelago.packageservice.exceptions.*;
+import build.archipelago.packageservice.models.*;
+import build.archipelago.packageservice.models.rest.*;
+import build.archipelago.versionsetservice.client.VersionSetExceptionHandler;
+import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.versionsetservice.models.rest.*;
+import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
-import java.util.stream.Collectors;
+import java.net.URI;
+import java.net.http.*;
+import java.nio.file.*;
 
 @Slf4j
 public class RestHarborClient extends OAuthRestClient implements HarborClient {
@@ -42,48 +34,37 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
     public VersionSet getVersionSet(String versionSetName) throws VersionSetDoseNotExistsException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
 
-        RestVersionSetResponse response;
+        VersionSetRestResponse response;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/version-set/" + versionSetName)
+            HttpRequest httpRequest = this.getOAuthRequest("/version-set/" + versionSetName)
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call harbor service to get a version set '{}'", versionSetName);
             throw new RuntimeException(e);
         }
         switch (httpResponse.statusCode()) {
             case 200: // Ok
-                try {
-                    response = objectMapper.readValue(httpResponse.body(), RestVersionSetResponse.class);
-                } catch (IOException e) {
-                    log.error(String.format("Failed to parse the string \"%s\" as a RestVersionSetResponse object", httpResponse.body()), e);
-                    throw new RuntimeException("Failed to parse RestVersionSetResponse", e);
-                }
+                response = this.parseOrThrow(httpResponse.body(), VersionSetRestResponse.class);
                 break;
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Harbor service");
                 throw new UnauthorizedException();
-            case 404: // Not found
-                throw new VersionSetDoseNotExistsException(versionSetName);
+            case 404:
+                log.warn("Got Not Found (404) response from Harbor service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
             default:
-                throw new RuntimeException("Was unable to get the version set revision with status code " + httpResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
 
-        return VersionSet.builder()
-                .name(response.getName())
-                .created(Instant.ofEpochMilli(response.getCreated()))
-                .parent(response.getParent())
-                .targets(response.getTargets().stream().map(ArchipelagoPackage::parse).collect(Collectors.toList()))
-                .revisions(response.getRevisions().stream().map(x ->
-                        Revision.builder()
-                                .revisionId(x.getRevisionId())
-                                .created(Instant.ofEpochMilli(x.getCreated()))
-                                .build()).collect(Collectors.toList()))
-                .latestRevision(response.getLatestRevision())
-                .latestRevisionCreated(response.getLatestRevisionCreated() != null ?
-                        Instant.ofEpochMilli(response.getLatestRevisionCreated()) :
-                        null)
-                .build();
+        return response.toInternal();
     }
 
     @Override
@@ -91,38 +72,38 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(revisionId), "Version set revision is required");
 
-        RestVersionSetRevisionResponse response;
+        VersionSetRevisionRestResponse response;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/version-set/" + versionSetName + "/" + revisionId)
+            HttpRequest httpRequest = this.getOAuthRequest("/version-set/" + versionSetName + "/" + revisionId)
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
         } catch (Exception e) {
+            log.error("Got unknown error while trying to call harbor service to get a version set '{}' revision '{}'", versionSetName, revisionId);
             throw new RuntimeException(e);
         }
 
         switch (httpResponse.statusCode()) {
             case 200: // Ok
-                try {
-                    response = objectMapper.readValue(httpResponse.body(), RestVersionSetRevisionResponse.class);
-                } catch (IOException e) {
-                    log.error(String.format("Failed to parse the string \"%s\" as a RestVersionSetRevisionResponse object", httpResponse.body()), e);
-                    throw new RuntimeException("Failed to parse RestVersionSetRevisionResponse", e);
-                }
+                response = this.parseOrThrow(httpResponse.body(), VersionSetRevisionRestResponse.class);
                 break;
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Harbor service");
                 throw new UnauthorizedException();
-            case 404: // Not found
-                throw new VersionSetDoseNotExistsException(versionSetName);
+            case 404:
+                log.warn("Got Not Found (404) response from Harbor service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
             default:
                 throw new RuntimeException("Was unable to create the version set revision with status code " + httpResponse.statusCode());
         }
 
-        return VersionSetRevision.builder()
-                .created(Instant.ofEpochMilli(response.getCreated()))
-                .packages(response.getPackages().stream().map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList()))
-                .build();
+        return response.toInternal();
     }
 
     @Override
@@ -135,31 +116,75 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
                 String.format("%s.zip", java.util.UUID.randomUUID().toString()));
 
         if (!Files.isDirectory(directory)) {
-            log.info("Creating directory \"%s\"", directory.toString());
+            log.info("Creating directory '{}'", directory.toString());
             try {
                 Files.createDirectories(directory);
             } catch (IOException e) {
+                log.error("Got unknown error when trying to create the directory '" + directory.toString() + "'", e);
                 throw new RuntimeException(e);
             }
         }
-        HttpResponse<Path> restResponse;
+
+        GetBuildArtifactResponse response = this.getBuildArtifact(pkg);
+
+        log.debug("Got a signed url from Harbor service to download the artifact for '{}', url '{}'",
+                pkg.getBuiltPackageName(), response.getUrl());
+        HttpResponse<Path> restPathResponse;
         try {
-            HttpRequest request = getOAuthRequest("/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash() + "/artifact")
+            HttpRequest request = HttpRequest.newBuilder(new URI(response.getUrl()))
                     .GET()
                     .build();
-            restResponse = client.send(request, HttpResponse.BodyHandlers.ofFile(filePath));
+            restPathResponse = client.send(request, HttpResponse.BodyHandlers.ofFile(filePath));
         } catch (Exception e) {
+            log.error("Got an unknown error when we tried to download a package artifact for '{}' from S3", pkg.getBuiltPackageName());
             throw new RuntimeException(e);
         }
-        switch (restResponse.statusCode()) {
-            case 401:
-                throw new UnauthorizedException();
-            case 404: // Not found
-                throw new PackageNotFoundException(pkg);
+        switch (restPathResponse.statusCode()) {
             case 200: // Ok
-                return restResponse.body();
+                return restPathResponse.body();
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from S3");
+                throw new UnauthorizedException();
+            case 404:
+                throw new PackageNotFoundException(pkg);
             default:
-                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+                log.error("Unknown response from S3 when we tried to fetch the file, status code " + restPathResponse.statusCode());
+                throw new RuntimeException("Unknown response from S3 when we tried to fetch the file, status code " + restPathResponse.statusCode());
+        }
+    }
+
+    @Override
+    public GetBuildArtifactResponse getBuildArtifact(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
+        GetBuildArtifactRestResponse restResponse;
+        HttpResponse<String> httpResponse;
+        try {
+            HttpRequest request = this.getOAuthRequest("/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash() + "/artifact")
+                    .GET()
+                    .build();
+            httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call Harbor service to get download url for artifact '{}'",
+                    pkg.getBuiltPackageName());
+            throw new RuntimeException(e);
+        }
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                restResponse = this.parseOrThrow(httpResponse.body(), GetBuildArtifactRestResponse.class);
+                return restResponse.toInternal();
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Harbor service");
+                throw new UnauthorizedException();
+            case 404:
+                log.warn("Got Not Found (404) response from Harbor service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
     }
 
@@ -174,26 +199,30 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
                 .description(request.getDescription())
                 .build();
 
-        HttpResponse<String> response;
+        HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = getOAuthRequest("/package")
+            HttpRequest httpRequest = this.getOAuthRequest("/package")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .header("accept", "application/json")
                     .build();
-            response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        switch (response.statusCode()) {
-            case 401:
-                throw new UnauthorizedException();
-            case 409: // Conflict
-                throw new PackageExistsException(request.getName());
+        switch (httpResponse.statusCode()) {
             case 200: // Ok
                 return;
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Harbor service");
+                throw new UnauthorizedException();
+            case 409:
+                log.warn("Got Conflict (409) response from Harbor service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (PackageExistsException) PackageExceptionHandler.createException(problem);
             default:
-                throw new RuntimeException("Unknown response " + response.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
     }
 
@@ -201,25 +230,29 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
     public String getConfig(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
         Preconditions.checkNotNull(pkg);
 
-        HttpResponse<String> restResponse;
+        HttpResponse<String> httpResponse;
         try {
-            HttpRequest request = getOAuthRequest( "/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash() + "/config")
+            HttpRequest request = this.getOAuthRequest("/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash() + "/config")
                     .GET()
                     .build();
-            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        switch (restResponse.statusCode()) {
+        switch (httpResponse.statusCode()) {
             case 200:
-                return restResponse.body();
+                return httpResponse.body();
             case 401:
+            case 403:
+                log.error("Got unauthorized response from Harbor service");
                 throw new UnauthorizedException();
-            case 404: // Conflict
-                throw new PackageNotFoundException(pkg);
+            case 404:
+                log.warn("Got Not Found (404) response from Harbor service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
             default:
-                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
     }
 
@@ -228,32 +261,39 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
         GetPackageRestResponse response;
-        HttpResponse<String> restResponse;
+        HttpResponse<String> httpResponse;
         try {
-            HttpRequest request = getOAuthRequest("/package/" + name)
+            HttpRequest request = this.getOAuthRequest("/package/" + name)
                     .GET()
                     .build();
 
-            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        switch (restResponse.statusCode()) {
-            case 401:
-                throw new UnauthorizedException();
-            case 404: // Not found
-                throw new PackageNotFoundException(name);
+        switch (httpResponse.statusCode()) {
             case 200: // Ok
-                try {
-                    response = objectMapper.readValue(restResponse.body(), GetPackageRestResponse.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                response = this.parseOrThrow(httpResponse.body(), GetPackageRestResponse.class);
                 break;
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Harbor service");
+                throw new UnauthorizedException();
+            case 404:
+                log.warn("Got Not Found (404) response from Harbor service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
             default:
-                throw new RuntimeException("Unknown response " + restResponse.statusCode());
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
 
         return response.toInternal();
+    }
+
+    private RuntimeException logAndReturnExceptionForUnknownStatusCode(HttpResponse<String> restResponse) {
+        log.error("Unknown response from Harbor service status code " + restResponse.statusCode() +
+                " body: " + restResponse.body());
+        return new RuntimeException("Unknown response from Harbor service status code " + restResponse.statusCode() +
+                " body: " + restResponse.body());
     }
 }

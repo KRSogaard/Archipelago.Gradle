@@ -1,11 +1,7 @@
 package build.archipelago.packageservice.models.rest;
 
 import build.archipelago.packageservice.models.BuiltPackageDetails;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -32,11 +28,11 @@ public class GetPackageBuildRestResponse {
 
     public BuiltPackageDetails toInternal() {
         return BuiltPackageDetails.builder()
-                .hash(getHash())
-                .created(Instant.ofEpochMilli(getCreated()))
-                .config(getConfig())
-                .gitCommit(getGitCommit())
-                .gitBranch(getGitBranch())
+                .hash(this.getHash())
+                .created(Instant.ofEpochMilli(this.getCreated()))
+                .config(this.getConfig())
+                .gitCommit(this.getGitCommit())
+                .gitBranch(this.getGitBranch())
                 .build();
     }
 }

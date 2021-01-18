@@ -33,9 +33,9 @@ Maui.Common/build/
 PackageService/build/
 PackageService.Models/build/
 Archipelago.Common.Github/build/
-VersionSetService.Client.Models/build/
 BuildServer.Models/build/
 BuildServer.API.Client/build/
+Archipelago.Common.REST/build/
 /build/
 
 # Ignore Gradle GUI config

@@ -2,15 +2,11 @@ package build.archipelago.maui.common.models;
 
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.maui.common.serializer.BuildConfigSerializer;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Data
 @Builder

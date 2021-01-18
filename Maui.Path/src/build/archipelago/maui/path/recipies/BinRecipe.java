@@ -5,8 +5,7 @@ import build.archipelago.common.exceptions.PackageNotBuiltException;
 import build.archipelago.maui.common.contexts.WorkspaceContext;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.List;
 
 public class BinRecipe implements Recipe {

@@ -1,9 +1,7 @@
 package build.archipelago.maui;
 
 import build.archipelago.maui.configuration.ApplicationModule;
-import com.google.inject.ConfigurationException;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import com.google.inject.*;
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 

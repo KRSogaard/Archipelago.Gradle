@@ -1,11 +1,10 @@
 package build.archipelago.packageservice.models;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.time.Instant;
 
-@Data
+@Value
 @Builder
 public class PackageDetailsVersion {
     private String version;

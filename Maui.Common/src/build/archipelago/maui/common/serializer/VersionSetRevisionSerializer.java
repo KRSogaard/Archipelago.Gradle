@@ -11,11 +11,9 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -26,12 +24,13 @@ public class VersionSetRevisionSerializer {
     private long created;
     private List<String> packages;
 
-    public VersionSetRevisionSerializer() {}
+    public VersionSetRevisionSerializer() {
+    }
 
     private static VersionSetRevisionSerializer convert(VersionSetRevision vsr) {
         Preconditions.checkNotNull(vsr);
 
-        List<String> packages = new ArrayList<String>();
+        List<String> packages = new ArrayList<>();
         for (ArchipelagoBuiltPackage pkg : vsr.getPackages()) {
             packages.add(pkg.getBuiltPackageName());
         }
@@ -62,7 +61,7 @@ public class VersionSetRevisionSerializer {
 
         Path cacheFile = tempDir.resolve(WorkspaceConstants.VERSION_SET_REVISION_CACHE);
         if (Files.exists(cacheFile)) {
-            log.warn("Version-set revision file \"{}\" already exists, we will override it", cacheFile.toString());
+            log.warn("Version-set revision file '{}' already exists, we will override it", cacheFile.toString());
         }
 
         VersionSetRevisionSerializer vsrs = VersionSetRevisionSerializer.convert(revision);

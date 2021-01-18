@@ -1,77 +1,46 @@
 package build.archipelago.buildserver.builder.builder;
 
 import build.archipelago.account.common.AccountService;
-import build.archipelago.account.common.exceptions.AccountNotFoundException;
-import build.archipelago.account.common.exceptions.GitDetailsNotFound;
-import build.archipelago.account.common.models.AccountDetails;
-import build.archipelago.account.common.models.GitDetails;
+import build.archipelago.account.common.exceptions.*;
+import build.archipelago.account.common.models.*;
 import build.archipelago.buildserver.builder.StageLog;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.builder.git.GitServiceSourceProvider;
 import build.archipelago.buildserver.builder.maui.Maui;
-import build.archipelago.buildserver.builder.output.S3OutputWrapper;
-import build.archipelago.buildserver.builder.output.S3OutputWrapperFactory;
+import build.archipelago.buildserver.builder.output.*;
 import build.archipelago.buildserver.common.services.build.BuildService;
 import build.archipelago.buildserver.common.services.build.exceptions.BuildRequestNotFoundException;
-import build.archipelago.buildserver.common.services.build.models.BuildQueueMessage;
-import build.archipelago.buildserver.common.services.build.models.PackageBuild;
-import build.archipelago.buildserver.models.ArchipelagoBuild;
-import build.archipelago.buildserver.models.BuildPackageDetails;
-import build.archipelago.buildserver.models.BuildStage;
-import build.archipelago.buildserver.models.BuildStatus;
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.buildserver.common.services.build.models.*;
+import build.archipelago.buildserver.models.*;
+import build.archipelago.common.*;
 import build.archipelago.common.concurrent.BlockingExecutorServiceFactory;
-import build.archipelago.common.exceptions.PackageNotFoundException;
-import build.archipelago.common.exceptions.PackageNotLocalException;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.exceptions.VersionSetNotSyncedException;
-import build.archipelago.common.github.GitService;
-import build.archipelago.common.github.GitServiceFactory;
+import build.archipelago.common.exceptions.*;
+import build.archipelago.common.github.*;
 import build.archipelago.common.github.exceptions.RepoNotFoundException;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.harbor.client.HarborClient;
-import build.archipelago.maui.common.PackageSourceProvider;
-import build.archipelago.maui.common.WorkspaceConstants;
+import build.archipelago.maui.common.*;
 import build.archipelago.maui.common.contexts.WorkspaceContext;
 import build.archipelago.maui.common.models.BuildConfig;
 import build.archipelago.maui.core.output.ConsoleOutputWrapper;
-import build.archipelago.maui.graph.ArchipelagoDependencyGraph;
-import build.archipelago.maui.graph.ArchipelagoPackageEdge;
-import build.archipelago.maui.graph.DependencyGraphGenerator;
-import build.archipelago.maui.graph.DependencyTransversalType;
+import build.archipelago.maui.graph.*;
 import build.archipelago.maui.path.MauiPath;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.UploadPackageRequest;
-import build.archipelago.packageservice.models.BuiltPackageDetails;
-import build.archipelago.packageservice.models.PackageDetails;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
+import build.archipelago.packageservice.models.*;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import com.wewelo.sqsconsumer.exceptions.PermanentMessageProcessingException;
-import com.wewelo.sqsconsumer.exceptions.TemporaryMessageProcessingException;
+import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
+import com.wewelo.sqsconsumer.exceptions.*;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
-import org.jgrapht.alg.util.Pair;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.*;
+import java.nio.file.*;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.*;
 
 @Slf4j
 public class VersionSetBuilder {
@@ -157,7 +126,7 @@ public class VersionSetBuilder {
                 throw new PermanentMessageProcessingException("No git settings was found for the account", gitDetailsNotFound);
             }
 
-            buildRoot = createBuildRoot(buildRequest.getAccountId() + "-" + Instant.now().toEpochMilli() + "-" + buildRequest.getBuildId());
+            buildRoot = this.createBuildRoot(buildRequest.getAccountId() + "-" + Instant.now().toEpochMilli() + "-" + buildRequest.getBuildId());
             if (!gitDetails.getCodeSource().toLowerCase().startsWith("github")) {
                 log.error("Unknown code source {}", gitDetails.getCodeSource());
                 throw new PermanentMessageProcessingException("Only github is supported at this time");
@@ -172,9 +141,9 @@ public class VersionSetBuilder {
                 throw new PermanentMessageProcessingException("Version-set dose not exists", e);
             }
 
-            stage_prepare();
-            stage_packages();
-            stage_publish();
+            this.stage_prepare();
+            this.stage_packages();
+            this.stage_publish();
         } catch (FailBuildException exp) {
             log.warn("The build was failed, will not retry");
         } catch (RuntimeException exp) {
@@ -201,23 +170,23 @@ public class VersionSetBuilder {
         try {
             stageLog.addInfo("Build preparations started");
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PREPARE, BuildStatus.IN_PROGRESS);
-            createWorkspace(request.getVersionSet());
+            this.createWorkspace(request.getVersionSet());
             wsContext = maui.getWorkspaceContext();
-            syncWorkspace();
+            this.syncWorkspace();
             // We need to check out the packages before we create the graphs, the new build may have changed the graph
             // they may even have change the version number
-            checkOutPackagedToBuild();
-            generateGraphs();
+            this.checkOutPackagedToBuild();
+            this.generateGraphs();
             directPackages = wsContext.getLocalArchipelagoPackages();
 
-            checkoutAffectedPackages(directPackages);
+            this.checkoutAffectedPackages(directPackages);
             // Recreate the workspace context with the newly checkout packages
             wsContext.load();
 
-            setBuildPackages(directPackages, wsContext.getLocalArchipelagoPackages());
-            generateGraphs();
+            this.setBuildPackages(directPackages, wsContext.getLocalArchipelagoPackages());
+            this.generateGraphs();
 
-            Map<ArchipelagoPackage, Boolean> lookupMap = buildLookUpMap(wsContext.getLocalArchipelagoPackages());
+            Map<ArchipelagoPackage, Boolean> lookupMap = this.buildLookUpMap(wsContext.getLocalArchipelagoPackages());
             for (ArchipelagoPackage pkg : wsContext.getLocalArchipelagoPackages()) {
                 BuildConfig config = wsContext.getConfig(pkg);
                 List<ArchipelagoPackage> dependencies = config.getAllDependencies().stream()
@@ -262,9 +231,9 @@ public class VersionSetBuilder {
         List<PackageBuild> pkgs = new ArrayList<>();
         for (ArchipelagoPackage pkg : localArchipelagoPackages) {
             pkgs.add(PackageBuild.builder()
-                .pkg(pkg)
-                .direct(directMap.containsKey(pkg))
-                .build());
+                    .pkg(pkg)
+                    .direct(directMap.containsKey(pkg))
+                    .build());
         }
         buildService.setBuildPackages(buildRequest.getBuildId(), pkgs);
     }
@@ -274,16 +243,16 @@ public class VersionSetBuilder {
         stageLog.addInfo("Starting package builds");
         try {
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.IN_PROGRESS);
-            ArchipelagoPackage pkg = getNextPackageToBuild();
+            ArchipelagoPackage pkg = this.getNextPackageToBuild();
             while (pkg != null) {
                 if (failedBuild) {
                     break;
                 }
                 log.info("Building " + pkg);
                 stageLog.addInfo("Starting build of %s", pkg.toString());
-                buildPackage(pkg);
+                this.buildPackage(pkg);
                 stageLog.addInfo("Finished build of %s", pkg.toString());
-                pkg = getNextPackageToBuild();
+                pkg = this.getNextPackageToBuild();
             }
             // Currently the build Package is in thread, but later it will be multi threaded,
             // therefore we may get to here even though we failed the build.
@@ -336,7 +305,7 @@ public class VersionSetBuilder {
                 String gitCommit = gitMap.get(builtPackage);
                 String buildHash = null;
 
-                ArchipelagoBuiltPackage previousBuilt = getPreviousBuild(builtPackage.getName(), gitCommit);
+                ArchipelagoBuiltPackage previousBuilt = this.getPreviousBuild(builtPackage.getName(), gitCommit);
                 if (previousBuilt != null) {
                     buildHash = previousBuilt.getHash();
                 }
@@ -352,12 +321,12 @@ public class VersionSetBuilder {
                             throw new RuntimeException("Where not able to find the package dir for " + builtPackage, e);
                         }
 
-                        Path zip = prepareBuildZip(builtPackage);
+                        Path zip = this.prepareBuildZip(builtPackage);
                         buildHash = packageServiceClient.uploadBuiltArtifact(accountDetails.getId(), UploadPackageRequest.builder()
-                                .config(configContent)
-                                .pkg(builtPackage)
-                                .gitCommit(gitCommit)
-                                .build(),
+                                        .config(configContent)
+                                        .pkg(builtPackage)
+                                        .gitCommit(gitCommit)
+                                        .build(),
                                 zip);
                     } catch (PackageNotFoundException e) {
                         throw new RuntimeException(String.format("The package %s no longer exists, was it deleted while building?", builtPackage), e);
@@ -377,7 +346,7 @@ public class VersionSetBuilder {
             }
             newRevision.addAll(newBuildPackage);
 
-            if (!doseRevisionHaveChanges(wsContext.getVersionSetRevision().getPackages(), newRevision)) {
+            if (!this.doseRevisionHaveChanges(wsContext.getVersionSetRevision().getPackages(), newRevision)) {
                 log.warn("There are no changes to the version set");
                 stageLog.addError("There are no change to the version set, can't publish");
                 throw new FailBuildException();
@@ -410,7 +379,7 @@ public class VersionSetBuilder {
         }
 
         Map<ArchipelagoBuiltPackage, Boolean> map = new HashMap<>();
-        for(ArchipelagoBuiltPackage pkg : previous) {
+        for (ArchipelagoBuiltPackage pkg : previous) {
             map.put(pkg, true);
         }
         for (ArchipelagoBuiltPackage pkg : newRevision) {
@@ -425,7 +394,7 @@ public class VersionSetBuilder {
         try {
             return packageServiceClient.getPackageByGit(accountDetails.getId(), name, commit);
         } catch (PackageNotFoundException e) {
-            log.debug("This is a new build of package \"{}\" for git commit \"{}\"",
+            log.debug("This is a new build of package '{}' for git commit '{}'",
                     name, commit);
         }
         return null;
@@ -441,7 +410,7 @@ public class VersionSetBuilder {
             Path zipPath = zipFolder.resolve(
                     builtPackage.getName() + "-" + builtPackage.getVersion() + "-" +
                             UUID.randomUUID().toString().substring(0, 6) + ".zip");
-            ZipFile zip =new ZipFile(zipPath.toFile());
+            ZipFile zip = new ZipFile(zipPath.toFile());
             try (Stream<Path> walk = Files.walk(buildPath, 1, FileVisitOption.FOLLOW_LINKS)) {
                 List<File> files = walk.sorted(Comparator.reverseOrder())
                         .filter(p -> !p.equals(buildPath))
@@ -480,17 +449,18 @@ public class VersionSetBuilder {
 
     private synchronized ArchipelagoPackage getNextPackageToBuild() {
         // TODO: Detect where a dependency is not satisfied and never will
-        while(buildQueue.size() > 0 && !failedBuild) {
+        while (buildQueue.size() > 0 && !failedBuild) {
             ArchipelagoPackage pkg = buildQueue.poll();
             if (pkg == null) {
                 return null;
             }
-            if (isAllDependenciesBuilt(pkg)) {
+            if (this.isAllDependenciesBuilt(pkg)) {
                 return pkg;
             }
         }
         return null;
     }
+
     private boolean isAllDependenciesBuilt(ArchipelagoPackage pkg) {
         List<ArchipelagoPackage> dependencies = buildDependicies.get(pkg);
         for (ArchipelagoPackage d : dependencies) {
@@ -503,11 +473,11 @@ public class VersionSetBuilder {
 
     private void checkoutAffectedPackages(List<ArchipelagoPackage> getBuildPackages)
             throws PackageNotFoundException, RepoNotFoundException {
-        List<ArchipelagoPackage> affectedPackages = findPackageAffectedByChange();
-        for(ArchipelagoPackage pkg : affectedPackages.stream()
+        List<ArchipelagoPackage> affectedPackages = this.findPackageAffectedByChange();
+        for (ArchipelagoPackage pkg : affectedPackages.stream()
                 .filter(p -> getBuildPackages.stream().noneMatch(bp -> bp.equals(p)))
                 .collect(Collectors.toList())) {
-            ArchipelagoBuiltPackage builtPackage = getBuiltPackageFromRevision(pkg);
+            ArchipelagoBuiltPackage builtPackage = this.getBuiltPackageFromRevision(pkg);
             if (builtPackage == null) {
                 throw new RuntimeException("Affected package " + pkg + " was not in the version set revision");
             }
@@ -519,7 +489,7 @@ public class VersionSetBuilder {
                     accountDetails.getId(), builtPackage.getName());
             response = packageServiceClient.getPackageBuild(accountDetails.getId(), builtPackage);
 
-            checkOutPackage(packageDetails, response.getGitCommit());
+            this.checkOutPackage(packageDetails, response.getGitCommit());
         }
     }
 
@@ -542,7 +512,7 @@ public class VersionSetBuilder {
     private void checkOutPackagedToBuild() throws PackageNotFoundException, RepoNotFoundException {
         for (BuildPackageDetails pkg : request.getBuildPackages()) {
             PackageDetails packageDetails = packageServiceClient.getPackage(request.getAccountId(), pkg.getPackageName());
-            checkOutPackage(packageDetails, pkg.getCommit());
+            this.checkOutPackage(packageDetails, pkg.getCommit());
         }
     }
 
@@ -555,7 +525,7 @@ public class VersionSetBuilder {
             throw new RuntimeException(e);
         }
 
-        Path packagePath = findPackageDir(packageDetails.getName());
+        Path packagePath = this.findPackageDir(packageDetails.getName());
         if (packagePath == null) {
             throw new RuntimeException("Failed to find package directory for package: " + packageDetails.getName());
         }
@@ -582,7 +552,7 @@ public class VersionSetBuilder {
 
     private void generateGraphs() {
         for (ArchipelagoPackage target : vs.getTargets()) {
-            graphs.put(target, generateGraph(wsContext, target));
+            graphs.put(target, this.generateGraph(wsContext, target));
         }
     }
 
@@ -591,8 +561,8 @@ public class VersionSetBuilder {
         for (ArchipelagoPackage target : vs.getTargets()) {
             // We can use getLocalArchipelagoPackages as we at this point only have checked out the packages with changes
             for (ArchipelagoPackage changedPackage : wsContext.getLocalArchipelagoPackages()) {
-                if (isPackageInGraph(changedPackage, graphs.get(target))) {
-                    fillMapWithAffectedPackage(changedPackage, graphs.get(target), map);
+                if (this.isPackageInGraph(changedPackage, graphs.get(target))) {
+                    this.fillMapWithAffectedPackage(changedPackage, graphs.get(target), map);
                 }
             }
         }
@@ -605,10 +575,11 @@ public class VersionSetBuilder {
             String key = p.getNameVersion().toLowerCase();
             if (!map.containsKey(key)) {
                 map.put(key, p);
-                fillMapWithAffectedPackage(p, graph, map);
+                this.fillMapWithAffectedPackage(p, graph, map);
             }
         });
     }
+
     private boolean isPackageInGraph(ArchipelagoPackage pkg, ArchipelagoDependencyGraph graph) {
         return graph.vertexSet().stream().anyMatch(v -> v.equals(pkg));
     }

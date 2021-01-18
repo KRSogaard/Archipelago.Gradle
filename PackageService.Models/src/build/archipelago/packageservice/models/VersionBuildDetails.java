@@ -1,7 +1,6 @@
 package build.archipelago.packageservice.models;
 
-import lombok.Builder;
-import lombok.Value;
+import lombok.*;
 
 import java.time.Instant;
 

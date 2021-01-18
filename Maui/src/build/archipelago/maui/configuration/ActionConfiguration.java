@@ -5,19 +5,11 @@ import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.maui.common.PackageSourceProvider;
 import build.archipelago.maui.common.cache.PackageCacher;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
-import build.archipelago.maui.core.actions.BuildAction;
-import build.archipelago.maui.core.actions.CleanAction;
-import build.archipelago.maui.core.actions.PackageCreateAction;
-import build.archipelago.maui.core.actions.WorkspaceCreateAction;
-import build.archipelago.maui.core.actions.WorkspaceRemoveAction;
-import build.archipelago.maui.core.actions.WorkspaceSyncAction;
-import build.archipelago.maui.core.actions.WorkspaceUseAction;
+import build.archipelago.maui.core.actions.*;
 import build.archipelago.maui.core.output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.path.MauiPath;
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
+import com.google.inject.*;
 import com.google.inject.name.Named;
 
 public class ActionConfiguration extends AbstractModule {

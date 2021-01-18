@@ -1,31 +1,17 @@
 package build.archipelago.versionsetservice.core.services;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
-import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.*;
 import build.archipelago.common.dynamodb.AV;
-import build.archipelago.common.exceptions.VersionSetDoseNotExistsException;
-import build.archipelago.common.versionset.Revision;
-import build.archipelago.common.versionset.VersionSet;
-import build.archipelago.common.versionset.VersionSetRevision;
+import build.archipelago.common.versionset.*;
 import build.archipelago.versionsetservice.core.utils.RevisionUtil;
+import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
-import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
-import com.amazonaws.services.dynamodbv2.model.GetItemResult;
-import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
-import com.amazonaws.services.dynamodbv2.model.QueryRequest;
-import com.amazonaws.services.dynamodbv2.model.QueryResult;
-import com.amazonaws.services.dynamodbv2.model.ReturnItemCollectionMetrics;
-import com.amazonaws.services.dynamodbv2.model.UpdateItemRequest;
+import com.amazonaws.services.dynamodbv2.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DynamoDbVersionSetService implements VersionSetService {
@@ -50,32 +36,32 @@ public class DynamoDbVersionSetService implements VersionSetService {
                         "#accountId", Keys.ACCOUNT_ID
                 ))
                 .withExpressionAttributeValues(ImmutableMap.of(
-                        ":accountId", AV.of(sanitizeName(accountId))));
+                        ":accountId", AV.of(this.sanitizeName(accountId))));
         QueryResult result = dynamoDB.query(request);
         List<VersionSet> versionSets = new ArrayList<>();
         for (Map<String, AttributeValue> item : result.getItems()) {
-            versionSets.add(parseVersionDBItem(item, new ArrayList<>()));
+            versionSets.add(this.parseVersionDBItem(item, new ArrayList<>()));
         }
 
         return versionSets;
     }
 
     @Override
-    public VersionSet get(String accountId, String versionSetName) {
+    public VersionSet get(String accountId, String versionSetName) throws VersionSetDoseNotExistsException {
         Preconditions.checkNotNull(accountId);
         Preconditions.checkNotNull(versionSetName);
 
         GetItemResult result = dynamoDB.getItem(new GetItemRequest(config.getVersionSetTable(),
                 ImmutableMap.<String, AttributeValue>builder()
-                        .put(Keys.ACCOUNT_ID, AV.of(sanitizeName(accountId)))
-                        .put(Keys.VERSION_SET_NAME, AV.of(sanitizeName(versionSetName)))
+                        .put(Keys.ACCOUNT_ID, AV.of(this.sanitizeName(accountId)))
+                        .put(Keys.VERSION_SET_NAME, AV.of(this.sanitizeName(versionSetName)))
                         .build()));
 
         if (result.getItem() == null) {
-            return null;
+            throw new VersionSetDoseNotExistsException(versionSetName);
         }
 
-        return parseVersionDBItem(result.getItem(), getRevisions(accountId, versionSetName));
+        return this.parseVersionDBItem(result.getItem(), this.getRevisions(accountId, versionSetName));
     }
 
     private VersionSet parseVersionDBItem(Map<String, AttributeValue> dbItem, List<Revision> revisions) {
@@ -120,18 +106,18 @@ public class DynamoDbVersionSetService implements VersionSetService {
                         "#nameKey", Keys.NAME_KEY,
                         "#revision", Keys.REVISION,
                         "#created", Keys.CREATED
-                        ))
+                ))
                 .withExpressionAttributeValues(ImmutableMap.of(
-                        ":nameKeyValue", AV.of(getKey(accountId, versionSetName))));
+                        ":nameKeyValue", AV.of(this.getKey(accountId, versionSetName))));
 
         QueryResult result = dynamoDB.query(queryRequest);
         if (result.getItems() == null || result.getItems().size() == 0) {
             return new ArrayList<>();
         }
         return result.getItems().stream().map(x -> Revision.builder()
-            .revisionId(x.get(Keys.REVISION).getS())
-            .created(AV.toInstant(x.get(Keys.CREATED)))
-            .build()).collect(Collectors.toList());
+                .revisionId(x.get(Keys.REVISION).getS())
+                .created(AV.toInstant(x.get(Keys.CREATED)))
+                .build()).collect(Collectors.toList());
     }
 
     @Override
@@ -142,9 +128,9 @@ public class DynamoDbVersionSetService implements VersionSetService {
 
         GetItemResult result = dynamoDB.getItem(new GetItemRequest(config.getVersionSetRevisionTable(),
                 ImmutableMap.<String, AttributeValue>builder()
-                .put(Keys.NAME_KEY, AV.of(getKey(accountId, versionSetName)))
-                .put(Keys.REVISION, AV.of(revision.toLowerCase()))
-                .build()));
+                        .put(Keys.NAME_KEY, AV.of(this.getKey(accountId, versionSetName)))
+                        .put(Keys.REVISION, AV.of(revision.toLowerCase()))
+                        .build()));
         if (result.getItem() == null) {
             throw new VersionSetDoseNotExistsException(versionSetName, revision);
         }
@@ -152,8 +138,8 @@ public class DynamoDbVersionSetService implements VersionSetService {
         List<ArchipelagoBuiltPackage> packages = new ArrayList<>();
         // TODO: This is a bit hacky, clean this up
         if (result.getItem().get(Keys.PACKAGES) != null &&
-            result.getItem().get(Keys.PACKAGES).getSS() != null &&
-            result.getItem().get(Keys.PACKAGES).getSS().size() > 0) {
+                result.getItem().get(Keys.PACKAGES).getSS() != null &&
+                result.getItem().get(Keys.PACKAGES).getSS().size() > 0) {
             packages.addAll(result.getItem().get(Keys.PACKAGES).getSS().stream()
                     .map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList()));
         }
@@ -177,14 +163,14 @@ public class DynamoDbVersionSetService implements VersionSetService {
         }
 
         ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
-                .put(Keys.ACCOUNT_ID, AV.of(sanitizeName(accountId)))
-                .put(Keys.VERSION_SET_NAME, AV.of(sanitizeName(name)))
+                .put(Keys.ACCOUNT_ID, AV.of(this.sanitizeName(accountId)))
+                .put(Keys.VERSION_SET_NAME, AV.of(this.sanitizeName(name)))
                 .put(Keys.DISPLAY_NAME, AV.of(name))
                 .put(Keys.CREATED, AV.of(Instant.now()))
                 .put(Keys.TARGETS,
-                    AV.of(targets.stream().map(x -> ((ArchipelagoPackage)x).toString()).collect(Collectors.toList())));
+                        AV.of(targets.stream().map(x -> ((ArchipelagoPackage) x).toString()).collect(Collectors.toList())));
         if (parent != null && parent.isPresent()) {
-            map.put(Keys.PARENT, AV.of(sanitizeName(parent.get())));
+            map.put(Keys.PARENT, AV.of(this.sanitizeName(parent.get())));
         }
 
         dynamoDB.putItem(new PutItemRequest(config.getVersionSetTable(), map.build()));
@@ -205,8 +191,8 @@ public class DynamoDbVersionSetService implements VersionSetService {
         try {
             UpdateItemRequest updateItemRequest = new UpdateItemRequest()
                     .withTableName(config.getVersionSetTable())
-                    .addKeyEntry(Keys.ACCOUNT_ID, AV.of(sanitizeName(accountId)))
-                    .addKeyEntry(Keys.VERSION_SET_NAME, AV.of(sanitizeName(versionSetName)))
+                    .addKeyEntry(Keys.ACCOUNT_ID, AV.of(this.sanitizeName(accountId)))
+                    .addKeyEntry(Keys.VERSION_SET_NAME, AV.of(this.sanitizeName(versionSetName)))
                     .withUpdateExpression("set #revisionLatest = :revisionLatest, #revisionCreated = :revisionCreated")
                     .withConditionExpression("(attribute_exists(#name) and attribute_exists(#accountId))")
                     .withReturnItemCollectionMetrics(ReturnItemCollectionMetrics.SIZE)
@@ -225,7 +211,7 @@ public class DynamoDbVersionSetService implements VersionSetService {
 
 
         dynamoDB.putItem(new PutItemRequest(config.getVersionSetRevisionTable(), ImmutableMap.<String, AttributeValue>builder()
-                .put(Keys.NAME_KEY, AV.of(getKey(accountId, versionSetName)))
+                .put(Keys.NAME_KEY, AV.of(this.getKey(accountId, versionSetName)))
                 .put(Keys.REVISION, AV.of(revisionId))
                 .put(Keys.CREATED, AV.of(now))
                 .put(Keys.PACKAGES, AV.of(
@@ -240,7 +226,8 @@ public class DynamoDbVersionSetService implements VersionSetService {
     protected String sanitizeName(final String n) {
         return n.trim().toLowerCase();
     }
+
     private String getKey(String accountId, String name) {
-        return sanitizeName(accountId)+"_"+ sanitizeName(name);
+        return this.sanitizeName(accountId) + "_" + this.sanitizeName(name);
     }
 }

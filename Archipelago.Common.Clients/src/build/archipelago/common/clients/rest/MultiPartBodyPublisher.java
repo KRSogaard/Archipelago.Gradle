@@ -1,17 +1,10 @@
 package build.archipelago.common.clients.rest;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.nio.file.*;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class MultiPartBodyPublisher {
@@ -22,7 +15,7 @@ public class MultiPartBodyPublisher {
         if (partsSpecificationList.size() == 0) {
             throw new IllegalStateException("Must have at least one part to build multipart message.");
         }
-        addFinalBoundaryPart();
+        this.addFinalBoundaryPart();
         return HttpRequest.BodyPublishers.ofByteArrays(PartsIterator::new);
     }
 
@@ -96,10 +89,14 @@ public class MultiPartBodyPublisher {
 
         @Override
         public boolean hasNext() {
-            if (done) return false;
-            if (next != null) return true;
+            if (done) {
+                return false;
+            }
+            if (next != null) {
+                return true;
+            }
             try {
-                next = computeNext();
+                next = this.computeNext();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -112,7 +109,9 @@ public class MultiPartBodyPublisher {
 
         @Override
         public byte[] next() {
-            if (!hasNext()) throw new NoSuchElementException();
+            if (!this.hasNext()) {
+                throw new NoSuchElementException();
+            }
             byte[] res = next;
             next = null;
             return res;
@@ -120,7 +119,9 @@ public class MultiPartBodyPublisher {
 
         private byte[] computeNext() throws IOException {
             if (currentFileInput == null) {
-                if (!iter.hasNext()) return null;
+                if (!iter.hasNext()) {
+                    return null;
+                }
                 PartsSpecification nextPart = iter.next();
                 if (PartsSpecification.TYPE.STRING.equals(nextPart.type)) {
                     String part =
@@ -139,12 +140,16 @@ public class MultiPartBodyPublisher {
                     Path path = nextPart.path;
                     filename = path.getFileName().toString();
                     contentType = Files.probeContentType(path);
-                    if (contentType == null) contentType = "application/octet-stream";
+                    if (contentType == null) {
+                        contentType = "application/octet-stream";
+                    }
                     currentFileInput = Files.newInputStream(path);
                 } else {
                     filename = nextPart.filename;
                     contentType = nextPart.contentType;
-                    if (contentType == null) contentType = "application/octet-stream";
+                    if (contentType == null) {
+                        contentType = "application/octet-stream";
+                    }
                     currentFileInput = nextPart.stream.get();
                 }
                 String partHeader =

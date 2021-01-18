@@ -1,15 +1,10 @@
 package build.archipelago.maui.graph;
 
 import build.archipelago.common.ArchipelagoPackage;
-import org.jgrapht.event.ConnectedComponentTraversalEvent;
-import org.jgrapht.event.EdgeTraversalEvent;
-import org.jgrapht.event.TraversalListener;
-import org.jgrapht.event.VertexTraversalEvent;
-import org.jgrapht.traverse.AbstractGraphIterator;
-import org.jgrapht.traverse.DepthFirstIterator;
+import org.jgrapht.event.*;
+import org.jgrapht.traverse.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class OrderedGraphTraversal {
 
