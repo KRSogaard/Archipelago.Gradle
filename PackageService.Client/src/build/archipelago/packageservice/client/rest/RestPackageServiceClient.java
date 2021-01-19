@@ -386,7 +386,7 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         }
         switch (restResponse.statusCode()) {
             case 200: // Ok
-                this.parseOrThrow(restResponse.body(), GetPackagesRestResponse.class)
+                return this.parseOrThrow(restResponse.body(), GetPackagesRestResponse.class)
                         .getPackages().stream().map(GetPackageRestResponse::toInternal)
                         .collect(ImmutableList.toImmutableList());
             case 401:

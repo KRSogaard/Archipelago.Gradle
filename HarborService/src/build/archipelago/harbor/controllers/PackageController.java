@@ -9,11 +9,9 @@ import build.archipelago.packageservice.models.rest.*;
 import com.google.common.base.*;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.stream.Collectors;
 
 @RestController
@@ -21,23 +19,20 @@ import java.util.stream.Collectors;
 @Slf4j
 @CrossOrigin(origins = "*")
 public class PackageController {
-
-    private String accountId = "wewelo";
-    private Path tempdir;
     private PackageServiceClient packageServiceClient;
 
-    public PackageController(PackageServiceClient packageServiceClient,
-                             @Qualifier("tempDir") Path tempdir) {
+    public PackageController(PackageServiceClient packageServiceClient) {
         Preconditions.checkNotNull(packageServiceClient);
         this.packageServiceClient = packageServiceClient;
-        this.tempdir = tempdir;
     }
 
     @GetMapping(value = {"{name}/{version}/{hash}/artifact"})
-    public GetBuildArtifactRestResponse getBuildArtifact(@PathVariable("name") String name,
-                                                         @PathVariable("version") String version,
-                                                         @PathVariable("hash") String hash) throws PackageNotFoundException, IOException {
-        log.info("Request to get build artifact for Package {}, Version: {}, Hash: {}", name, version, hash);
+    public GetBuildArtifactRestResponse getBuildArtifact(
+            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @PathVariable("name") String name,
+            @PathVariable("version") String version,
+            @PathVariable("hash") String hash) throws PackageNotFoundException, IOException {
+        log.info("Request to get build artifact for Package '{}', Version: '{}', Hash: '{}'", name, version, hash);
         ArchipelagoPackage pkg = new ArchipelagoPackage(name, version);
 
         GetBuildArtifactResponse downloadResponse = packageServiceClient.getBuildArtifact(accountId, new ArchipelagoBuiltPackage(name, version,
@@ -46,8 +41,10 @@ public class PackageController {
     }
 
     @PostMapping()
-    public void createPackage(@RequestBody CreatePackageRestRequest request) throws PackageExistsException {
-        log.info("Request to create package {} for account {}", request.getName(), accountId);
+    public void createPackage(
+            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestBody CreatePackageRestRequest request) throws PackageExistsException {
+        log.info("Request to create package '{}' for account '{}'", request.getName(), accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
@@ -60,9 +57,12 @@ public class PackageController {
     }
 
     @GetMapping("{name}/{version}/{hash}/config")
-    public String getConfig(@PathVariable("name") String name,
-                            @PathVariable("version") String version,
-                            @PathVariable("hash") String hash) throws PackageNotFoundException {
+    public String getConfig(
+            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @PathVariable("name") String name,
+            @PathVariable("version") String version,
+            @PathVariable("hash") String hash) throws PackageNotFoundException {
+        log.info("Request to get config for package '{}-{}#{}' for account '{}'", name, version, hash, accountId);
         BuiltPackageDetails response = packageServiceClient.getPackageBuild(
                 accountId, new ArchipelagoBuiltPackage(name, version, hash));
 
@@ -70,8 +70,10 @@ public class PackageController {
     }
 
     @GetMapping("{name}")
-    public GetPackageRestResponse getPackage(@PathVariable("name") String packageName,
-                                             @RequestAttribute(AccountIdFilter.Key) String accountId) throws PackageNotFoundException {
+    public GetPackageRestResponse getPackage(
+            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @PathVariable("name") String packageName) throws PackageNotFoundException {
+        log.info("Request to get package '{}' for account '{}'", packageName, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 
         PackageDetails pkg = packageServiceClient.getPackage(accountId, packageName);
@@ -80,6 +82,7 @@ public class PackageController {
 
     @GetMapping("all")
     public GetPackagesRestResponse getAllPackages(@RequestAttribute(AccountIdFilter.Key) String accountId) {
+        log.info("Request to get all packages for account '{}'", accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 
         ImmutableList<PackageDetails> packages = packageServiceClient.getAllPackages(accountId);
