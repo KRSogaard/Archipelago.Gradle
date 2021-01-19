@@ -12,23 +12,28 @@ public class VersionSetDoseNotExistsException extends ArchipelagoException {
         super(getMessage(name));
         this.versionSet = name;
     }
+
     public VersionSetDoseNotExistsException(String name, Exception exp) {
         super(getMessage(name), exp);
         this.versionSet = name;
     }
-    public VersionSetDoseNotExistsException(String name, String reversion) {
-        super(getMessage(name, reversion));
+
+    public VersionSetDoseNotExistsException(String name, String revision) {
+        super(getMessage(name, revision));
         this.versionSet = name;
         this.revision = revision;
     }
-    public VersionSetDoseNotExistsException(String name, String reversion, Exception exp) {
-        super(getMessage(name, reversion), exp);
+
+    public VersionSetDoseNotExistsException(String name, String revision, Exception exp) {
+        super(getMessage(name, revision), exp);
         this.revision = revision;
     }
+
     private static String getMessage(String name) {
         return "Version Set " + name + " dose not exist";
     }
-    private static String getMessage(String name, String reversion) {
-        return getMessage(name + ":" + reversion);
+
+    private static String getMessage(String name, String revision) {
+        return getMessage(name + "#" + revision);
     }
 }

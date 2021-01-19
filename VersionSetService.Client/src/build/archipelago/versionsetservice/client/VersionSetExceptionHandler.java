@@ -3,8 +3,9 @@ package build.archipelago.versionsetservice.client;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.rest.models.errors.ProblemDetailRestResponse;
 import build.archipelago.versionsetservice.exceptions.*;
+import com.google.common.base.Preconditions;
 
-import java.util.Map;
+import java.util.HashMap;
 
 public class VersionSetExceptionHandler {
 
@@ -13,35 +14,51 @@ public class VersionSetExceptionHandler {
     public static final String TYPE_VERSION_SET_TARGETS_MISSING = "versionSet/targetMissing";
 
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(VersionSetDoseNotExistsException exp) {
+        Preconditions.checkNotNull(exp);
         return ProblemDetailRestResponse.builder()
                 .type(TYPE_VERSION_SET_NOT_FOUND)
                 .title("Version set was not found")
                 .status(404)
                 .detail(exp.getMessage())
-                .data(Map.of(
-                        "versionSet", exp.getVersionSet(),
-                        "revision", exp.getRevision()));
+                .data(new HashMap<>() {{
+                    if (exp.getVersionSet() != null) {
+                        this.put("versionSet", exp.getVersionSet());
+                    }
+                    if (exp.getRevision() != null) {
+                        this.put("revision", exp.getRevision());
+                    }
+                }});
     }
 
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(VersionSetExistsException exp) {
+        Preconditions.checkNotNull(exp);
         return ProblemDetailRestResponse.builder()
                 .type(TYPE_VERSION_SET_EXISTS)
                 .title("Version set already exists")
                 .status(409)
                 .detail(exp.getMessage())
-                .data(Map.of(
-                        "versionSet", ((VersionSetExistsException) exp).getVersionSet()));
+                .data(new HashMap<>() {{
+                    if (exp.getVersionSet() != null) {
+                        this.put("versionSet", exp.getVersionSet());
+                    }
+                }});
     }
 
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(MissingTargetPackageException exp) {
+        Preconditions.checkNotNull(exp);
         return ProblemDetailRestResponse.builder()
                 .type(TYPE_VERSION_SET_TARGETS_MISSING)
                 .title("A target was not version set")
                 .status(400)
                 .detail(exp.getMessage())
-                .data(Map.of(
-                        "packageName", exp.getPackageName(),
-                        "version", exp.getVersion()));
+                .data(new HashMap<>() {{
+                    if (exp.getPackageName() != null) {
+                        this.put("packageName", exp.getPackageName());
+                    }
+                    if (exp.getVersion() != null) {
+                        this.put("version", exp.getVersion());
+                    }
+                }});
     }
 
 

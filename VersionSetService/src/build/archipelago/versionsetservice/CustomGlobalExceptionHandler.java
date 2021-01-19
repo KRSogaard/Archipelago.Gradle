@@ -17,26 +17,27 @@ public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleIllegalArgumentException(HttpServletRequest req, Exception ex) {
-        return createResponse(req, CommonExceptionHandler.from((IllegalArgumentException)ex));
+        return this.createResponse(req, CommonExceptionHandler.from((IllegalArgumentException) ex));
     }
 
     @ExceptionHandler(VersionSetDoseNotExistsException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleVersionSetDoseNotExistsException(HttpServletRequest req, Exception ex) {
-        return createResponse(req, VersionSetExceptionHandler.from((VersionSetDoseNotExistsException)ex));
+        VersionSetDoseNotExistsException exp = (VersionSetDoseNotExistsException) ex;
+        return this.createResponse(req, VersionSetExceptionHandler.from(exp));
     }
 
     @ExceptionHandler(VersionSetExistsException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleVersionSetExistsException(HttpServletRequest req, Exception ex) {
-        return createResponse(req, VersionSetExceptionHandler.from((VersionSetExistsException)ex));
+        return this.createResponse(req, VersionSetExceptionHandler.from((VersionSetExistsException) ex));
     }
 
     @ExceptionHandler(PackageNotFoundException.class)
-    public ResponseEntity<ProblemDetailRestResponse> springHandlePackageNotFoundException(HttpServletRequest req, Exception ex){
-        return createResponse(req, PackageExceptionHandler.from((PackageNotFoundException)ex));
+    public ResponseEntity<ProblemDetailRestResponse> springHandlePackageNotFoundException(HttpServletRequest req, Exception ex) {
+        return this.createResponse(req, PackageExceptionHandler.from((PackageNotFoundException) ex));
     }
 
     @ExceptionHandler(MissingTargetPackageException.class)
     public ResponseEntity<ProblemDetailRestResponse> stringHandleMissingTargetPackageException(HttpServletRequest req, Exception ex) {
-        return createResponse(req, VersionSetExceptionHandler.from((MissingTargetPackageException)ex));
+        return this.createResponse(req, VersionSetExceptionHandler.from((MissingTargetPackageException) ex));
     }
 }

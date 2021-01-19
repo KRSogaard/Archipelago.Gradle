@@ -10,6 +10,7 @@ import java.util.*;
 public class PackageExceptionHandler {
     public static final String TYPE_PACKAGE_NOT_FOUND = "package/notFound";
     public static final String TYPE_MULTIPLE_PACKAGE_NOT_FOUND = "package/multipleNotFound";
+    public static final String TYPE_PACKAGE_EXISTS = "package/exists";
 
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(PackageNotFoundException exp) {
         ProblemDetailRestResponse.ProblemDetailRestResponseBuilder builder = ProblemDetailRestResponse.builder();
@@ -28,10 +29,17 @@ public class PackageExceptionHandler {
                     .title("Package was not found")
                     .status(404)
                     .detail(exp.getMessage())
-                    .data(Map.of(
-                            "packageName", exp.getPackageName(),
-                            "version", exp.getVersion(),
-                            "hash", exp.getHash()));
+                    .data(new HashMap<>() {{
+                        if (exp.getPackageName() != null) {
+                            this.put("packageName", exp.getPackageName());
+                        }
+                        if (exp.getVersion() != null) {
+                            this.put("version", exp.getVersion());
+                        }
+                        if (exp.getHash() != null) {
+                            this.put("hash", exp.getHash());
+                        }
+                    }});
         }
         return builder;
     }
@@ -39,13 +47,20 @@ public class PackageExceptionHandler {
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(PackageExistsException exp) {
         return ProblemDetailRestResponse.builder()
                 .type("package/exists")
-                .title("The package already exists")
+                .title(TYPE_PACKAGE_EXISTS)
                 .status(409)
                 .detail(exp.getMessage())
-                .data(Map.of(
-                        "packageName", exp.getPackageName(),
-                        "version", exp.getVersion(),
-                        "hash", exp.getHash()));
+                .data(new HashMap<>() {{
+                    if (exp.getPackageName() != null) {
+                        this.put("packageName", exp.getPackageName());
+                    }
+                    if (exp.getVersion() != null) {
+                        this.put("version", exp.getVersion());
+                    }
+                    if (exp.getHash() != null) {
+                        this.put("hash", exp.getHash());
+                    }
+                }});
     }
 
     public static Exception createException(ProblemDetailRestResponse problem) {
@@ -59,6 +74,17 @@ public class PackageExceptionHandler {
                             (String) problem.getData().get("hash")));
                 }
                 return new PackageNotFoundException(new ArchipelagoPackage(
+                        (String) problem.getData().get("packageName"),
+                        (String) problem.getData().get("version")));
+            case TYPE_PACKAGE_EXISTS:
+                if (problem.getData().containsKey("hash") &&
+                        !Strings.isNullOrEmpty((String) problem.getData().get("hash"))) {
+                    return new PackageExistsException(new ArchipelagoBuiltPackage(
+                            (String) problem.getData().get("packageName"),
+                            (String) problem.getData().get("version"),
+                            (String) problem.getData().get("hash")));
+                }
+                return new PackageExistsException(new ArchipelagoPackage(
                         (String) problem.getData().get("packageName"),
                         (String) problem.getData().get("version")));
             default:

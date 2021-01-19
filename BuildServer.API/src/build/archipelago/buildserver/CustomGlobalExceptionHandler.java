@@ -18,16 +18,21 @@ public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
 
     @ExceptionHandler(PackageNotFoundException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandlePackageNotFoundException(HttpServletRequest req, Exception ex) throws IOException {
-        return createResponse(req, PackageExceptionHandler.from((PackageNotFoundException)ex));
+        return createResponse(req, PackageExceptionHandler.from((PackageNotFoundException) ex));
     }
 
     @ExceptionHandler(PackageExistsException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandlePackageExistsException(HttpServletRequest req, Exception ex) {
-        return createResponse(req, PackageExceptionHandler.from((PackageExistsException)ex));
+        return createResponse(req, PackageExceptionHandler.from((PackageExistsException) ex));
     }
 
     @ExceptionHandler(VersionSetDoseNotExistsException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleVersionSetDoseNotExistsException(HttpServletRequest req, Exception ex) {
-        return createResponse(req, VersionSetExceptionHandler.from((VersionSetDoseNotExistsException)ex));
+        return createResponse(req, VersionSetExceptionHandler.from((VersionSetDoseNotExistsException) ex));
+    }
+    
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ProblemDetailRestResponse> springHandleIllegalArgumentException(HttpServletRequest req, Exception ex) {
+        return createResponse(req, CommonExceptionHandler.from((IllegalArgumentException) ex));
     }
 }
