@@ -3,7 +3,8 @@ package build.archipelago.buildserver.builder.builder;
 import build.archipelago.account.common.AccountService;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.builder.output.S3OutputWrapperFactory;
-import build.archipelago.buildserver.common.services.build.BuildService;
+import build.archipelago.buildserver.common.services.build.DynamoDBBuildService;
+import build.archipelago.buildserver.common.services.build.logs.StageLogsService;
 import build.archipelago.buildserver.common.services.build.models.BuildQueueMessage;
 import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.maui.path.MauiPath;
@@ -18,11 +19,12 @@ public class BuilderFactory {
     private VersionSetServiceClient versionSetServiceClient;
     private PackageServiceClient packageServiceClient;
     private Path buildLocation;
-    private BuildService buildService;
+    private DynamoDBBuildService buildService;
     private AccountService accountService;
     private MauiPath mauiPath;
     private GitServiceFactory gitServiceFactory;
     private S3OutputWrapperFactory s3OutputWrapperFactory;
+    private StageLogsService stageLogsService;
 
     public BuilderFactory(InternalHarborClientFactory internalHarborClientFactory,
                           VersionSetServiceClient versionSetServiceClient,
@@ -30,7 +32,8 @@ public class BuilderFactory {
                           Path buildLocation,
                           GitServiceFactory gitServiceFactory,
                           S3OutputWrapperFactory s3OutputWrapperFactory,
-                          BuildService buildService,
+                          StageLogsService stageLogsService,
+                          DynamoDBBuildService buildService,
                           AccountService accountService,
                           MauiPath mauiPath) {
         this.internalHarborClientFactory = internalHarborClientFactory;
@@ -42,11 +45,12 @@ public class BuilderFactory {
         this.mauiPath = mauiPath;
         this.gitServiceFactory = gitServiceFactory;
         this.s3OutputWrapperFactory = s3OutputWrapperFactory;
+        this.stageLogsService = stageLogsService;
     }
 
     public VersionSetBuilder create(BuildQueueMessage buildRequest) {
         return new VersionSetBuilder(internalHarborClientFactory, versionSetServiceClient,
-                packageServiceClient, buildLocation, gitServiceFactory, s3OutputWrapperFactory, buildService, accountService,
+                packageServiceClient, buildLocation, gitServiceFactory, s3OutputWrapperFactory, stageLogsService, buildService, accountService,
                 mauiPath, buildRequest);
     }
 }

@@ -162,13 +162,18 @@ public class DynamoDbVersionSetService implements VersionSetService {
             }
         }
 
+        List<ArchipelagoPackage> vsTargets = new ArrayList<>();
+        if (targets != null) {
+            vsTargets.addAll(targets);
+        }
+        
         ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
                 .put(Keys.ACCOUNT_ID, AV.of(this.sanitizeName(accountId)))
                 .put(Keys.VERSION_SET_NAME, AV.of(this.sanitizeName(name)))
                 .put(Keys.DISPLAY_NAME, AV.of(name))
                 .put(Keys.CREATED, AV.of(Instant.now()))
                 .put(Keys.TARGETS,
-                        AV.of(targets.stream().map(x -> ((ArchipelagoPackage) x).toString()).collect(Collectors.toList())));
+                        AV.of(vsTargets.stream().map(x -> ((ArchipelagoPackage) x).toString()).collect(Collectors.toList())));
         if (parent != null && parent.isPresent()) {
             map.put(Keys.PARENT, AV.of(this.sanitizeName(parent.get())));
         }

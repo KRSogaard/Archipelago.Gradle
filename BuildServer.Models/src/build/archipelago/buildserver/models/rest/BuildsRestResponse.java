@@ -5,8 +5,8 @@ import lombok.*;
 import java.util.List;
 
 @Builder
-@Data
-@NoArgsConstructor
+@Getter
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BuildsRestResponse {
     private List<BuildRestResponse> processingBuilds;

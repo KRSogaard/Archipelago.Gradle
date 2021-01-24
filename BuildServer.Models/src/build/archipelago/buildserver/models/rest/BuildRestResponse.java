@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Builder
-@Data
-@NoArgsConstructor
+@Getter
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BuildRestResponse {
     private String buildId;
@@ -41,19 +41,19 @@ public class BuildRestResponse {
                 .build();
     }
 
-    public ArchipelagoBuild toArchipelagoBuild() {
+    public ArchipelagoBuild toInternal() {
         return ArchipelagoBuild.builder()
-                .buildId(getBuildId())
-                .accountId(getAccountId())
-                .versionSet(getVersionSet())
-                .dryRun(isDryRun())
-                .created(Instant.ofEpochMilli(getCreated()))
-                .updated(Instant.ofEpochMilli(getUpdated()))
-                .buildStatus(BuildStatus.getEnum(getBuildStatus()))
-                .stagePrepare(BuildStatus.getEnum(getStagePrepare()))
-                .stagePackages(BuildStatus.getEnum(getStagePackages()))
-                .stagePublish(BuildStatus.getEnum(getStagePublish()))
-                .buildPackages(getBuildPackages().stream().map(BuildPackageDetails::parse).collect(Collectors.toList()))
+                .buildId(this.getBuildId())
+                .accountId(this.getAccountId())
+                .versionSet(this.getVersionSet())
+                .dryRun(this.isDryRun())
+                .created(Instant.ofEpochMilli(this.getCreated()))
+                .updated(Instant.ofEpochMilli(this.getUpdated()))
+                .buildStatus(BuildStatus.getEnum(this.getBuildStatus()))
+                .stagePrepare(BuildStatus.getEnum(this.getStagePrepare()))
+                .stagePackages(BuildStatus.getEnum(this.getStagePackages()))
+                .stagePublish(BuildStatus.getEnum(this.getStagePublish()))
+                .buildPackages(this.getBuildPackages().stream().map(BuildPackageDetails::parse).collect(Collectors.toList()))
                 .build();
     }
 }

@@ -58,11 +58,13 @@ public class VersionSetRevisionSerializer {
         if (Files.notExists(tempDir)) {
             Files.createDirectory(tempDir);
         }
+        String td = tempDir.toString();
 
         Path cacheFile = tempDir.resolve(WorkspaceConstants.VERSION_SET_REVISION_CACHE);
         if (Files.exists(cacheFile)) {
             log.warn("Version-set revision file '{}' already exists, we will override it", cacheFile.toString());
         }
+        String cf = cacheFile.toString();
 
         VersionSetRevisionSerializer vsrs = VersionSetRevisionSerializer.convert(revision);
         mapper.writeValue(cacheFile.toFile(), vsrs);

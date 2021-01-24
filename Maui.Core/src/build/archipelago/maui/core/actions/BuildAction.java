@@ -6,12 +6,17 @@ import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.graph.DependencyTransversalType;
 import build.archipelago.maui.path.MauiPath;
 import build.archipelago.maui.path.recipies.BinRecipe;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
 
+import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class BuildAction extends BaseAction {
 
     private static final String BASH_BUILD_SYSTEM = "bash";
@@ -25,11 +30,11 @@ public class BuildAction extends BaseAction {
     }
 
     public boolean build(List<String> args) throws Exception {
-        if (!setupWorkspaceContext()) {
+        if (!this.setupWorkspaceContext()) {
             out.error("Was unable to locate the workspace");
             return false;
         }
-        if (!setupPackage()) {
+        if (!this.setupPackage()) {
             out.error("Was unable to locate the package");
             return false;
         }
@@ -73,6 +78,7 @@ public class BuildAction extends BaseAction {
         }
 
         ProcessBuilder builder = new ProcessBuilder();
+        builder.redirectErrorStream(true);
         builder.directory(pkgDir.toFile());
         List<String> cmd = new ArrayList<>();
         cmd.add(buildSystemFilePath.toRealPath().toString());
@@ -89,12 +95,42 @@ public class BuildAction extends BaseAction {
         env.put("ARCHIPELAGO.WORKSPACE", wsDir.toRealPath().toString());
 
         Process process = builder.start();
+        CompletableFuture<Void> errorReader = redirectOut(process.getErrorStream(), line -> out.error(line));
+        CompletableFuture<Void> outReader = redirectOut(process.getInputStream(), line -> out.write(line));
+
+        boolean wasTerminated = !process.waitFor(15, TimeUnit.MINUTES);
+        process.destroy();
+        if (process.isAlive()) {
+            process.waitFor(10, TimeUnit.SECONDS); // give it a chance to stop
+            process.destroyForcibly();
+        }
+        if (wasTerminated) {
+            out.error("The build failed to finish within the allowed 15 min, was terminated");
+            out.error("The build failed.");
+            return false;
+        }
         int exitCode = process.waitFor();
+        errorReader.cancel(true);
+        outReader.cancel(true);
         if (exitCode != 0) {
             out.error("The build failed.");
             return false;
         }
         out.write("Build successful");
         return true;
+    }
+
+    private static CompletableFuture<Void> redirectOut(InputStream in, Consumer<String> out) {
+        return CompletableFuture.runAsync(() -> {
+            try (
+                    InputStreamReader inputStreamReader = new InputStreamReader(in);
+                    BufferedReader bufferedReader = new BufferedReader(inputStreamReader)
+            ) {
+                bufferedReader.lines()
+                        .forEach(out);
+            } catch (IOException e) {
+                log.error("Failed to redirect process output", e);
+            }
+        });
     }
 }

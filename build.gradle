@@ -406,6 +406,7 @@ project(':BuildServer.API') {
         api project(':BuildServer.Common')
         api project(':BuildServer.Models')
         api project(':Archipelago.Common.REST')
+        implementation project(':BuildServer.API.Client')
 
         implementation 'org.springframework.boot:spring-boot-starter-jersey'
         implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -516,6 +517,7 @@ project(':BuildServer.Models') {
     apply plugin: 'java-library'
 
     dependencies {
+        api project(':Archipelago.Common')
     }
 }
 

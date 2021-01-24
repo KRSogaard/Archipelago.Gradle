@@ -35,6 +35,13 @@ public class AV {
         return Instant.ofEpochMilli(Long.parseLong(av.getN()));
     }
 
+    public static Instant toInstantOrNull(AttributeValue av) {
+        if (av == null) {
+            return null;
+        }
+        return toInstant(av);
+    }
+
     public static <T> T getOrNull(Map<String, AttributeValue> map, String key, Function<AttributeValue, T> parse) {
         if (!map.containsKey(key)) {
             return null;
@@ -56,4 +63,14 @@ public class AV {
         return map.get(key).getS();
     }
 
+    public static <T> T getOrDefault(Map<String, AttributeValue> map, String key, Function<AttributeValue, T> parse, T defaultValue) {
+        if (!map.containsKey(key)) {
+            return defaultValue;
+        }
+        return parse.apply(map.get(key));
+    }
+
+    public static String getStringOrDefault(Map<String, AttributeValue> map, String key, String defaultValue) {
+        return getOrDefault(map, key, AttributeValue::getS, defaultValue);
+    }
 }

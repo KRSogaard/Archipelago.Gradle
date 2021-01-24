@@ -63,6 +63,8 @@ public class VersionSetExceptionHandler {
 
 
     public static Exception createException(ProblemDetailRestResponse problem) {
+        Preconditions.checkNotNull(problem);
+
         switch (problem.getType()) {
             case TYPE_VERSION_SET_NOT_FOUND:
                 if (problem.getData().containsKey("revision")) {

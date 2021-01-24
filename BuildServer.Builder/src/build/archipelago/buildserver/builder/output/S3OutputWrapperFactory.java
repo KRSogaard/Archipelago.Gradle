@@ -1,18 +1,21 @@
 package build.archipelago.buildserver.builder.output;
 
-import com.amazonaws.services.s3.AmazonS3;
+import build.archipelago.buildserver.common.services.build.logs.PackageLogsService;
+import build.archipelago.common.ArchipelagoPackage;
+import com.google.common.base.*;
 
 public class S3OutputWrapperFactory {
-    private AmazonS3 amazonS3;
-    private String packageBuildLogS3Bucket;
+    private PackageLogsService service;
 
-    public S3OutputWrapperFactory(AmazonS3 amazonS3, String packageBuildLogS3Bucket) {
-        this.amazonS3 = amazonS3;
-        this.packageBuildLogS3Bucket = packageBuildLogS3Bucket;
+    public S3OutputWrapperFactory(PackageLogsService service) {
+        this.service = service;
     }
 
-    public S3OutputWrapper create(String accountId, String buildId, String pkgName) {
-        String key = accountId + "/" + buildId + "/" + pkgName + ".log";
-        return new S3OutputWrapper(amazonS3, packageBuildLogS3Bucket, key);
+    public S3OutputWrapper create(String accountId, String buildId, ArchipelagoPackage pkg) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(buildId));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
+        Preconditions.checkNotNull(pkg);
+
+        return new S3OutputWrapper(service, accountId, buildId, pkg);
     }
 }

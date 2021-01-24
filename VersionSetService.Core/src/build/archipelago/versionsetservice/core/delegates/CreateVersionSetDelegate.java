@@ -31,13 +31,18 @@ public class CreateVersionSetDelegate {
         Preconditions.checkNotNull(targets, "At least 1 target is required");
         Preconditions.checkArgument(targets.size() > 0, "At least 1 target is required");
 
-        if (versionSetService.get(accountId, name) != null) {
+        try {
+            versionSetService.get(accountId, name);
             throw new VersionSetExistsException(name);
+        } catch (VersionSetDoseNotExistsException exp) {
+            // This is expected we do not want the version set to exists
         }
 
-        PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(accountId, targets);
-        if (!targetsVerified.isValid()) {
-            throw new PackageNotFoundException(targetsVerified.getMissingPackages());
+        if (targets.size() > 0) {
+            PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(accountId, targets);
+            if (!targetsVerified.isValid()) {
+                throw new PackageNotFoundException(targetsVerified.getMissingPackages());
+            }
         }
 
         if (parent.isPresent()) {

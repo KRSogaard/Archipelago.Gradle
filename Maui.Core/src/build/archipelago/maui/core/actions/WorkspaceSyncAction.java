@@ -40,7 +40,7 @@ public class WorkspaceSyncAction extends BaseAction {
 
 
     public boolean syncWorkspace(String revision) {
-        if (!setupWorkspaceContext()) {
+        if (!this.setupWorkspaceContext()) {
             out.error("Was unable to locate the workspace");
             return false;
         }
@@ -59,6 +59,10 @@ public class WorkspaceSyncAction extends BaseAction {
         try {
             vs = harborClient.getVersionSet(workspaceContext.getVersionSet());
             if (revision == null) {
+                if (vs.getLatestRevision() == null) {
+                    log.warn("There are no latest revision for this version-set it must be a new version-set, can't sync");
+                    return false;
+                }
                 revision = vs.getLatestRevision();
                 log.info("No revision was provided for the sync of {}, using latest {}", vs.getName(), revision);
             }
@@ -76,7 +80,7 @@ public class WorkspaceSyncAction extends BaseAction {
             return false;
         }
 
-        if (!syncVersionSet(vs, versionSetRevision)) {
+        if (!this.syncVersionSet(vs, versionSetRevision)) {
             return false;
         }
         try {
@@ -113,7 +117,7 @@ public class WorkspaceSyncAction extends BaseAction {
         log.info("Syncing {} packages", packagesToSync.size());
 
         List<Future> pkgFutures = new ArrayList<>();
-        for(ArchipelagoBuiltPackage pkg : packagesToSync) {
+        for (ArchipelagoBuiltPackage pkg : packagesToSync) {
             log.trace("Syncing {} to cache", pkg.toString());
             pkgFutures.add(executor.submit(() -> {
                 try {

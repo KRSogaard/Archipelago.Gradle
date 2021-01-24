@@ -5,7 +5,8 @@ import build.archipelago.buildserver.builder.builder.BuilderFactory;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.builder.handlers.*;
 import build.archipelago.buildserver.builder.output.S3OutputWrapperFactory;
-import build.archipelago.buildserver.common.services.build.BuildService;
+import build.archipelago.buildserver.common.services.build.DynamoDBBuildService;
+import build.archipelago.buildserver.common.services.build.logs.*;
 import build.archipelago.common.github.GitServiceFactory;
 import build.archipelago.maui.graph.DependencyGraphGenerator;
 import build.archipelago.maui.path.MauiPath;
@@ -69,13 +70,13 @@ public class ServiceConfiguration {
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-    public BuildService buildService(AmazonSQS amazonSQS,
-                                     AmazonDynamoDB amazonDynamoDB,
-                                     AmazonS3 amazonS3,
-                                     @Value("${dynamodb.build}") String buildTable,
-                                     @Value("${dynamodb.build-packages}") String buildPackagesTable,
-                                     @Value("${s3.logs}") String bucketNameLogs,
-                                     @Value("${sqs.build-queue}") String queueUrl) {
+    public DynamoDBBuildService buildService(AmazonSQS amazonSQS,
+                                             AmazonDynamoDB amazonDynamoDB,
+                                             AmazonS3 amazonS3,
+                                             @Value("${dynamodb.build}") String buildTable,
+                                             @Value("${dynamodb.build-packages}") String buildPackagesTable,
+                                             @Value("${s3.logs}") String bucketNameLogs,
+                                             @Value("${sqs.build-queue}") String queueUrl) {
         Preconditions.checkNotNull(amazonSQS);
         Preconditions.checkNotNull(amazonDynamoDB);
         Preconditions.checkNotNull(amazonS3);
@@ -83,7 +84,7 @@ public class ServiceConfiguration {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(buildPackagesTable));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(bucketNameLogs));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(queueUrl));
-        return new BuildService(amazonDynamoDB, amazonSQS, amazonS3, buildTable, buildPackagesTable, bucketNameLogs, queueUrl);
+        return new DynamoDBBuildService(amazonDynamoDB, amazonSQS, amazonS3, buildTable, buildPackagesTable, bucketNameLogs, queueUrl);
     }
 
     @Bean
@@ -98,10 +99,11 @@ public class ServiceConfiguration {
                                          VersionSetServiceClient versionSetServiceClient,
                                          PackageServiceClient packageServiceClient,
                                          GitServiceFactory gitServiceFactory,
-                                         BuildService buildService,
+                                         DynamoDBBuildService buildService,
                                          AccountService accountService,
                                          MauiPath mauiPath,
                                          S3OutputWrapperFactory s3OutputWrapperFactory,
+                                         StageLogsService stageLogsService,
                                          @Value("${workspace.path}") String workspacePath) throws IOException {
         Preconditions.checkNotNull(internalHarborClientFactory);
         Preconditions.checkNotNull(versionSetServiceClient);
@@ -110,6 +112,7 @@ public class ServiceConfiguration {
         Preconditions.checkNotNull(accountService);
         Preconditions.checkNotNull(mauiPath);
         Preconditions.checkNotNull(gitServiceFactory);
+        Preconditions.checkNotNull(stageLogsService);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(workspacePath));
         Path wsPath = Path.of(workspacePath);
         if (!Files.exists(wsPath) || !Files.isDirectory(wsPath)) {
@@ -117,7 +120,7 @@ public class ServiceConfiguration {
         }
         return new BuilderFactory(internalHarborClientFactory, versionSetServiceClient,
                 packageServiceClient, wsPath,
-                gitServiceFactory, s3OutputWrapperFactory, buildService, accountService,
+                gitServiceFactory, s3OutputWrapperFactory, stageLogsService, buildService, accountService,
                 mauiPath);
     }
 
@@ -181,11 +184,25 @@ public class ServiceConfiguration {
         return new GitServiceFactory();
     }
 
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public PackageLogsService packageLogsService(AmazonS3 amazonS3,
+                                                 @Value("${s3.packages-logs}") String bucketPackageLogs) {
+        return new S3PackageLogsService(amazonS3, bucketPackageLogs);
+    }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-    public S3OutputWrapperFactory s3OutputWrapperFactory(AmazonS3 amazonS3,
-                                                         @Value("${s3.packages-logs}") String bucketPackageNameLogs) {
-        return new S3OutputWrapperFactory(amazonS3, bucketPackageNameLogs);
+    public StageLogsService stageLogsService(AmazonS3 amazonS3,
+                                             @Value("${s3.logs}") String bucketStageLogs) {
+        return new S3StageLogsService(amazonS3, bucketStageLogs);
     }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public S3OutputWrapperFactory s3OutputWrapperFactory(PackageLogsService packageLogsService) {
+        return new S3OutputWrapperFactory(packageLogsService);
+    }
+
+
 }

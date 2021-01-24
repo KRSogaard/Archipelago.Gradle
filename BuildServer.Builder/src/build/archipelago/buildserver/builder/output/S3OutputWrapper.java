@@ -1,56 +1,59 @@
 package build.archipelago.buildserver.builder.output;
 
+import build.archipelago.buildserver.common.services.build.logs.PackageLogsService;
+import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.maui.core.output.OutputWrapper;
-import com.amazonaws.services.s3.AmazonS3;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.util.ArrayList;
 
+@Slf4j
 public class S3OutputWrapper implements OutputWrapper {
 
-    private AmazonS3 amazonS3;
-    private String packageBuildLogS3Bucket;
-    private String packageBuildLogS3File;
-
+    private PackageLogsService service;
+    private String accountId;
+    private String buildId;
+    private ArchipelagoPackage pkg;
     private final StringBuilder logs;
-    private boolean hasLogs;
 
-
-    public S3OutputWrapper(AmazonS3 amazonS3, String packageBuildLogS3Bucket, String packageBuildLogS3File) {
-        this.amazonS3 = amazonS3;
-        this.packageBuildLogS3Bucket = packageBuildLogS3Bucket;
-        this.packageBuildLogS3File = packageBuildLogS3File;
+    public S3OutputWrapper(PackageLogsService service, String accountId, String buildId, ArchipelagoPackage pkg) {
+        this.service = service;
+        this.accountId = accountId;
+        this.buildId = buildId;
+        this.pkg = pkg;
 
         logs = new StringBuilder();
     }
 
     @Override
     public void write(String message) {
-        write(message, new ArrayList<String>());
+        this.write(message, new ArrayList<String>());
     }
 
     @Override
     public void write(String message, Object... args) {
-        addMessage("OUT", message, args);
+        log.info(String.format(message, args));
+        this.addMessage("OUT", message, args);
     }
 
     @Override
     public void error(String message) {
-        error(message, new ArrayList<String>());
+        this.error(message, new ArrayList<String>());
     }
 
     @Override
     public void error(String message, Object... args) {
-        addMessage("ERROR", message, args);
+        log.error(String.format(message, args));
+        this.addMessage("ERROR", message, args);
     }
 
     public void upload() {
-        amazonS3.putObject(packageBuildLogS3Bucket, packageBuildLogS3File, logs.toString());
+        service.uploadLog(accountId, buildId, pkg, logs.toString());
     }
 
     private void addMessage(String prefix, String message, Object... args) {
         synchronized (logs) {
-            hasLogs = true;
             logs.append(Instant.now().toEpochMilli());
             logs.append(";");
             logs.append(prefix);

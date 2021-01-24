@@ -28,7 +28,7 @@ public class BuilderApplication implements CommandLineRunner {
     public void run(String... args) throws Exception {
         try {
             Message msg = new Message();
-            msg.setBody("{\"buildId\":\"03845159-b549-48f0-bfe8-105b4691fb0b\",\"accountId\":\"wewelo\"}");
+            msg.setBody("{\"buildId\":\"2bc3b949-ad92-4947-a2ce-0655fe4335fe\",\"accountId\":\"wewelo\"}");
             buildRequestHandler.handle(msg);
 //            sqsConsumer.start();
 //            sqsConsumer.waitForExecutors();

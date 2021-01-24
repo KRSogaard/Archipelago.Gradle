@@ -19,7 +19,7 @@ public class ArchipelagoPackage {
             throw new IllegalArgumentException("\"" + value + "\" is not a valid name version");
         }
         String pkgName = value.substring(0, i);
-        String version = (i == value.length()-1) ? null : value.substring(i + 1);
+        String version = (i == value.length() - 1) ? null : value.substring(i + 1);
         return new ArchipelagoPackage(pkgName, version);
     }
 
@@ -35,7 +35,7 @@ public class ArchipelagoPackage {
 
     @Override
     public String toString() {
-        return getNameVersion();
+        return this.getNameVersion();
     }
 
     public String getNameVersion() {
@@ -61,20 +61,25 @@ public class ArchipelagoPackage {
     public static boolean validateName(String name) {
         return NAME_PATTERN.matcher(name).find();
     }
+
     public static boolean validateVersion(String version) {
         return VERSION_PATTERN.matcher(version).find();
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || o.getClass() != ArchipelagoPackage.class && o.getClass() != ArchipelagoBuiltPackage.class) {
+            return false;
+        }
         ArchipelagoPackage that = (ArchipelagoPackage) o;
 
         return (name == null && that.name == null ||
                 name.equalsIgnoreCase(that.name)) &&
                 (version == null && that.version == null ||
-                version.equalsIgnoreCase(that.version));
+                        version.equalsIgnoreCase(that.version));
     }
 
     @Override
