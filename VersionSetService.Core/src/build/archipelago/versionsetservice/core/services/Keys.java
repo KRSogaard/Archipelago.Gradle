@@ -13,4 +13,5 @@ public class Keys {
     public static final String CREATED = "created";
     public static final String PACKAGES = "packages";
     public static final String VERSION_SET_NAME = "version-set-name";
+    public static final String UPDATED = "updated";
 }

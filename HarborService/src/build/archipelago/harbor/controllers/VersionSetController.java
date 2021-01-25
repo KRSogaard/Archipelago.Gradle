@@ -5,11 +5,12 @@ import build.archipelago.common.versionset.*;
 import build.archipelago.harbor.filters.AccountIdFilter;
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
-import build.archipelago.versionsetservice.client.models.CreateVersionSetRequest;
 import build.archipelago.versionsetservice.exceptions.*;
+import build.archipelago.versionsetservice.models.*;
 import build.archipelago.versionsetservice.models.rest.*;
 import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -103,5 +104,22 @@ public class VersionSetController {
                 .targets(targets)
                 .build();
         versionSetServiceClient.createVersionSet(accountId, createRequest);
+    }
+
+
+    @PutMapping("/{versionSet}")
+    @ResponseStatus(HttpStatus.OK)
+    public void updateVersionSet(
+            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @PathVariable("versionSet") String versionSetName,
+            UpdateVersionSetRestRequest request) throws PackageNotFoundException, VersionSetDoseNotExistsException {
+        log.info("Request to update version set '{}' for account '{}'", versionSetName, accountId);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName));
+        request.validate();
+
+        UpdateVersionSetRequest updateRequest = request.toInternal();
+
+        versionSetServiceClient.updateVersionSet(accountId, versionSetName, updateRequest);
     }
 }

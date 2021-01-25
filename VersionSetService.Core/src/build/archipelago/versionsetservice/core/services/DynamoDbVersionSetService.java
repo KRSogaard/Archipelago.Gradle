@@ -47,6 +47,37 @@ public class DynamoDbVersionSetService implements VersionSetService {
     }
 
     @Override
+    public void update(String accountId, String versionSetName, List<ArchipelagoPackage> targets, Optional<String> parent) {
+
+        String parentValue;
+        if (parent != null && parent.isPresent()) {
+            parentValue = this.sanitizeName(parent.get());
+        } else {
+            parentValue = null;
+        }
+
+        UpdateItemRequest updateItemRequest = new UpdateItemRequest()
+                .withTableName(config.getVersionSetTable())
+                .addKeyEntry(Keys.ACCOUNT_ID, AV.of(this.sanitizeName(accountId)))
+                .addKeyEntry(Keys.VERSION_SET_NAME, AV.of(this.sanitizeName(versionSetName)))
+                .withUpdateExpression("set #updated = :updated, " +
+                        "#targets = :targets, " +
+                        "#parent = :parent")
+                .withReturnItemCollectionMetrics(ReturnItemCollectionMetrics.SIZE)
+                .withExpressionAttributeNames(ImmutableMap.of(
+                        "#updated", Keys.UPDATED,
+                        "#targets", Keys.TARGETS,
+                        "#parent", Keys.PARENT
+                ))
+                .withExpressionAttributeValues(ImmutableMap.of(
+                        ":updated", AV.of(Instant.now()),
+                        ":targets", AV.of(targets.stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList())),
+                        ":parent", AV.of(parentValue)
+                ));
+        dynamoDB.updateItem(updateItemRequest);
+    }
+
+    @Override
     public VersionSet get(String accountId, String versionSetName) throws VersionSetDoseNotExistsException {
         Preconditions.checkNotNull(accountId);
         Preconditions.checkNotNull(versionSetName);
@@ -86,6 +117,7 @@ public class DynamoDbVersionSetService implements VersionSetService {
         return VersionSet.builder()
                 .name(dbItem.get(Keys.DISPLAY_NAME).getS())
                 .created(Instant.ofEpochMilli(Long.parseLong(dbItem.get(Keys.CREATED).getN())))
+                .updated(dbItem.containsKey(Keys.UPDATED) ? Instant.ofEpochMilli(Long.parseLong(dbItem.get(Keys.UPDATED).getN())) : Instant.now())
                 .parent(parent)
                 .targets(targets)
                 .revisions(revisions)
@@ -166,7 +198,7 @@ public class DynamoDbVersionSetService implements VersionSetService {
         if (targets != null) {
             vsTargets.addAll(targets);
         }
-        
+
         ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
                 .put(Keys.ACCOUNT_ID, AV.of(this.sanitizeName(accountId)))
                 .put(Keys.VERSION_SET_NAME, AV.of(this.sanitizeName(name)))

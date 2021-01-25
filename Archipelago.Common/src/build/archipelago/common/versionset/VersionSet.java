@@ -12,6 +12,7 @@ public class VersionSet {
     private String name;
     private String parent;
     private Instant created;
+    private Instant updated;
     private String latestRevision;
     private Instant latestRevisionCreated;
     private List<ArchipelagoPackage> targets;

@@ -124,7 +124,7 @@ public class DynamoDBBuildService implements BuildService {
         Map<String, AttributeValue> item = itemResult.getItem();
         if (BuildStatus.FAILED.equals(status)) {
             item.put(Constants.ATTRIBUTE_BUILD_STATUS, AV.of(BuildStatus.FAILED.getStatus()));
-        } else if (BuildStatus.FINISHED.equals(status) && BuildStage.PUBLISHING.equals(stage)) {
+        } else if ((BuildStatus.FINISHED.equals(status) || BuildStatus.SKIPPED.equals(status)) && BuildStage.PUBLISHING.equals(stage)) {
             item.put(Constants.ATTRIBUTE_BUILD_STATUS, AV.of(BuildStatus.FINISHED.getStatus()));
         } else {
             item.put(Constants.ATTRIBUTE_BUILD_STATUS, AV.of(BuildStatus.IN_PROGRESS.getStatus()));

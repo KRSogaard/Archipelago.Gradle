@@ -25,17 +25,20 @@ public class VersionSetController {
     private GetVersionSetDelegate getVersionSetDelegate;
     private GetVersionSetPackagesDelegate getVersionSetPackagesDelegate;
     private GetVersionSetsDelegate getVersionSetsDelegate;
+    private UpdateVersionSetDelegate updateVersionSetDelegate;
 
     public VersionSetController(CreateVersionSetDelegate createVersionSetDelegate,
                                 CreateVersionSetRevisionDelegate createVersionSetRevisionDelegate,
                                 GetVersionSetDelegate getVersionSetDelegate,
                                 GetVersionSetPackagesDelegate getVersionSetPackagesDelegate,
-                                GetVersionSetsDelegate getVersionSetsDelegate) {
+                                GetVersionSetsDelegate getVersionSetsDelegate,
+                                UpdateVersionSetDelegate updateVersionSetDelegate) {
         this.createVersionSetDelegate = createVersionSetDelegate;
         this.createVersionSetRevisionDelegate = createVersionSetRevisionDelegate;
         this.getVersionSetDelegate = getVersionSetDelegate;
         this.getVersionSetPackagesDelegate = getVersionSetPackagesDelegate;
         this.getVersionSetsDelegate = getVersionSetsDelegate;
+        this.updateVersionSetDelegate = updateVersionSetDelegate;
     }
 
     @GetMapping
@@ -59,8 +62,14 @@ public class VersionSetController {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         request.validate();
 
-        List<ArchipelagoPackage> targets = request.getTargets().stream()
-                .map(ArchipelagoPackage::parse).collect(Collectors.toList());
+
+        List<ArchipelagoPackage> targets;
+        if (request.getTargets() != null) {
+            targets = request.getTargets().stream()
+                    .map(ArchipelagoPackage::parse).collect(Collectors.toList());
+        } else {
+            targets = new ArrayList<>();
+        }
 
         Optional<String> parent = Optional.empty();
         if (!Strings.isNullOrEmpty(request.getParent())) {
@@ -77,7 +86,7 @@ public class VersionSetController {
             @PathVariable("versionSet") String versionSetName,
             @RequestBody CreateVersionSetRevisionRestRequest request) throws VersionSetDoseNotExistsException,
             MissingTargetPackageException, PackageNotFoundException {
-        log.info("Request to created revision for version set '{}': {}", versionSetName, request);
+        log.info("Request to created revision for version set '{}' for account '{}'", versionSetName, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName));
         request.validate();
@@ -92,6 +101,23 @@ public class VersionSetController {
         return CreateVersionSetRevisionRestResponse.builder()
                 .revisionId(revisionId)
                 .build();
+    }
+
+    @PutMapping("/{versionSet}")
+    @ResponseStatus(HttpStatus.OK)
+    public void updateVersionSet(
+            @PathVariable("accountId") String accountId,
+            @PathVariable("versionSet") String versionSetName,
+            UpdateVersionSetRestRequest request) throws PackageNotFoundException, VersionSetDoseNotExistsException {
+        log.info("Request to update revision for version set '{}' for account '{}'", versionSetName, accountId);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName));
+        request.validate();
+
+        List<ArchipelagoPackage> targets = request.getTargets().stream()
+                .map(ArchipelagoPackage::parse).collect(Collectors.toList());
+
+        updateVersionSetDelegate.update(accountId, versionSetName, targets, Optional.ofNullable(request.getParent()));
     }
 
     @GetMapping("{versionSet}")

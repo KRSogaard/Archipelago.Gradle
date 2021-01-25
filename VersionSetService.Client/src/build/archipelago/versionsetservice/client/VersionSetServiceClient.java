@@ -4,8 +4,8 @@ import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.versionset.*;
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
-import build.archipelago.versionsetservice.client.models.CreateVersionSetRequest;
 import build.archipelago.versionsetservice.exceptions.*;
+import build.archipelago.versionsetservice.models.*;
 
 import java.util.List;
 
@@ -14,6 +14,9 @@ public interface VersionSetServiceClient {
 
     void createVersionSet(String accountId, CreateVersionSetRequest request)
             throws VersionSetExistsException, VersionSetDoseNotExistsException, PackageNotFoundException;
+
+    void updateVersionSet(String accountId, String versionSetName, UpdateVersionSetRequest request) throws VersionSetDoseNotExistsException,
+            PackageNotFoundException;
 
     String createVersionRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages)
             throws VersionSetDoseNotExistsException, MissingTargetPackageException, PackageNotFoundException;

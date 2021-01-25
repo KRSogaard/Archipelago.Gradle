@@ -28,8 +28,6 @@ public class CreateVersionSetDelegate {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "An account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
         Preconditions.checkArgument(NameUtil.validateVersionSetName(name), "Version set name was invalid");
-        Preconditions.checkNotNull(targets, "At least 1 target is required");
-        Preconditions.checkArgument(targets.size() > 0, "At least 1 target is required");
 
         try {
             versionSetService.get(accountId, name);

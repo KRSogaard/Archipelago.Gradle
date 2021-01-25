@@ -8,8 +8,8 @@ import build.archipelago.common.versionset.*;
 import build.archipelago.packageservice.client.PackageExceptionHandler;
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.client.*;
-import build.archipelago.versionsetservice.client.models.CreateVersionSetRequest;
 import build.archipelago.versionsetservice.exceptions.*;
+import build.archipelago.versionsetservice.models.*;
 import build.archipelago.versionsetservice.models.rest.*;
 import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
@@ -101,6 +101,57 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
                 log.warn("Got Conflict (409) response from Version set service with body: " + httpResponse.body());
                 problem = ProblemDetailRestResponse.from(httpResponse.body());
                 throw (VersionSetExistsException) VersionSetExceptionHandler.createException(problem);
+            case 404:
+                log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
+                problem = ProblemDetailRestResponse.from(httpResponse.body());
+                switch (problem.getType()) {
+                    case VersionSetExceptionHandler.TYPE_VERSION_SET_NOT_FOUND:
+                        throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
+                    case PackageExceptionHandler.TYPE_PACKAGE_NOT_FOUND:
+                        throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
+                    default:
+                        throw new RuntimeException("The problem type " + problem.getType() + " was not known");
+                }
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
+        }
+    }
+
+    @Override
+    public void updateVersionSet(String accountId, String versionSetName, UpdateVersionSetRequest request) throws VersionSetDoseNotExistsException,
+            PackageNotFoundException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version-set name is required");
+        Preconditions.checkNotNull(request);
+        request.validate();
+
+        UpdateVersionSetRestRequest restRequest = UpdateVersionSetRestRequest.builder()
+                .targets(request.getTargets().stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()))
+                .parent(request.getParent() != null && request.getParent().isPresent() ? request.getParent().get() : null)
+                .build();
+
+        HttpResponse<String> httpResponse;
+        try {
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set")
+                    .PUT(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
+                    .build();
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call version set service to update version-set '{}' for account '{}'", versionSetName,
+                    accountId);
+            throw new RuntimeException(e);
+        }
+        ProblemDetailRestResponse problem;
+        switch (httpResponse.statusCode()) {
+            case 200:
+                break;
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Version set service");
+                throw new UnauthorizedException();
             case 404:
                 log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
                 problem = ProblemDetailRestResponse.from(httpResponse.body());

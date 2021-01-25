@@ -133,11 +133,15 @@ public class VersionSetBuilder {
             harborClient = internalHarborClientFactory.create(request.getAccountId());
             maui = new Maui(buildRoot, harborClient, packageSourceProvider, mauiPath);
 
+            buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PREPARE, BuildStatus.WAITING);
+            buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.WAITING);
+            buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.WAITING);
+
             this.stage_prepare();
             this.stage_packages();
             this.stage_publish();
         } catch (FailBuildException exp) {
-            log.warn("The build was failed, will not retry");
+            log.warn("The build was failed, will not retry", exp);
         } catch (RuntimeException exp) {
             log.error("Fatal error while processing build, will retry later", exp);
             throw new TemporaryMessageProcessingException();
@@ -268,32 +272,37 @@ public class VersionSetBuilder {
                 String gitCommit = gitMap.get(builtPackage);
                 String buildHash = null;
 
-                ArchipelagoBuiltPackage previousBuilt = this.getPreviousBuild(builtPackage.getName(), gitCommit);
-                if (previousBuilt != null) {
-                    buildHash = previousBuilt.getHash();
-                }
-
-                if (buildHash == null) {
-                    log.info("First time the package {}, at commit {} has been built",
-                            builtPackage.getName(), gitCommit);
-                    try {
-                        String configContent;
-                        try {
-                            configContent = Files.readString(wsContext.getPackageRoot(builtPackage).resolve(WorkspaceConstants.BUILD_FILE_NAME));
-                        } catch (PackageNotLocalException e) {
-                            throw new RuntimeException("Where not able to find the package dir for " + builtPackage, e);
-                        }
-
-                        Path zip = this.prepareBuildZip(builtPackage);
-                        buildHash = packageServiceClient.uploadBuiltArtifact(accountDetails.getId(), UploadPackageRequest.builder()
-                                        .config(configContent)
-                                        .pkg(builtPackage)
-                                        .gitCommit(gitCommit)
-                                        .build(),
-                                zip);
-                    } catch (PackageNotFoundException e) {
-                        throw new RuntimeException(String.format("The package %s no longer exists, was it deleted while building?", builtPackage), e);
+                try {
+                    ArchipelagoBuiltPackage previousBuilt = this.getPreviousBuild(builtPackage.getName(), gitCommit);
+                    if (previousBuilt != null) {
+                        buildHash = previousBuilt.getHash();
                     }
+
+                    if (buildHash == null) {
+                        log.info("First time the package {}, at commit {} has been built",
+                                builtPackage.getName(), gitCommit);
+                        try {
+                            String configContent;
+                            try {
+                                configContent = Files.readString(wsContext.getPackageRoot(builtPackage).resolve(WorkspaceConstants.BUILD_FILE_NAME));
+                            } catch (PackageNotLocalException e) {
+                                throw new RuntimeException("Where not able to find the package dir for " + builtPackage, e);
+                            }
+
+                            Path zip = this.prepareBuildZip(builtPackage);
+                            buildHash = packageServiceClient.uploadBuiltArtifact(accountDetails.getId(), UploadPackageRequest.builder()
+                                            .config(configContent)
+                                            .pkg(builtPackage)
+                                            .gitCommit(gitCommit)
+                                            .build(),
+                                    zip);
+                        } catch (PackageNotFoundException e) {
+                            throw new RuntimeException(String.format("The package %s no longer exists, was it deleted while building?", builtPackage), e);
+                        }
+                    }
+                } catch (Exception exp) {
+                    log.error("Failed to get last build of package", exp);
+                    log.error("Failed to get last build of package", exp);
                 }
 
                 newBuildPackage.add(new ArchipelagoBuiltPackage(builtPackage, buildHash));

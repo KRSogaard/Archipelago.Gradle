@@ -57,7 +57,7 @@ public class S3OutputWrapper implements OutputWrapper {
             logs.append(Instant.now().toEpochMilli());
             logs.append(";");
             logs.append(prefix);
-            logs.append(": ");
+            logs.append(";");
             logs.append(String.format(message, args));
             logs.append("\n");
         }

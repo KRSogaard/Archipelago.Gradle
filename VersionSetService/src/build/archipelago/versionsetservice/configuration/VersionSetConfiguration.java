@@ -14,8 +14,8 @@ public class VersionSetConfiguration {
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public VersionSetService getVersionSetService(AmazonDynamoDB amazonDynamoDB,
-                              @Value("${dynamodb.versionsets.name}") String versionSetTable,
-                              @Value("${dynamodb.versionsets.revisions.name}") String versionSetRevisionsTable) {
+                                                  @Value("${dynamodb.versionsets.name}") String versionSetTable,
+                                                  @Value("${dynamodb.versionsets.revisions.name}") String versionSetRevisionsTable) {
         return new DynamoDbVersionSetService(amazonDynamoDB, DynamoDbVersionSetServiceConfig.builder()
                 .versionSetTable(versionSetTable)
                 .versionSetRevisionTable(versionSetRevisionsTable)
@@ -51,7 +51,14 @@ public class VersionSetConfiguration {
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-    public GetVersionSetsDelegate getVersionSetsDelegate(VersionSetService versionSetService){
+    public GetVersionSetsDelegate getVersionSetsDelegate(VersionSetService versionSetService) {
         return new GetVersionSetsDelegate(versionSetService);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public UpdateVersionSetDelegate getUpdateVersionSetDelegate(VersionSetService versionSetService,
+                                                                PackageServiceClient packageServiceClient) {
+        return new UpdateVersionSetDelegate(versionSetService, packageServiceClient);
     }
 }

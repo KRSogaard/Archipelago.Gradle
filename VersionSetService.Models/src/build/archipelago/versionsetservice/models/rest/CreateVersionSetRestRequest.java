@@ -16,7 +16,5 @@ public class CreateVersionSetRestRequest {
 
     public void validate() throws IllegalArgumentException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
-        Preconditions.checkNotNull(targets, "At least 1 target is required");
-        Preconditions.checkArgument(targets.size() > 0, "At least 1 target is required");
     }
 }

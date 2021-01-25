@@ -1,4 +1,4 @@
-package build.archipelago.versionsetservice.client.models;
+package build.archipelago.versionsetservice.models;
 
 import build.archipelago.common.ArchipelagoPackage;
 import com.google.common.base.*;

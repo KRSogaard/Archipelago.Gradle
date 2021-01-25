@@ -73,9 +73,13 @@ public class PackageExceptionHandler {
                             (String) problem.getData().get("version"),
                             (String) problem.getData().get("hash")));
                 }
-                return new PackageNotFoundException(new ArchipelagoPackage(
-                        (String) problem.getData().get("packageName"),
-                        (String) problem.getData().get("version")));
+                if (problem.getData().containsKey("version") &&
+                        !Strings.isNullOrEmpty((String) problem.getData().get("version"))) {
+                    return new PackageNotFoundException(new ArchipelagoPackage(
+                            (String) problem.getData().get("packageName"),
+                            (String) problem.getData().get("version")));
+                }
+                return new PackageNotFoundException((String) problem.getData().get("packageName"));
             case TYPE_PACKAGE_EXISTS:
                 if (problem.getData().containsKey("hash") &&
                         !Strings.isNullOrEmpty((String) problem.getData().get("hash"))) {
