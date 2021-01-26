@@ -40,40 +40,6 @@ public class CreateVersionSetDelegateTest {
         delegate = new CreateVersionSetDelegate(versionSetService, packageServiceClient);
     }
 
-    @Test
-    public void testCreateValidVersionSet() throws VersionSetExistsException,
-            VersionSetDoseNotExistsException, PackageNotFoundException {
-        when(packageServiceClient.verifyPackagesExists(eq(testAccountId), any())).thenReturn(
-                PackageVerificationResult.<ArchipelagoPackage>builder().missingPackages(ImmutableList.of()).build());
-        when(versionSetService.get(eq(testAccountId), eq(parentVSName))).thenReturn(this.createVS(parentVSName, List.of(pA)));
-
-        delegate.create(testAccountId, testVSName, List.of(pA, pB), Optional.of(parentVSName));
-    }
-
-    @Test
-    public void testCreateValidVersionSetWithoutParent() throws VersionSetExistsException,
-            VersionSetDoseNotExistsException, PackageNotFoundException {
-        when(packageServiceClient.verifyPackagesExists(eq(testAccountId), any())).thenReturn(
-                PackageVerificationResult.<ArchipelagoPackage>builder().missingPackages(ImmutableList.of()).build());
-        delegate.create(testAccountId, testVSName, List.of(pA, pB), Optional.empty());
-    }
-
-    @Test(expected = VersionSetExistsException.class)
-    public void testCreateVersionSetWithNameThatAlreadyExistsShouldFail() throws VersionSetExistsException,
-            VersionSetDoseNotExistsException, PackageNotFoundException {
-        when(packageServiceClient.verifyPackagesExists(eq(testAccountId), any())).thenReturn(
-                PackageVerificationResult.<ArchipelagoPackage>builder().missingPackages(ImmutableList.of()).build());
-        when(versionSetService.get(eq(testAccountId), eq(testVSName))).thenReturn(this.createVS(testVSName, List.of(pA, pB)));
-        delegate.create(testAccountId, testVSName, List.of(pA, pB), Optional.empty());
-
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateVersionWithoutTargetsShouldFail() throws VersionSetExistsException,
-            VersionSetDoseNotExistsException, PackageNotFoundException {
-        delegate.create(testAccountId, testVSName, new ArrayList<>(), Optional.empty());
-    }
-
     @Test(expected = PackageNotFoundException.class)
     public void testCreateVersionWithTargetThatDoseNotExistsShouldFail() throws VersionSetExistsException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
@@ -81,13 +47,13 @@ public class CreateVersionSetDelegateTest {
         when(packageServiceClient.verifyPackagesExists(eq(testAccountId), any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoPackage>builder().missingPackages(
                         ImmutableList.of(ArchipelagoPackage.parse(packageName))).build());
-        when(versionSetService.get(eq(testAccountId), eq(testVSName))).thenReturn(null);
+        when(versionSetService.get(eq(testAccountId), eq(testVSName))).thenThrow(new VersionSetDoseNotExistsException(testVSName));
 
-        delegate.create(testAccountId, testVSName, List.of(ArchipelagoPackage.parse(packageName)), Optional.empty());
+        delegate.create(testAccountId, testVSName, Optional.of(ArchipelagoPackage.parse(packageName)), Optional.empty());
     }
 
 
-    private VersionSet createVS(String vsName, List<ArchipelagoPackage> targets) {
+    private VersionSet createVS(String vsName, ArchipelagoPackage target) {
         Instant created = Instant.now();
         String vsParentName = "parent-master";
         String revisionId = "123";
@@ -100,7 +66,7 @@ public class CreateVersionSetDelegateTest {
                 .name(vsName)
                 .created(created)
                 .parent(vsParentName)
-                .targets(targets)
+                .target(target)
                 .revisions(List.of(revisionA))
                 .latestRevisionCreated(revisionDate)
                 .latestRevision(revisionId)

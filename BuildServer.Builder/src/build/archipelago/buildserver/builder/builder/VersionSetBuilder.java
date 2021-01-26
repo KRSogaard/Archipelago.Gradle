@@ -246,6 +246,7 @@ public class VersionSetBuilder {
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.SKIPPED);
             return;
         }
+
         StageLog stageLog = new StageLog();
         try {
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.IN_PROGRESS);
@@ -296,6 +297,7 @@ public class VersionSetBuilder {
                                             .gitCommit(gitCommit)
                                             .build(),
                                     zip);
+                            stageLog.addInfo("Uploaded new build of %s with id %s", builtPackage.getNameVersion(), buildHash);
                         } catch (PackageNotFoundException e) {
                             throw new RuntimeException(String.format("The package %s no longer exists, was it deleted while building?", builtPackage), e);
                         }
@@ -308,20 +310,29 @@ public class VersionSetBuilder {
                 newBuildPackage.add(new ArchipelagoBuiltPackage(builtPackage, buildHash));
             }
 
-            List<ArchipelagoBuiltPackage> newRevision;
-            try {
-                newRevision = wsContext.getVersionSetRevision().getPackages()
-                        .stream().filter(rp -> newBuildPackage.stream().noneMatch(p -> rp.getNameVersion().equalsIgnoreCase(p.getNameVersion())))
-                        .collect(Collectors.toList());
-            } catch (VersionSetNotSyncedException e) {
-                throw new RuntimeException("The workspace had not been synced", e);
-            }
-            newRevision.addAll(newBuildPackage);
-
-            if (!this.doseRevisionHaveChanges(wsContext.getVersionSetRevision().getPackages(), newRevision)) {
-                log.warn("There are no changes to the version set");
-                stageLog.addError("There are no change to the version set, can't publish");
+            VersionSet versionSet = versionSetServiceClient.getVersionSet(accountDetails.getId(), wsContext.getVersionSet());
+            if (versionSet.getTarget() == null) {
+                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
+                stageLog.addError("There are no target set for the version-set, we can not create a new version-set revision without it");
+                stageLog.addError("If the target package is new and was added to this build, it will have been published. " +
+                        "You can then update this version-set to target that package.");
                 throw new FailBuildException();
+            }
+
+            List<ArchipelagoBuiltPackage> newRevision = new ArrayList<>(newBuildPackage);
+            if (versionSet.getLatestRevision() != null) {
+                VersionSetRevision revision = versionSetServiceClient.getVersionSetPackages(accountDetails.getId(), wsContext.getVersionSet(),
+                        versionSet.getLatestRevision());
+
+                newRevision.addAll(revision.getPackages()
+                        .stream().filter(revisionPackage -> newBuildPackage.stream().noneMatch(revisionPackage::equals))
+                        .collect(Collectors.toList()));
+
+                if (!this.doseRevisionHaveChanges(revision.getPackages(), newRevision)) {
+                    log.warn("There are no changes to the version set");
+                    stageLog.addError("There are no change to the version set, can't publish");
+                    throw new FailBuildException();
+                }
             }
 
             try {

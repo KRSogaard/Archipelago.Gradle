@@ -41,8 +41,7 @@ public class CreateVersionSetRevisionDelegateTest {
 
         testVSName = UUID.randomUUID().toString().split("-", 2)[0];
         testAccountId = UUID.randomUUID().toString().split("-", 2)[0];
-        List<ArchipelagoPackage> targets = List.of(pA, pB);
-        VersionSet vs = this.createVS(testVSName, targets);
+        VersionSet vs = this.createVS(testVSName, pA);
         when(versionSetService.get(eq(testAccountId), eq(testVSName))).thenReturn(vs);
     }
 
@@ -51,9 +50,8 @@ public class CreateVersionSetRevisionDelegateTest {
             PackageNotFoundException {
         String vsName = "TestVS-master";
         String revisionId = "12345";
-        List<ArchipelagoPackage> targets = List.of(pA, pB);
 
-        VersionSet vs = this.createVS(vsName, targets);
+        VersionSet vs = this.createVS(vsName, pA);
 
         when(versionSetService.get(eq(testAccountId), eq(vsName))).thenReturn(vs);
         when(versionSetService.createRevision(eq(testAccountId), eq(vsName), any())).thenReturn(revisionId);
@@ -98,7 +96,7 @@ public class CreateVersionSetRevisionDelegateTest {
 
     }
 
-    private VersionSet createVS(String vsName, List<ArchipelagoPackage> targets) {
+    private VersionSet createVS(String vsName, ArchipelagoPackage target) {
         Instant created = Instant.now();
         String vsParentName = "parent/master";
         String revisionId = "123";
@@ -111,7 +109,7 @@ public class CreateVersionSetRevisionDelegateTest {
                 .name(vsName)
                 .created(created)
                 .parent(vsParentName)
-                .targets(targets)
+                .target(target)
                 .revisions(List.of(revisionA))
                 .latestRevisionCreated(revisionDate)
                 .latestRevision(revisionId)

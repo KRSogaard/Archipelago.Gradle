@@ -1,6 +1,6 @@
 package build.archipelago.versionsetservice.client.rest;
 
-import build.archipelago.common.*;
+import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.clients.rest.OAuthRestClient;
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.rest.models.errors.ProblemDetailRestResponse;
@@ -72,8 +72,8 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
 
         CreateVersionSetRestRequest restRequest = CreateVersionSetRestRequest.builder()
                 .name(request.getName())
-                .targets(request.getTargets().stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()))
-                .parent(request.getParent() != null && request.getParent().isPresent() ? request.getParent().get() : null)
+                .target(request.getTarget().isPresent() ? request.getTarget().get().getNameVersion() : null)
+                .parent(request.getParent().isPresent() ? request.getParent().get() : null)
                 .build();
 
         HttpResponse<String> httpResponse;
@@ -125,10 +125,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
         Preconditions.checkNotNull(request);
         request.validate();
 
-        UpdateVersionSetRestRequest restRequest = UpdateVersionSetRestRequest.builder()
-                .targets(request.getTargets().stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList()))
-                .parent(request.getParent() != null && request.getParent().isPresent() ? request.getParent().get() : null)
-                .build();
+        UpdateVersionSetRestRequest restRequest = UpdateVersionSetRestRequest.from(request);
 
         HttpResponse<String> httpResponse;
         try {

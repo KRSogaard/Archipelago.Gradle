@@ -12,12 +12,12 @@ import java.util.*;
 @Slf4j
 public class Workspace {
     protected String versionSet;
-    protected List<ArchipelagoPackage> targets;
+    protected ArchipelagoPackage target;
     protected List<String> localPackages;
 
     protected Workspace() {
         versionSet = null;
-        targets = new ArrayList<>();
+        target = null;
         localPackages = new ArrayList<>();
     }
 }

@@ -3,10 +3,11 @@ package build.archipelago.harbor.controllers;
 import build.archipelago.common.*;
 import build.archipelago.common.versionset.*;
 import build.archipelago.harbor.filters.AccountIdFilter;
-import build.archipelago.packageservice.exceptions.PackageNotFoundException;
+import build.archipelago.harbor.models.versionset.AddTargetRestRequest;
+import build.archipelago.packageservice.exceptions.*;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.exceptions.*;
-import build.archipelago.versionsetservice.models.*;
+import build.archipelago.versionsetservice.models.CreateVersionSetRequest;
 import build.archipelago.versionsetservice.models.rest.*;
 import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
@@ -38,9 +39,7 @@ public class VersionSetController {
         return VersionSetsRestResponse.builder()
                 .versionSets(versionSets.stream().map(VersionSetRestResponse::fromVersionSet).collect(Collectors.toList()))
                 .build();
-
     }
-
 
     @GetMapping("{versionSet}")
     public VersionSetRestResponse getVersionSet(@RequestAttribute(AccountIdFilter.Key) String accountId,
@@ -93,33 +92,37 @@ public class VersionSetController {
         if (!Strings.isNullOrEmpty(request.getParent())) {
             parent = Optional.of(request.getParent());
         }
-        List<ArchipelagoPackage> targets = new ArrayList<>();
-        for (String pkg : request.getTargets()) {
-            targets.add(ArchipelagoPackage.parse(pkg));
+
+        Optional<ArchipelagoPackage> target = Optional.empty();
+        if (!Strings.isNullOrEmpty(request.getTarget())) {
+            target = Optional.of(ArchipelagoPackage.parse(request.getTarget()));
         }
 
         CreateVersionSetRequest createRequest = CreateVersionSetRequest.builder()
                 .name(request.getName())
                 .parent(parent)
-                .targets(targets)
+                .target(target)
                 .build();
         versionSetServiceClient.createVersionSet(accountId, createRequest);
     }
 
-
-    @PutMapping("/{versionSet}")
+    @PostMapping("/{versionSet}/targets")
     @ResponseStatus(HttpStatus.OK)
-    public void updateVersionSet(
+    public void addVersionSetTarget(
             @RequestAttribute(AccountIdFilter.Key) String accountId,
             @PathVariable("versionSet") String versionSetName,
-            UpdateVersionSetRestRequest request) throws PackageNotFoundException, VersionSetDoseNotExistsException {
+            @RequestBody AddTargetRestRequest request) throws PackageNotFoundException, VersionSetDoseNotExistsException, PackageExistsException {
         log.info("Request to update version set '{}' for account '{}'", versionSetName, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName));
+        Preconditions.checkArgument(request != null);
         request.validate();
 
-        UpdateVersionSetRequest updateRequest = request.toInternal();
+        ArchipelagoPackage pkg = ArchipelagoPackage.parse(request.getTarget());
 
-        versionSetServiceClient.updateVersionSet(accountId, versionSetName, updateRequest);
+        //UpdateVersionSetRequest updateRequest = new UpdateVersionSetRequest();
+
+//
+//        versionSetServiceClient.updateVersionSet(accountId, versionSetName, updateRequest);
     }
 }

@@ -31,21 +31,18 @@ public class CreateVersionSetRevisionDelegate {
         Preconditions.checkArgument(NameUtil.validateVersionSetName(versionSetName), "Version set name was invalid");
         Preconditions.checkArgument(packages.size() > 0, "At least 1 package is required for a revision");
 
-        this.validateVersionSetTargets(accountId, versionSetName, packages);
+        this.validateVersionSetTarget(accountId, versionSetName, packages);
         this.validatePackages(accountId, packages);
 
         return versionSetService.createRevision(accountId, versionSetName, packages);
     }
 
-    private void validateVersionSetTargets(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages)
+    private void validateVersionSetTarget(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages)
             throws MissingTargetPackageException, VersionSetDoseNotExistsException {
+
         VersionSet vs = versionSetService.get(accountId, versionSetName);
-        for (ArchipelagoPackage pkg : vs.getTargets()) {
-            if (packages.stream().noneMatch(p ->
-                    pkg.getName().equalsIgnoreCase(p.getName()) &&
-                            pkg.getVersion().equalsIgnoreCase(p.getVersion()))) {
-                throw new MissingTargetPackageException(pkg);
-            }
+        if (packages.stream().noneMatch(p -> p.equals(vs.getTarget()))) {
+            throw new MissingTargetPackageException(vs.getTarget());
         }
     }
 

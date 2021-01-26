@@ -364,6 +364,8 @@ project(':VersionSetService.Models') {
 
     dependencies {
         api project(':Archipelago.Common')
+
+        implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
     }
 }
 

@@ -32,7 +32,6 @@ public class GetVersionSetDelegateTest {
         ArchipelagoPackage pA = ArchipelagoPackage.parse("TestPackageA-1.0");
         ArchipelagoPackage pB = ArchipelagoPackage.parse("TestPackageB-1.0");
         ArchipelagoPackage pC = ArchipelagoPackage.parse("TestPackageC-1.0");
-        List<ArchipelagoPackage> targets = List.of(pA, pB, pC);
         String revisionId = "123";
         Instant revisionDate = Instant.now();
         Revision revisionA = Revision.builder()
@@ -43,7 +42,7 @@ public class GetVersionSetDelegateTest {
                 .name(vsName)
                 .created(created)
                 .parent(vsParentName)
-                .targets(targets)
+                .target(pA)
                 .revisions(List.of(revisionA))
                 .latestRevisionCreated(revisionDate)
                 .latestRevision(revisionId)
@@ -57,11 +56,8 @@ public class GetVersionSetDelegateTest {
         Assert.assertEquals(created, r.getCreated());
         Assert.assertNotNull(r.getParent());
         Assert.assertEquals(vsParentName, r.getParent());
-        Assert.assertNotNull(r.getTargets());
-        Assert.assertEquals(3, r.getTargets().size());
-        Assert.assertTrue(r.getTargets().stream().anyMatch(x -> pA.toString().equals(x.toString())));
-        Assert.assertTrue(r.getTargets().stream().anyMatch(x -> pB.toString().equals(x.toString())));
-        Assert.assertTrue(r.getTargets().stream().anyMatch(x -> pC.toString().equals(x.toString())));
+        Assert.assertNotNull(r.getTarget());
+        Assert.assertEquals(r.getTarget(), pA);
         Assert.assertNotNull(r.getRevisions());
         Assert.assertEquals(1, r.getRevisions().size());
         Assert.assertTrue(r.getRevisions().stream().anyMatch(x -> revisionA.getRevisionId().equals(x.getRevisionId())));

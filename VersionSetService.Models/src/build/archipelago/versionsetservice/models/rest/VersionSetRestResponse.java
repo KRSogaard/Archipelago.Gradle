@@ -18,7 +18,7 @@ public class VersionSetRestResponse {
     private Long created;
     private String latestRevision;
     private Long latestRevisionCreated;
-    private List<String> targets;
+    private String target;
     private List<RevisionIdRestResponse> revisions;
 
     public static VersionSetRestResponse fromVersionSet(VersionSet vs) {
@@ -29,7 +29,7 @@ public class VersionSetRestResponse {
                 .latestRevision(vs.getLatestRevision())
                 .latestRevisionCreated(
                         vs.getLatestRevisionCreated() != null ? vs.getLatestRevisionCreated().toEpochMilli() : null)
-                .targets(vs.getTargets().stream().map(ArchipelagoPackage::toString).collect(Collectors.toList()))
+                .target(vs.getTarget() != null ? vs.getTarget().getNameVersion() : null)
                 .revisions(vs.getRevisions() != null ? vs.getRevisions().stream().map(RevisionIdRestResponse::from).collect(Collectors.toList()) : null)
                 .build();
     }
@@ -41,7 +41,7 @@ public class VersionSetRestResponse {
                 .created(Instant.ofEpochMilli(this.getCreated()))
                 .latestRevision(this.getLatestRevision())
                 .latestRevisionCreated(this.getLatestRevisionCreated() != null ? Instant.ofEpochMilli(this.getLatestRevisionCreated()) : null)
-                .targets(this.getTargets().stream().map(ArchipelagoPackage::parse).collect(Collectors.toList()))
+                .target(this.getTarget() != null ? ArchipelagoPackage.parse(this.getTarget()) : null)
                 .revisions(this.getRevisions() != null ? this.getRevisions().stream().map(RevisionIdRestResponse::toInternal).collect(Collectors.toList()) : null)
                 .build();
     }

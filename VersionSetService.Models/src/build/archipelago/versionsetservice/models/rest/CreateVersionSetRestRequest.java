@@ -1,9 +1,8 @@
 package build.archipelago.versionsetservice.models.rest;
 
+import build.archipelago.common.ArchipelagoPackage;
 import com.google.common.base.*;
 import lombok.*;
-
-import java.util.List;
 
 @Builder
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -11,10 +10,13 @@ import java.util.List;
 @Getter
 public class CreateVersionSetRestRequest {
     private String name;
-    private List<String> targets;
+    private String target;
     private String parent;
 
     public void validate() throws IllegalArgumentException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
+        if (target != null) {
+            ArchipelagoPackage.parse(target);
+        }
     }
 }

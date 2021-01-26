@@ -23,7 +23,7 @@ public class CreateVersionSetDelegate {
         this.packageServiceClient = packageServiceClient;
     }
 
-    public void create(String accountId, String name, List<ArchipelagoPackage> targets, Optional<String> parent)
+    public void create(String accountId, String name, Optional<ArchipelagoPackage> target, Optional<String> parent)
             throws VersionSetExistsException, PackageNotFoundException, VersionSetDoseNotExistsException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "An account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
@@ -36,10 +36,11 @@ public class CreateVersionSetDelegate {
             // This is expected we do not want the version set to exists
         }
 
-        if (targets.size() > 0) {
-            PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(accountId, targets);
+        if (target.isPresent()) {
+            PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(
+                    accountId, List.of(target.get()));
             if (!targetsVerified.isValid()) {
-                throw new PackageNotFoundException(targetsVerified.getMissingPackages());
+                throw new PackageNotFoundException(targetsVerified.getMissingPackages().get(0));
             }
         }
 
@@ -53,6 +54,6 @@ public class CreateVersionSetDelegate {
             versionSetService.get(accountId, parent.get());
         }
 
-        versionSetService.create(accountId, name, targets, parent);
+        versionSetService.create(accountId, name, target, parent);
     }
 }

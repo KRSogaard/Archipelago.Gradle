@@ -6,10 +6,10 @@ import build.archipelago.packageservice.client.models.PackageVerificationResult;
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
 import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.versionsetservice.models.UpdateVersionSetRequest;
 import com.google.common.base.*;
 
-import java.util.Optional;
-import java.util.*;
+import java.util.List;
 
 public class UpdateVersionSetDelegate {
 
@@ -22,20 +22,28 @@ public class UpdateVersionSetDelegate {
         this.packageServiceClient = packageServiceClient;
     }
 
-    public void update(String accountId, String versionSetName, List<ArchipelagoPackage> targets, Optional<String> parent) throws VersionSetDoseNotExistsException, PackageNotFoundException {
+    public void update(String accountId, String versionSetName, UpdateVersionSetRequest request) throws VersionSetDoseNotExistsException,
+            PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName));
-        Preconditions.checkArgument(targets != null);
+        Preconditions.checkArgument(request != null);
 
+        // Ensure the version set exists
         versionSetService.get(accountId, versionSetName);
 
-        if (targets.size() > 0) {
-            PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(accountId, targets);
+        if (request.getTarget().isPresent()) {
+            PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(
+                    accountId, List.of(request.getTarget().get()));
             if (!targetsVerified.isValid()) {
-                throw new PackageNotFoundException(targetsVerified.getMissingPackages());
+                throw new PackageNotFoundException(targetsVerified.getMissingPackages().get(0));
             }
         }
 
-        versionSetService.update(accountId, versionSetName, targets, parent);
+        if (request.getParent().isPresent()) {
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getParent().get()), "The parent attribute was empty or null");
+            versionSetService.get(accountId, request.getParent().get());
+        }
+
+        versionSetService.update(accountId, versionSetName, request);
     }
 }

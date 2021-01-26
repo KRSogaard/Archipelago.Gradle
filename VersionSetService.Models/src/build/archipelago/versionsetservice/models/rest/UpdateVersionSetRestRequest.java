@@ -2,27 +2,38 @@ package build.archipelago.versionsetservice.models.rest;
 
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.versionsetservice.models.UpdateVersionSetRequest;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Builder
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UpdateVersionSetRestRequest {
-    private List<String> targets;
-    private String parent;
+    private Optional<String> target;
+    private Optional<String> parent;
 
     public void validate() throws IllegalArgumentException {
-        // TODO: Do we need targets on update?
     }
 
     public UpdateVersionSetRequest toInternal() {
         return UpdateVersionSetRequest.builder()
-                .parent(Optional.ofNullable(this.getParent()))
-                .targets(this.getTargets() == null ? new ArrayList<>() : this.getTargets().stream().map(ArchipelagoPackage::parse).collect(Collectors.toList()))
+                .parent(this.getParent())
+                .target(this.getTarget().isPresent() ?
+                        Optional.of(ArchipelagoPackage.parse(this.getTarget().get()))
+                        : Optional.empty())
+                .build();
+    }
+
+    public static UpdateVersionSetRestRequest from(UpdateVersionSetRequest request) {
+        return UpdateVersionSetRestRequest.builder()
+                .parent(request.getParent())
+                .target(request.getTarget().isPresent() ?
+                        Optional.of(request.getTarget().get().getNameVersion())
+                        : Optional.empty())
                 .build();
     }
 }

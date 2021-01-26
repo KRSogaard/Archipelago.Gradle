@@ -63,19 +63,16 @@ public class VersionSetController {
         request.validate();
 
 
-        List<ArchipelagoPackage> targets;
-        if (request.getTargets() != null) {
-            targets = request.getTargets().stream()
-                    .map(ArchipelagoPackage::parse).collect(Collectors.toList());
-        } else {
-            targets = new ArrayList<>();
+        Optional<ArchipelagoPackage> target = Optional.empty();
+        if (request.getTarget() != null) {
+            target = Optional.of(ArchipelagoPackage.parse(request.getTarget()));
         }
 
         Optional<String> parent = Optional.empty();
         if (!Strings.isNullOrEmpty(request.getParent())) {
             parent = Optional.of(request.getParent());
         }
-        createVersionSetDelegate.create(accountId, request.getName(), targets, parent);
+        createVersionSetDelegate.create(accountId, request.getName(), target, parent);
         log.debug("Version set '{}' was successfully installed", request.getName());
     }
 
@@ -108,16 +105,14 @@ public class VersionSetController {
     public void updateVersionSet(
             @PathVariable("accountId") String accountId,
             @PathVariable("versionSet") String versionSetName,
-            UpdateVersionSetRestRequest request) throws PackageNotFoundException, VersionSetDoseNotExistsException {
+            @RequestBody UpdateVersionSetRestRequest request) throws PackageNotFoundException, VersionSetDoseNotExistsException {
         log.info("Request to update revision for version set '{}' for account '{}'", versionSetName, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName));
         request.validate();
 
-        List<ArchipelagoPackage> targets = request.getTargets().stream()
-                .map(ArchipelagoPackage::parse).collect(Collectors.toList());
 
-        updateVersionSetDelegate.update(accountId, versionSetName, targets, Optional.ofNullable(request.getParent()));
+        updateVersionSetDelegate.update(accountId, versionSetName, request.toInternal());
     }
 
     @GetMapping("{versionSet}")

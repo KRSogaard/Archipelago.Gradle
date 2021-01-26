@@ -11,7 +11,7 @@ public class VersionSetExceptionHandler {
 
     public static final String TYPE_VERSION_SET_NOT_FOUND = "versionSet/notFound";
     public static final String TYPE_VERSION_SET_EXISTS = "versionSet/exists";
-    public static final String TYPE_VERSION_SET_TARGETS_MISSING = "versionSet/targetMissing";
+    public static final String TYPE_VERSION_SET_TARGET_MISSING = "versionSet/targetMissing";
 
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(VersionSetDoseNotExistsException exp) {
         Preconditions.checkNotNull(exp);
@@ -47,8 +47,8 @@ public class VersionSetExceptionHandler {
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(MissingTargetPackageException exp) {
         Preconditions.checkNotNull(exp);
         return ProblemDetailRestResponse.builder()
-                .type(TYPE_VERSION_SET_TARGETS_MISSING)
-                .title("A target was not version set")
+                .type(TYPE_VERSION_SET_TARGET_MISSING)
+                .title("A target was not in version set")
                 .status(400)
                 .detail(exp.getMessage())
                 .data(new HashMap<>() {{
@@ -60,7 +60,6 @@ public class VersionSetExceptionHandler {
                     }
                 }});
     }
-
 
     public static Exception createException(ProblemDetailRestResponse problem) {
         Preconditions.checkNotNull(problem);
@@ -77,7 +76,7 @@ public class VersionSetExceptionHandler {
             case TYPE_VERSION_SET_EXISTS:
                 return new VersionSetExistsException(
                         (String) problem.getData().get("versionSet"));
-            case TYPE_VERSION_SET_TARGETS_MISSING:
+            case TYPE_VERSION_SET_TARGET_MISSING:
                 return new MissingTargetPackageException(new ArchipelagoPackage(
                         (String) problem.getData().get("packageName"),
                         (String) problem.getData().get("version")));

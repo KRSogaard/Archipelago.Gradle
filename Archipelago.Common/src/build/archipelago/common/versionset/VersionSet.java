@@ -15,7 +15,7 @@ public class VersionSet {
     private Instant updated;
     private String latestRevision;
     private Instant latestRevisionCreated;
-    private List<ArchipelagoPackage> targets;
+    private ArchipelagoPackage target;
     private List<Revision> revisions;
 }
 

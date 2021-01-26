@@ -5,15 +5,18 @@ import build.archipelago.common.dynamodb.AV;
 import build.archipelago.common.versionset.*;
 import build.archipelago.versionsetservice.core.utils.RevisionUtil;
 import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
+import build.archipelago.versionsetservice.models.UpdateVersionSetRequest;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class DynamoDbVersionSetService implements VersionSetService {
 
     private final AmazonDynamoDB dynamoDB;
@@ -47,33 +50,34 @@ public class DynamoDbVersionSetService implements VersionSetService {
     }
 
     @Override
-    public void update(String accountId, String versionSetName, List<ArchipelagoPackage> targets, Optional<String> parent) {
+    public void update(String accountId, String versionSetName, UpdateVersionSetRequest request) {
+        Map<String, AttributeValue> attributeValues = new HashMap<>();
+        Map<String, String> attributeNames = new HashMap<>();
+        List<String> updateExpression = new ArrayList<>();
 
-        String parentValue;
-        if (parent != null && parent.isPresent()) {
-            parentValue = this.sanitizeName(parent.get());
-        } else {
-            parentValue = null;
+        if (request.getParent().isPresent()) {
+            attributeNames.put("#parent", Keys.PARENT);
+            attributeValues.put(":parent", AV.of(request.getParent().get()));
+            updateExpression.add("#parent = :parent");
         }
+        if (request.getTarget().isPresent()) {
+            attributeNames.put("#target", Keys.TARGET);
+            attributeValues.put(":target", AV.of(request.getTarget().get().getNameVersion()));
+            updateExpression.add("#target = :target");
+        }
+
+        // TODO: Remove
+        String test = "set " + String.join(", ", updateExpression);
+        log.info("Test '{}'", test);
 
         UpdateItemRequest updateItemRequest = new UpdateItemRequest()
                 .withTableName(config.getVersionSetTable())
                 .addKeyEntry(Keys.ACCOUNT_ID, AV.of(this.sanitizeName(accountId)))
                 .addKeyEntry(Keys.VERSION_SET_NAME, AV.of(this.sanitizeName(versionSetName)))
-                .withUpdateExpression("set #updated = :updated, " +
-                        "#targets = :targets, " +
-                        "#parent = :parent")
+                .withUpdateExpression("set " + String.join(", ", updateExpression))
                 .withReturnItemCollectionMetrics(ReturnItemCollectionMetrics.SIZE)
-                .withExpressionAttributeNames(ImmutableMap.of(
-                        "#updated", Keys.UPDATED,
-                        "#targets", Keys.TARGETS,
-                        "#parent", Keys.PARENT
-                ))
-                .withExpressionAttributeValues(ImmutableMap.of(
-                        ":updated", AV.of(Instant.now()),
-                        ":targets", AV.of(targets.stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.toList())),
-                        ":parent", AV.of(parentValue)
-                ));
+                .withExpressionAttributeNames(attributeNames)
+                .withExpressionAttributeValues(attributeValues);
         dynamoDB.updateItem(updateItemRequest);
     }
 
@@ -97,10 +101,9 @@ public class DynamoDbVersionSetService implements VersionSetService {
 
     private VersionSet parseVersionDBItem(Map<String, AttributeValue> dbItem, List<Revision> revisions) {
 
-        List<ArchipelagoPackage> targets = new ArrayList<>();
-        if (dbItem.get(Keys.TARGETS) != null) {
-            targets.addAll(dbItem.get(Keys.TARGETS).getSS().stream()
-                    .map(ArchipelagoPackage::parse).collect(Collectors.toList()));
+        ArchipelagoPackage target = null;
+        if (dbItem.get(Keys.TARGET) != null) {
+            target = ArchipelagoPackage.parse(dbItem.get(Keys.TARGET).getS());
         }
 
         String parent = null;
@@ -119,7 +122,7 @@ public class DynamoDbVersionSetService implements VersionSetService {
                 .created(Instant.ofEpochMilli(Long.parseLong(dbItem.get(Keys.CREATED).getN())))
                 .updated(dbItem.containsKey(Keys.UPDATED) ? Instant.ofEpochMilli(Long.parseLong(dbItem.get(Keys.UPDATED).getN())) : Instant.now())
                 .parent(parent)
-                .targets(targets)
+                .target(target)
                 .revisions(revisions)
                 .latestRevision(latestRevision)
                 .latestRevisionCreated(latestRevisionCreated)
@@ -183,30 +186,25 @@ public class DynamoDbVersionSetService implements VersionSetService {
     }
 
     @Override
-    public void create(String accountId, final String name, final List<ArchipelagoPackage> targets, final Optional<String> parent) {
+    public void create(String accountId, final String name, Optional<ArchipelagoPackage> target, final Optional<String> parent) {
         Preconditions.checkNotNull(accountId);
         Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(targets);
-
-        for (ArchipelagoPackage t : targets) {
-            if (t instanceof ArchipelagoBuiltPackage) {
-                throw new IllegalArgumentException(t.toString() + " can not have a build version");
-            }
-        }
-
-        List<ArchipelagoPackage> vsTargets = new ArrayList<>();
-        if (targets != null) {
-            vsTargets.addAll(targets);
+        Preconditions.checkNotNull(target);
+        Preconditions.checkNotNull(parent);
+        if (target.isPresent() && target.get() instanceof ArchipelagoBuiltPackage) {
+            throw new IllegalArgumentException(target.toString() + " can not have a build version");
         }
 
         ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
                 .put(Keys.ACCOUNT_ID, AV.of(this.sanitizeName(accountId)))
                 .put(Keys.VERSION_SET_NAME, AV.of(this.sanitizeName(name)))
                 .put(Keys.DISPLAY_NAME, AV.of(name))
-                .put(Keys.CREATED, AV.of(Instant.now()))
-                .put(Keys.TARGETS,
-                        AV.of(vsTargets.stream().map(x -> ((ArchipelagoPackage) x).toString()).collect(Collectors.toList())));
-        if (parent != null && parent.isPresent()) {
+                .put(Keys.CREATED, AV.of(Instant.now()));
+
+        if (target.isPresent()) {
+            map.put(Keys.TARGET, AV.of(target.get().getNameVersion()));
+        }
+        if (parent.isPresent()) {
             map.put(Keys.PARENT, AV.of(this.sanitizeName(parent.get())));
         }
 
