@@ -1,9 +1,10 @@
 package build.archipelago.versionsetservice.client.rest;
 
-import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.*;
 import build.archipelago.common.clients.rest.OAuthRestClient;
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.rest.models.errors.ProblemDetailRestResponse;
+import build.archipelago.common.utils.O;
 import build.archipelago.common.versionset.*;
 import build.archipelago.packageservice.client.PackageExceptionHandler;
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
@@ -11,6 +12,7 @@ import build.archipelago.versionsetservice.client.*;
 import build.archipelago.versionsetservice.exceptions.*;
 import build.archipelago.versionsetservice.models.*;
 import build.archipelago.versionsetservice.models.rest.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,8 +74,8 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
 
         CreateVersionSetRestRequest restRequest = CreateVersionSetRestRequest.builder()
                 .name(request.getName())
-                .target(request.getTarget().isPresent() ? request.getTarget().get().getNameVersion() : null)
-                .parent(request.getParent().isPresent() ? request.getParent().get() : null)
+                .target(O.getOrNull(request.getTarget(), ArchipelagoPackage::getNameVersion))
+                .parent(O.getOrNull(request.getParent()))
                 .build();
 
         HttpResponse<String> httpResponse;
@@ -129,7 +131,13 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
 
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set")
+            String test = objectMapper.writeValueAsString(restRequest);
+            log.info("Serilized: " + test);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        try {
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName)
                     .PUT(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());

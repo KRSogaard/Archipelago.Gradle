@@ -1,13 +1,13 @@
 package build.archipelago.harbor.controllers;
 
 import build.archipelago.common.*;
+import build.archipelago.common.utils.O;
 import build.archipelago.common.versionset.*;
 import build.archipelago.harbor.filters.AccountIdFilter;
-import build.archipelago.harbor.models.versionset.AddTargetRestRequest;
 import build.archipelago.packageservice.exceptions.*;
 import build.archipelago.versionsetservice.client.VersionSetServiceClient;
 import build.archipelago.versionsetservice.exceptions.*;
-import build.archipelago.versionsetservice.models.CreateVersionSetRequest;
+import build.archipelago.versionsetservice.models.*;
 import build.archipelago.versionsetservice.models.rest.*;
 import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
@@ -106,23 +106,24 @@ public class VersionSetController {
         versionSetServiceClient.createVersionSet(accountId, createRequest);
     }
 
-    @PostMapping("/{versionSet}/targets")
+    @PutMapping("/{versionSet}")
     @ResponseStatus(HttpStatus.OK)
-    public void addVersionSetTarget(
+    public void updateVersionSet(
             @RequestAttribute(AccountIdFilter.Key) String accountId,
             @PathVariable("versionSet") String versionSetName,
-            @RequestBody AddTargetRestRequest request) throws PackageNotFoundException, VersionSetDoseNotExistsException, PackageExistsException {
+            @RequestBody UpdateVersionSetRestRequest request) throws PackageNotFoundException, VersionSetDoseNotExistsException, PackageExistsException {
         log.info("Request to update version set '{}' for account '{}'", versionSetName, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName));
         Preconditions.checkArgument(request != null);
         request.validate();
 
-        ArchipelagoPackage pkg = ArchipelagoPackage.parse(request.getTarget());
-
-        //UpdateVersionSetRequest updateRequest = new UpdateVersionSetRequest();
-
-//
-//        versionSetServiceClient.updateVersionSet(accountId, versionSetName, updateRequest);
+        UpdateVersionSetRequest updateRequest = UpdateVersionSetRequest.builder()
+                .parent(request.getParent())
+                .target(O.isPresent(request.getTarget()) ?
+                        Optional.of(ArchipelagoPackage.parse(request.getTarget().get())) :
+                        Optional.empty())
+                .build();
+        versionSetServiceClient.updateVersionSet(accountId, versionSetName, updateRequest);
     }
 }

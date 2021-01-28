@@ -1,6 +1,7 @@
 package build.archipelago.versionsetservice.core.delegates;
 
 import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.utils.O;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
@@ -36,7 +37,7 @@ public class CreateVersionSetDelegate {
             // This is expected we do not want the version set to exists
         }
 
-        if (target.isPresent()) {
+        if (O.isPresent(target)) {
             PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(
                     accountId, List.of(target.get()));
             if (!targetsVerified.isValid()) {
@@ -44,7 +45,7 @@ public class CreateVersionSetDelegate {
             }
         }
 
-        if (parent.isPresent()) {
+        if (O.isPresent(parent)) {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(parent.get()),
                     "Parent is required");
             Preconditions.checkArgument(NameUtil.validateVersionSetName(parent.get()),

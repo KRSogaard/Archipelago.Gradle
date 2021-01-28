@@ -1,5 +1,6 @@
 package build.archipelago.common.clients.rest;
 
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -7,8 +8,12 @@ import java.io.IOException;
 @Slf4j
 public abstract class BaseRestClient {
 
-    protected com.fasterxml.jackson.databind.ObjectMapper objectMapper
-            = new com.fasterxml.jackson.databind.ObjectMapper();
+    protected final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    public BaseRestClient() {
+        objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        objectMapper.registerModule(new Jdk8Module());
+    }
 
     protected <T> T parseOrThrow(String body, Class<T> valueType) {
         try {

@@ -2,6 +2,7 @@ package build.archipelago.versionsetservice.core.services;
 
 import build.archipelago.common.*;
 import build.archipelago.common.dynamodb.AV;
+import build.archipelago.common.utils.O;
 import build.archipelago.common.versionset.*;
 import build.archipelago.versionsetservice.core.utils.RevisionUtil;
 import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsException;
@@ -55,12 +56,12 @@ public class DynamoDbVersionSetService implements VersionSetService {
         Map<String, String> attributeNames = new HashMap<>();
         List<String> updateExpression = new ArrayList<>();
 
-        if (request.getParent().isPresent()) {
+        if (O.isPresent(request.getParent())) {
             attributeNames.put("#parent", Keys.PARENT);
             attributeValues.put(":parent", AV.of(request.getParent().get()));
             updateExpression.add("#parent = :parent");
         }
-        if (request.getTarget().isPresent()) {
+        if (O.isPresent(request.getTarget())) {
             attributeNames.put("#target", Keys.TARGET);
             attributeValues.put(":target", AV.of(request.getTarget().get().getNameVersion()));
             updateExpression.add("#target = :target");
@@ -191,7 +192,7 @@ public class DynamoDbVersionSetService implements VersionSetService {
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(target);
         Preconditions.checkNotNull(parent);
-        if (target.isPresent() && target.get() instanceof ArchipelagoBuiltPackage) {
+        if (O.isPresent(target) && target.get() instanceof ArchipelagoBuiltPackage) {
             throw new IllegalArgumentException(target.toString() + " can not have a build version");
         }
 
@@ -201,10 +202,10 @@ public class DynamoDbVersionSetService implements VersionSetService {
                 .put(Keys.DISPLAY_NAME, AV.of(name))
                 .put(Keys.CREATED, AV.of(Instant.now()));
 
-        if (target.isPresent()) {
+        if (O.isPresent(target)) {
             map.put(Keys.TARGET, AV.of(target.get().getNameVersion()));
         }
-        if (parent.isPresent()) {
+        if (O.isPresent(parent)) {
             map.put(Keys.PARENT, AV.of(this.sanitizeName(parent.get())));
         }
 

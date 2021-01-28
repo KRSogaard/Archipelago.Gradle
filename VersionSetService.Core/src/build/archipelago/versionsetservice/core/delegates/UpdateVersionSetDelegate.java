@@ -1,6 +1,7 @@
 package build.archipelago.versionsetservice.core.delegates;
 
 import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.utils.O;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
@@ -31,7 +32,7 @@ public class UpdateVersionSetDelegate {
         // Ensure the version set exists
         versionSetService.get(accountId, versionSetName);
 
-        if (request.getTarget().isPresent()) {
+        if (O.isPresent(request.getTarget())) {
             PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(
                     accountId, List.of(request.getTarget().get()));
             if (!targetsVerified.isValid()) {
@@ -39,7 +40,7 @@ public class UpdateVersionSetDelegate {
             }
         }
 
-        if (request.getParent().isPresent()) {
+        if (O.isPresent(request.getParent())) {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getParent().get()), "The parent attribute was empty or null");
             versionSetService.get(accountId, request.getParent().get());
         }

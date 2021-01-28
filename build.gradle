@@ -73,7 +73,8 @@ project(':Archipelago.Common.REST') {
     dependencies {
         implementation 'org.springframework:spring-web:5.2.5.RELEASE'
         implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.33'
-        implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+        implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.1'
     }
 }
 project(':Archipelago.Common.Concurrent') {
@@ -544,7 +545,8 @@ project(':Archipelago.Common.Clients') {
         api project(':Archipelago.Common')
         api project(':Archipelago.Common.REST')
 
-        implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+        implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.1'
     }
 }
 

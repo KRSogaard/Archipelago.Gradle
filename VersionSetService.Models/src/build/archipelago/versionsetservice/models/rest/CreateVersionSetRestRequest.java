@@ -15,7 +15,7 @@ public class CreateVersionSetRestRequest {
 
     public void validate() throws IllegalArgumentException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
-        if (target != null) {
+        if (!Strings.isNullOrEmpty(target)) {
             ArchipelagoPackage.parse(target);
         }
     }
