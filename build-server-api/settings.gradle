@@ -1,16 +1,16 @@
 rootProject.name = "build-server-api"
 
-if (file("../Archipelago.Common").exists()) {
-    includeBuild "../Archipelago.Common"
+if (file("../archipelago-common").exists()) {
+    includeBuild "../archipelago-common"
 }
-if (file("../Archipelago.Common.Clients").exists()) {
-    includeBuild "../Archipelago.Common.Clients"
+if (file("../archipelago-common-clients").exists()) {
+    includeBuild "../archipelago-common-clients"
 }
-if (file("../Archipelago.Common.REST").exists()) {
-    includeBuild "../Archipelago.Common.REST"
+if (file("../archipelago-common-rest").exists()) {
+    includeBuild "../archipelago-common-rest"
 }
-if (file("../Archipelago.Common.DynamoDB").exists()) {
-    includeBuild "../Archipelago.Common.DynamoDB"
+if (file("../archipelago-common-dynamodb").exists()) {
+    includeBuild "../archipelago-common-dynamodb"
 }
 
 if (file("../package-service-client").exists()) {

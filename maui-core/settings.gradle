@@ -10,8 +10,8 @@ if (file("../archipelago-common-concurrent").exists()) {
     includeBuild "../archipelago-common-concurrent"
 }
 
-if (file("../ maui-common").exists()) {
-    includeBuild "../ maui-common"
+if (file("../maui-common").exists()) {
+    includeBuild "../maui-common"
 }
 if (file("../maui-path").exists()) {
     includeBuild "../maui-path"

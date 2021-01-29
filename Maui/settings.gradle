@@ -11,8 +11,8 @@ if (file("../maui-core").exists()) {
     includeBuild "../maui-core"
 }
 
-if (file("../version-set-service-models"s").exists()) {
-    includeBuild "../version-set-service-models"s"
+if (file("../version-set-service-models").exists()) {
+    includeBuild "../version-set-service-models"
 }
 
 if (file("../package-service-models").exists()) {
