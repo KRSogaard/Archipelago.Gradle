@@ -1,0 +1,33 @@
+rootProject.name = "maui-core"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.Github").exists()) {
+    includeBuild "../Archipelago.Common.Github"
+}
+if (file("../Archipelago.Common.Concurrent").exists()) {
+    includeBuild "../Archipelago.Common.Concurrent"
+}
+
+if (file("../Maui.Common").exists()) {
+    includeBuild "../Maui.Common"
+}
+if (file("../Maui.Path").exists()) {
+    includeBuild "../Maui.Path"
+}
+if (file("../Maui.Graph").exists()) {
+    includeBuild "../Maui.Graph"
+}
+
+if (file("../VersionSetService.Client").exists()) {
+    includeBuild "../VersionSetService.Client"
+}
+
+if (file("../PackageService.Client").exists()) {
+    includeBuild "../PackageService.Client"
+}
+
+if (file("../Harbor.Client").exists()) {
+    includeBuild "../Harbor.Client"
+}

@@ -1,0 +1,44 @@
+rootProject.name = "build-server-builder"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.Clients").exists()) {
+    includeBuild "../Archipelago.Common.Clients"
+}
+if (file("../Archipelago.Common.Concurrent").exists()) {
+    includeBuild "../Archipelago.Common.Concurrent"
+}
+if (file("../Archipelago.Common.Github").exists()) {
+    includeBuild "../Archipelago.Common.Github"
+}
+if (file("../Archipelago.Account.Common").exists()) {
+    includeBuild "../Archipelago.Account.Common"
+}
+
+if (file("../PackageService.Client").exists()) {
+    includeBuild "../PackageService.Client"
+}
+
+if (file("../VersionSetService.Client").exists()) {
+    includeBuild "../VersionSetService.Client"
+}
+
+if (file("../Maui.Core").exists()) {
+    includeBuild "../Maui.Core"
+}
+
+if (file("../BuildServer.Common").exists()) {
+    includeBuild "../BuildServer.Common"
+}
+if (file("../BuildServer.Models").exists()) {
+    includeBuild "../BuildServer.Models"
+}
+
+if (file("../Maui.Core").exists()) {
+    includeBuild "../Maui.Core"
+}
+
+if (file("../Harbor.Client").exists()) {
+    includeBuild "../Harbor.Client"
+}

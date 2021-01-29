@@ -8,6 +8,7 @@ gradle/
 .settings/
 bin/
 *.class
+.DS_Store
 
 Archipelago.Account.Common/build/
 Archipelago.Common.DynamoDB/build/

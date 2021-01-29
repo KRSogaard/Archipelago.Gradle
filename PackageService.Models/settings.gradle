@@ -1,0 +1,5 @@
+rootProject.name = "package-service-models"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}

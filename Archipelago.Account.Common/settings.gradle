@@ -1,0 +1,16 @@
+rootProject.name = "account-common"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.DynamoDB").exists()) {
+    includeBuild "../Archipelago.Common.DynamoDB"
+}
+
+if (file("../VersionSetService.Client").exists()) {
+    includeBuild "../VersionSetService.Client"
+}
+
+if (file("../PackageService.Client").exists()) {
+    includeBuild "../PackageService.Client"
+}

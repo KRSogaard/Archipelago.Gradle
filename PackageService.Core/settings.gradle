@@ -1,0 +1,18 @@
+rootProject.name = "package-service-core"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.DynamoDB").exists()) {
+    includeBuild "../Archipelago.Common.DynamoDB"
+}
+if (file("../Archipelago.Common.Github").exists()) {
+    includeBuild "../Archipelago.Common.Github"
+}
+if (file("../Archipelago.Account.Common").exists()) {
+    includeBuild "../Archipelago.Account.Common"
+}
+
+if (file("../PackageService.Models").exists()) {
+    includeBuild "../PackageService.Models"
+}

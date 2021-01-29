@@ -1,0 +1,22 @@
+rootProject.name = "version-set-service-client"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.Clients").exists()) {
+    includeBuild "../Archipelago.Common.Clients"
+}
+if (file("../Archipelago.Common.REST").exists()) {
+    includeBuild "../Archipelago.Common.REST"
+}
+
+if (file("../VersionSetService.Models").exists()) {
+    includeBuild "../VersionSetService.Models"
+}
+
+if (file("../PackageService.Client").exists()) {
+    includeBuild "../PackageService.Client"
+}
+if (file("../PackageService.Models").exists()) {
+    includeBuild "../PackageService.Models"
+}

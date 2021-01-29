@@ -1,0 +1,15 @@
+rootProject.name = "package-service-client"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.Clients").exists()) {
+    includeBuild "../Archipelago.Common.Clients"
+}
+if (file("../Archipelago.Common.REST").exists()) {
+    includeBuild "../Archipelago.Common.REST"
+}
+
+if (file("../PackageService.Models").exists()) {
+    includeBuild "../PackageService.Models"
+}

@@ -1,0 +1,5 @@
+rootProject.name = "common-github"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}

@@ -1,0 +1,16 @@
+rootProject.name = "maui-path"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+
+if (file("../Maui.Common").exists()) {
+    includeBuild "../Maui.Common"
+}
+if (file("../Maui.Graph").exists()) {
+    includeBuild "../Maui.Graph"
+}
+
+if (file("../PackageService.Models").exists()) {
+    includeBuild "../PackageService.Models"
+}

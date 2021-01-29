@@ -1,0 +1,19 @@
+rootProject.name = "maui-common"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.Github").exists()) {
+    includeBuild "../Archipelago.Common.Github"
+}
+if (file("../Archipelago.Common.Concurrent").exists()) {
+    includeBuild "../Archipelago.Common.Concurrent"
+}
+
+if (file("../PackageService.Models").exists()) {
+    includeBuild "../PackageService.Models"
+}
+
+if (file("../Harbor.Client").exists()) {
+    includeBuild "../Harbor.Client"
+}

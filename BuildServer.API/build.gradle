@@ -1,0 +1,112 @@
+buildscript {
+    ext {
+        springBootVersion = '2.2.6.RELEASE'
+    }
+
+    repositories {
+        jcenter()
+        maven { url 'https://plugins.gradle.org/m2/' }
+    }
+
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+repositories {
+    jcenter()
+    maven { url 'https://plugins.gradle.org/m2/' }
+    maven {
+        name = "Local dynamodb Repo"
+        //Local DynamoDB repository
+        url "https://s3-us-west-2.amazonaws.com/dynamodb-local/release"
+    }
+    maven {
+        name = "Wewelo Repo"
+        url "http://repo.wewelo.com/release"
+    }
+}
+
+apply plugin: 'maven'
+apply plugin: 'java-library'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'application'
+
+group "build.archipelago"
+version "1.0"
+sourceCompatibility = 11
+targetCompatibility = 11
+mainClassName = 'build.archipelago.buildserver.BuildServerAPIApplication'
+
+sourceSets {
+    main.java.srcDirs = ['src']
+    main.resources.srcDirs = ['resources']
+    test.java.srcDirs = ['tst']
+    test.resources.srcDirs = ['tst/resources']
+}
+
+configurations {
+    all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+}
+
+dependencies {
+    api "build.archipelago:common:1.0"
+    api "build.archipelago:common-dynamodb:1.0"
+    api "build.archipelago:common-clients:1.0"
+    api "build.archipelago:version-set-service-client:1.0"
+    api "build.archipelago:package-service-client:1.0"
+    api "build.archipelago:maui-core:1.0"
+    api "build.archipelago:build-server-common:1.0"
+    api "build.archipelago:build-server-models:1.0"
+    api "build.archipelago:common-rest:1.0"
+    implementation "build.archipelago:build-server-api-client:1.0"
+
+    implementation 'org.springframework.boot:spring-boot-starter-jersey'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+    implementation 'org.springframework.security:spring-security-config'
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+    implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
+
+    testImplementation 'com.google.code.gson:gson:2.8.6'
+    testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+
+    // Test framework
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.+'
+
+    implementation 'org.slf4j:slf4j-api:1.7.30'
+
+    // Google Guava
+    implementation 'com.google.guava:guava:28.0-jre'
+    implementation 'org.apache.commons:commons-lang3:3.0'
+
+    testImplementation 'commons-io:commons-io:2.6'
+    testImplementation "org.assertj:assertj-core:3.18.1"
+
+    // Lombok
+    compile 'org.projectlombok:lombok:1.18.12'  // utilities for POJOs
+    annotationProcessor 'org.projectlombok:lombok:1.18.12'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+}
+
+task runlocal {
+    run.configure {
+        project.logger.lifecycle("======================================")
+        project.logger.lifecycle("= Running application in alpha stage =")
+        project.logger.lifecycle("======================================")
+        systemProperty "spring.profiles.active", 'alpha'
+    }
+}
+runlocal.finalizedBy run

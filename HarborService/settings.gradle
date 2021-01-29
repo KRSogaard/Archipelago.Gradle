@@ -1,0 +1,30 @@
+rootProject.name = "harbor-service"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.Clients").exists()) {
+    includeBuild "../Archipelago.Common.Clients"
+}
+if (file("../Archipelago.Common.REST").exists()) {
+    includeBuild "../Archipelago.Common.REST"
+}
+if (file("../Archipelago.Common.Github").exists()) {
+    println("Including ../Archipelago.Common.Github")
+    includeBuild "../Archipelago.Common.Github"
+}
+if (file("../Archipelago.Account.Common").exists()) {
+    includeBuild "../Archipelago.Account.Common"
+}
+
+if (file("../PackageService.Client").exists()) {
+    includeBuild "../PackageService.Client"
+}
+
+if (file("../VersionSetService.Client").exists()) {
+    includeBuild "../VersionSetService.Client"
+}
+
+if (file("../BuildServer.API.Client").exists()) {
+    includeBuild "../BuildServer.API.Client"
+}

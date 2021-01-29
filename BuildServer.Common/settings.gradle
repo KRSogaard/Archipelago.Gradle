@@ -1,0 +1,24 @@
+rootProject.name = "build-server-common"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.DynamoDB").exists()) {
+    includeBuild "../Archipelago.Common.DynamoDB"
+}
+
+if (file("../Maui.Core").exists()) {
+    includeBuild "../Maui.Core"
+}
+
+if (file("../VersionSetService.Client").exists()) {
+    includeBuild "../VersionSetService.Client"
+}
+
+if (file("../PackageService.Client").exists()) {
+    includeBuild "../PackageService.Client"
+}
+
+if (file("../BuildServer.Models").exists()) {
+    includeBuild "../BuildServer.Models"
+}

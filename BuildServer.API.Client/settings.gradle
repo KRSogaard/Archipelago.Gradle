@@ -1,0 +1,29 @@
+rootProject.name = "build-server-api-client"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.Clients").exists()) {
+    includeBuild "../Archipelago.Common.Clients"
+}
+if (file("../Archipelago.Common.REST").exists()) {
+    includeBuild "../Archipelago.Common.REST"
+}
+
+if (file("../BuildServer.Models").exists()) {
+    includeBuild "../BuildServer.Models"
+}
+
+if (file("../PackageService.Models").exists()) {
+    includeBuild "../PackageService.Models"
+}
+if (file("../PackageService.Client").exists()) {
+    includeBuild "../PackageService.Client"
+}
+
+if (file("../VersionSetService.Models").exists()) {
+    includeBuild "../VersionSetService.Models"
+}
+if (file("../VersionSetService.Client").exists()) {
+    includeBuild "../VersionSetService.Client"
+}
