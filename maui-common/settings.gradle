@@ -1,18 +1,13 @@
-rootProject.name = "maui"
+rootProject.name = "maui-common"
 
 if (file("../archipelago-common").exists()) {
     includeBuild "../archipelago-common"
 }
+if (file("../archipelago-common-github").exists()) {
+    includeBuild "../archipelago-common-github"
+}
 if (file("../archipelago-common-concurrent").exists()) {
     includeBuild "../archipelago-common-concurrent"
-}
-
-if (file("../maui-core").exists()) {
-    includeBuild "../maui-core"
-}
-
-if (file("../version-set-service-models"s").exists()) {
-    includeBuild "../version-set-service-models"s"
 }
 
 if (file("../package-service-models").exists()) {

@@ -1,0 +1,245 @@
+{
+  "info": {
+    "_postman_id": "f18bf602-10d0-42fa-b2df-8d083d3daa88",
+    "name": "Archipelago",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "PackageService",
+      "item": [
+        {
+          "name": "Create Package",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"TestCreatePackage\",\n    \"description\": \"This is a test description\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8090/account/wewelo/package",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8090",
+              "path": ["account", "wewelo", "package"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "harbor-service",
+      "item": [
+        {
+          "name": "Packages",
+          "item": [
+            {
+              "name": "Create Package",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"TestCreatePackageHarbor\",\n    \"description\": \"This is a test description though Harbor client\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8093/packages",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8093",
+                  "path": ["packages"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "VersionSets",
+          "item": [
+            {
+              "name": "Get Version Sets",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8093/version-sets",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8093",
+                  "path": ["version-sets"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Version Set",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8093/version-sets/TestVS",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8093",
+                  "path": ["version-sets", "TestVS"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get veresion set revision",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8093/version-sets/TestVS/821e2f39",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8093",
+                  "path": ["version-sets", "TestVS", "821e2f39"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "VersionSetService",
+      "item": [
+        {
+          "name": "Get version sets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8091/account/wewelo/version-set",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8091",
+              "path": ["account", "wewelo", "version-set"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Version Set Revision",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8091/account/wewelo/version-set/TestVS/821e2f39",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8091",
+              "path": ["account", "wewelo", "version-set", "TestVS", "821e2f39"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "oauth2",
+    "oauth2": [
+      {
+        "key": "grant_type",
+        "value": "client_credentials",
+        "type": "string"
+      },
+      {
+        "key": "accessTokenUrl",
+        "value": "https://archipelago.auth.us-west-2.amazoncognito.com/oauth2/token",
+        "type": "string"
+      },
+      {
+        "key": "clientSecret",
+        "value": "r1g1kk5va4mipda0ojeuv9aenvluvmdp0pa6iu8pse9g87okopv",
+        "type": "string"
+      },
+      {
+        "key": "clientId",
+        "value": "7pgl45113p3qq2dfnvcmehloe8",
+        "type": "string"
+      },
+      {
+        "key": "scope",
+        "value": "http://buildserver-api.archipelago.build/read http://buildserver-api.archipelago.build/create http://harbor.archipelago.build/builds http://harbor.archipelago.build/versionsets http://harbor.archipelago.build/packages http://packageservice.archipelago.build/read http://packageservice.archipelago.build/write http://versionsetservice.archipelago.build/read http://versionsetservice.archipelago.build/write",
+        "type": "string"
+      },
+      {
+        "key": "tokenName",
+        "value": "Developer Token",
+        "type": "string"
+      },
+      {
+        "key": "authUrl",
+        "value": "https://archipelago.auth.us-west-2.amazoncognito.com/oauth/authorize",
+        "type": "string"
+      },
+      {
+        "key": "useBrowser",
+        "value": true,
+        "type": "boolean"
+      },
+      {
+        "key": "password",
+        "value": "Doomday1971!",
+        "type": "string"
+      },
+      {
+        "key": "username",
+        "value": "test",
+        "type": "string"
+      },
+      {
+        "key": "redirect_uri",
+        "value": "http://localhost:3000",
+        "type": "string"
+      },
+      {
+        "key": "tokenType",
+        "value": "Bearer",
+        "type": "string"
+      },
+      {
+        "key": "addTokenTo",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+rootProject.name = "build-server-api"
+
+if (file("../Archipelago.Common").exists()) {
+    includeBuild "../Archipelago.Common"
+}
+if (file("../Archipelago.Common.Clients").exists()) {
+    includeBuild "../Archipelago.Common.Clients"
+}
+if (file("../Archipelago.Common.REST").exists()) {
+    includeBuild "../Archipelago.Common.REST"
+}
+if (file("../Archipelago.Common.DynamoDB").exists()) {
+    includeBuild "../Archipelago.Common.DynamoDB"
+}
+
+if (file("../package-service-client").exists()) {
+    includeBuild "../package-service-client"
+}
+
+if (file("../version-set-service-client").exists()) {
+    includeBuild "../version-set-service-client"
+}
+
+if (file("../maui-core").exists()) {
+    includeBuild "../maui-core"
+}
+
+if (file("../build-server-common").exists()) {
+    includeBuild "../build-server-common"
+}
+if (file("../build-server-models").exists()) {
+    includeBuild "../build-server-models"
+}
+
+if (file("../build-server-api-client").exists()) {
+    includeBuild "../build-server-api-client"
+}
