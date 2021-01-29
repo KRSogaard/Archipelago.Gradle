@@ -1,0 +1,24 @@
+rootProject.name = "maui"
+
+if (file("../archipelago-common").exists()) {
+    includeBuild "../archipelago-common"
+}
+if (file("../archipelago-common-concurrent").exists()) {
+    includeBuild "../archipelago-common-concurrent"
+}
+
+if (file("../maui-core").exists()) {
+    includeBuild "../maui-core"
+}
+
+if (file("../version-set-service-models").exists()) {
+    includeBuild "../version-set-service-models"
+}
+
+if (file("../package-service-models").exists()) {
+    includeBuild "../package-service-models"
+}
+
+if (file("../harbor-service-client").exists()) {
+    includeBuild "../harbor-service-client"
+}

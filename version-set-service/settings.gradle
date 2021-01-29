@@ -1,0 +1,25 @@
+rootProject.name = "version-set-service"
+
+if (file("../archipelago-common").exists()) {
+    includeBuild "../archipelago-common"
+}
+if (file("../archipelago-common-clients").exists()) {
+    includeBuild "../archipelago-common-clients"
+}
+if (file("../archipelago-common-rest").exists()) {
+    includeBuild "../archipelago-common-rest"
+}
+
+if (file("../version-set-service-client").exists()) {
+    includeBuild "../version-set-service-client"
+}
+if (file("../version-set-service-core").exists()) {
+    includeBuild "../version-set-service-core"
+}
+if (file("../version-set-service-models").exists()) {
+    includeBuild "../version-set-service-models"
+}
+
+if (file("../package-service-client").exists()) {
+    includeBuild "../package-service-client"
+}
