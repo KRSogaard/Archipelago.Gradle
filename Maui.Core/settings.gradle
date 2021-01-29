@@ -1,13 +1,13 @@
 rootProject.name = "maui-core"
 
-if (file("../Archipelago.Common").exists()) {
-    includeBuild "../Archipelago.Common"
+if (file("../archipelago-common").exists()) {
+    includeBuild "../archipelago-common"
 }
-if (file("../Archipelago.Common.Github").exists()) {
-    includeBuild "../Archipelago.Common.Github"
+if (file("../archipelago-common-github").exists()) {
+    includeBuild "../archipelago-common-github"
 }
-if (file("../Archipelago.Common.Concurrent").exists()) {
-    includeBuild "../Archipelago.Common.Concurrent"
+if (file("../archipelago-common-concurrent").exists()) {
+    includeBuild "../archipelago-common-concurrent"
 }
 
 if (file("../Maui.Common").exists()) {

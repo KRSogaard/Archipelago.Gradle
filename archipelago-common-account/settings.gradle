@@ -1,4 +1,4 @@
-rootProject.name = "build-server-common"
+rootProject.name = "account-common"
 
 if (file("../archipelago-common").exists()) {
     includeBuild "../archipelago-common"
@@ -7,18 +7,10 @@ if (file("../archipelago-common-dynamodb").exists()) {
     includeBuild "../archipelago-common-dynamodb"
 }
 
-if (file("../Maui.Core").exists()) {
-    includeBuild "../Maui.Core"
-}
-
 if (file("../VersionSetService.Client").exists()) {
     includeBuild "../VersionSetService.Client"
 }
 
 if (file("../PackageService.Client").exists()) {
     includeBuild "../PackageService.Client"
-}
-
-if (file("../BuildServer.Models").exists()) {
-    includeBuild "../BuildServer.Models"
 }

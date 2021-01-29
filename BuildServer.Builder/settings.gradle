@@ -1,19 +1,19 @@
 rootProject.name = "build-server-builder"
 
-if (file("../Archipelago.Common").exists()) {
-    includeBuild "../Archipelago.Common"
+if (file("../archipelago-common").exists()) {
+    includeBuild "../archipelago-common"
 }
-if (file("../Archipelago.Common.Clients").exists()) {
-    includeBuild "../Archipelago.Common.Clients"
+if (file("../archipelago-common-clients").exists()) {
+    includeBuild "../archipelago-common-clients"
 }
-if (file("../Archipelago.Common.Concurrent").exists()) {
-    includeBuild "../Archipelago.Common.Concurrent"
+if (file("../archipelago-common-concurrent").exists()) {
+    includeBuild "../archipelago-common-concurrent"
 }
-if (file("../Archipelago.Common.Github").exists()) {
-    includeBuild "../Archipelago.Common.Github"
+if (file("../archipelago-common-github").exists()) {
+    includeBuild "../archipelago-common-github"
 }
-if (file("../Archipelago.Account.Common").exists()) {
-    includeBuild "../Archipelago.Account.Common"
+if (file("../archipelago-common-account").exists()) {
+    includeBuild "../archipelago-common-account"
 }
 
 if (file("../PackageService.Client").exists()) {

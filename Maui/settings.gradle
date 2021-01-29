@@ -1,10 +1,10 @@
 rootProject.name = "maui"
 
-if (file("../Archipelago.Common").exists()) {
-    includeBuild "../Archipelago.Common"
+if (file("../archipelago-common").exists()) {
+    includeBuild "../archipelago-common"
 }
-if (file("../Archipelago.Common.Concurrent").exists()) {
-    includeBuild "../Archipelago.Common.Concurrent"
+if (file("../archipelago-common-concurrent").exists()) {
+    includeBuild "../archipelago-common-concurrent"
 }
 
 if (file("../Maui.Core").exists()) {
