@@ -37,7 +37,7 @@ group "build.archipelago"
 version "1.0"
 sourceCompatibility = 11
 targetCompatibility = 11
-mainClassName = 'build.archipelago.packageservice.PackageServiceApplication'
+mainClassName = 'build.archipelago.authservice.AuthServiceApplication'
 
 sourceSets {
     main.java.srcDirs = ['src']
@@ -53,35 +53,7 @@ configurations {
 }
 
 dependencies {
-    api "build.archipelago:common:1.0"
-    api "build.archipelago:common-github:1.0"
     api "build.archipelago:common-rest:1.0"
-    api "build.archipelago:account-common:1.0"
-    api "build.archipelago:package-service-core:1.0"
-    api "build.archipelago:package-service-models:1.0"
-    api "build.archipelago:package-service-client:1.0"
-
-    implementation 'org.springframework.boot:spring-boot-starter-jersey'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
-    implementation 'org.springframework.security:spring-security-oauth2-jose'
-    implementation 'org.springframework.security:spring-security-config'
-    implementation 'io.springfox:springfox-swagger2:2.9.2'
-    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
-
-    implementation 'com.amazonaws:aws-java-sdk-s3:1.11.880'
-    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
-
-    testImplementation 'com.google.code.gson:gson:2.8.6'
-    testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-    }
-
-    // Test framework
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
-    testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.+'
 
     implementation 'org.slf4j:slf4j-api:1.7.30'
 
@@ -89,13 +61,31 @@ dependencies {
     implementation 'com.google.guava:guava:28.0-jre'
     implementation 'org.apache.commons:commons-lang3:3.0'
 
-    testImplementation 'commons-io:commons-io:2.6'
-    testImplementation "org.assertj:assertj-core:3.18.1"
-
     // Lombok
     compile 'org.projectlombok:lombok:1.18.12'  // utilities for POJOs
     annotationProcessor 'org.projectlombok:lombok:1.18.12'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+
+    implementation 'org.springframework.boot:spring-boot-starter-jersey'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+
+    // Test framework
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.+'
+    testImplementation 'commons-io:commons-io:2.6'
+    testImplementation "org.assertj:assertj-core:3.18.1"
+    testImplementation 'com.google.code.gson:gson:2.8.6'
+    testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+
+    // Needed for DynamoDBLocal
+    testImplementation 'com.amazonaws:DynamoDBLocal:1.12.0'
+    testImplementation 'com.almworks.sqlite4java:sqlite4java:1.0.392'
 }
 
 task runlocal {

@@ -16,7 +16,7 @@ public class AffectedPackagesHelper {
         int previousSize;
         do {
             previousSize = directOrAffectedPackages.size();
-            for (ArchipelagoPackage pkg : directOrAffectedPackages.keySet()) {
+            for (ArchipelagoPackage pkg : new ArrayList<>(directOrAffectedPackages.keySet())) {
                 for (ArchipelagoPackage vsPackage : vsPackages.keySet()) {
                     if (directOrAffectedPackages.containsKey(vsPackage)) {
                         continue;

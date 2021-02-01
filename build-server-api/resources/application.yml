@@ -1,13 +1,7 @@
 server:
-  port: 8095
+  port: 8080
   error:
     include-stacktrace: never
-
-aws:
-  region: "us-west-2"
-  access:
-    id: "AKIARDAF5R4ODZ2LMPNZ"
-    key: "MS7flruyxp3QPlEVEd41NZVDG7WTkkZYBfZjfWEM"
 
 spring:
   jackson:
@@ -23,17 +17,44 @@ oauth:
   client-id: "3e7d5fgp0bekt1o8k29rn6vleh"
   client-secret: "19qso7avuot68i69jl9j6d9qr49datlrrajbf4u7bq6kndmipqj6"
 
-dynamodb:
-  build: "builds.alpha"
-  build-packages: "builds-packages.alpha"
-  accounts: "accounts.alpha"
-s3:
-  logs: "alpha-archipelago-build-log"
-  packages-logs: "alpha-archipelago-build-packages-log"
-sqs:
-  build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-queue-alpha"
+aws:
+  region: "us-west-2"
 
+---
+spring:
+  profiles: local
+
+server:
+  port: 8095
+
+aws:
+  access:
+    id: "AKIARDAF5R4OLOFUKTG6"
+    key: "LfLZdIQAT7xpEMAaa3toXioXC/rMm1G6CFu3Vq+0"
+
+dynamodb:
+  build: "archipelago-local.builds"
+  build-packages: "archipelago-local.builds-packages"
+
+s3:
+  stage-logs: "archipelago-local-stage-log"
+  packages-logs: "archipelago-local-packages-log"
+
+sqs:
+  build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-local-build-queue"
 
 endpoints:
   package-service: "http://localhost:8090"
   versionset-service: "http://localhost:8091"
+
+---
+spring:
+  profiles: alpha
+
+---
+spring:
+  profiles: beta
+
+---
+spring:
+  profiles: prod

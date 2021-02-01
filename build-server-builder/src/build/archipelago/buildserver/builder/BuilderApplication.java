@@ -36,5 +36,6 @@ public class BuilderApplication implements CommandLineRunner {
         } catch (Exception exp) {
             log.error("Error while executing", exp);
         }
+        System.exit(1);
     }
 }

@@ -1,5 +1,5 @@
 server:
-  port: 8091
+  port: 8080
   error:
     include-stacktrace: never
 
@@ -13,26 +13,40 @@ spring:
         jwt:
           issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
 
-s3:
-  packages:
-    name: "alpha-archipelago-packages"
-
-
-dynamodb:
-  versionsets:
-    name: "versionsets.alpha"
-    revisions:
-      name: "versionsets.revisions.alpha"
-
 aws:
   region: "us-west-2"
-  access:
-    id: "AKIARDAF5R4ODZ2LMPNZ"
-    key: "MS7flruyxp3QPlEVEd41NZVDG7WTkkZYBfZjfWEM"
-
-endpoints:
-  package-service: "http://localhost:8090"
 
 oauth:
   client-id: "1iv0c51b2f7a2nsl0hnphthnq6"
   client-secret: "n1uv2fh8o1hf0medie0luo85ksh5hju0s0na1p3i7lv6c82h0ic"
+
+---
+spring:
+  profiles: local
+
+server:
+  port: 8091
+
+dynamodb:
+  version-sets: "archipelago-local.version-sets"
+  version-sets-revisions: "archipelago-local.version-set-revisions"
+
+aws:
+  access:
+    id: "AKIARDAF5R4OHE3DO6XE"
+    key: "azF2nUIwaaUzbQtA3vnosfXr2agY+wMUa6UARybd"
+
+endpoints:
+  package-service: "http://localhost:8090"
+
+---
+spring:
+  profiles: alpha
+
+---
+spring:
+  profiles: beta
+
+---
+spring:
+  profiles: prod

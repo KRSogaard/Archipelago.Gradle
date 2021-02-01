@@ -2,6 +2,8 @@ package build.archipelago.maui;
 
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.maui.commands.MauiCommand;
+import build.archipelago.maui.configuration.ApplicationModule;
+import com.google.inject.*;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -9,7 +11,8 @@ import picocli.CommandLine;
 public class Application {
 
     public static void main(String[] args) {
-        CommandLine commandLine = new CommandLine(MauiCommand.class, new GuiceFactory());
+        Injector injector = Guice.createInjector(new ApplicationModule());
+        CommandLine commandLine = new CommandLine(MauiCommand.class, new GuiceFactory(injector));
         commandLine.setExecutionExceptionHandler(new CommandLine.IExecutionExceptionHandler() {
             @Override
             public int handleExecutionException(Exception ex, CommandLine commandLine, CommandLine.ParseResult parseResult) throws Exception {

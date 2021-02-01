@@ -17,6 +17,7 @@ public class S3PackageStorage implements PackageStorage {
     private String bucketName;
 
     public S3PackageStorage(AmazonS3 s3Client, String bucketName) {
+        log.info("Creating S3PackageStorage with bucket '{}'", bucketName);
         this.s3Client = s3Client;
         this.bucketName = bucketName;
     }
@@ -39,6 +40,7 @@ public class S3PackageStorage implements PackageStorage {
         log.debug("Fetching build artifact from S3 '{}' with key '{}'", bucketName, keyName);
         // The user have 5 min to download the file
         Instant expiresAt = Instant.now().plusSeconds(60 * 5);
+        S3Object obj = s3Client.getObject(bucketName, keyName);
         URL url = s3Client.generatePresignedUrl(bucketName, keyName, Date.from(expiresAt));
         return url.toString();
     }

@@ -35,7 +35,7 @@ public class ServiceConfiguration {
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-    public VersionSetServiceClient versionServiceClient(@Value("${services.versionset.url}") String vsEndpoint,
+    public VersionSetServiceClient versionServiceClient(@Value("${services.versionset}") String vsEndpoint,
                                                         @Value("${oauth.client-id}") String clientId,
                                                         @Value("${oauth.client-secret}") String clientSecret) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(vsEndpoint));
@@ -46,7 +46,7 @@ public class ServiceConfiguration {
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-    public PackageServiceClient packageServiceClient(@Value("${services.packages.url}") String pkgEndpoint,
+    public PackageServiceClient packageServiceClient(@Value("${services.packages}") String pkgEndpoint,
                                                      @Value("${oauth.client-id}") String clientId,
                                                      @Value("${oauth.client-secret}") String clientSecret) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(pkgEndpoint));
@@ -75,7 +75,7 @@ public class ServiceConfiguration {
                                              AmazonS3 amazonS3,
                                              @Value("${dynamodb.build}") String buildTable,
                                              @Value("${dynamodb.build-packages}") String buildPackagesTable,
-                                             @Value("${s3.logs}") String bucketNameLogs,
+                                             @Value("${s3.stage-logs}") String bucketNameLogs,
                                              @Value("${sqs.build-queue}") String queueUrl) {
         Preconditions.checkNotNull(amazonSQS);
         Preconditions.checkNotNull(amazonDynamoDB);
@@ -194,7 +194,7 @@ public class ServiceConfiguration {
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public StageLogsService stageLogsService(AmazonS3 amazonS3,
-                                             @Value("${s3.logs}") String bucketStageLogs) {
+                                             @Value("${s3.stage-logs}") String bucketStageLogs) {
         return new S3StageLogsService(amazonS3, bucketStageLogs);
     }
 

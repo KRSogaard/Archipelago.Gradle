@@ -1,12 +1,7 @@
 server:
-  port: 8090
+  port: 8080
   error:
     include-stacktrace: never
-
-oauth:
-  client-id: "H4L36UXifMqdt4T3pLgajGvap0oJ63HD"
-  client-secret: "3YLhyrPbphWtZtD0quk-H_3sp9HoGMVdPej0DQNZXJ3_WTgYqeNTNzCe6bVGfPnO"
-  audience: http://packageservice.archipelago.build
 
 spring:
   jackson:
@@ -18,19 +13,45 @@ spring:
         jwt:
           issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
 
-s3:
-  packages: "alpha-archipelago-packages"
-
-dynamodb:
-  packages: "packages.alpha"
-  packages_versions: "packages-versions.alpha"
-  packages_builds: "packages-builds.alpha"
-  packages_builds_git: "packages-builds-git.alpha"
-  accounts: "accounts.alpha"
-  account-mapping: "account-mapping.alpha"
-  accounts-git: "accounts-git.alpha"
 aws:
   region: "us-west-2"
+
+oauth:
+  client-id: "H4L36UXifMqdt4T3pLgajGvap0oJ63HD"
+  client-secret: "3YLhyrPbphWtZtD0quk-H_3sp9HoGMVdPej0DQNZXJ3_WTgYqeNTNzCe6bVGfPnO"
+
+---
+spring:
+  profiles: local
+
+server:
+  port: 8090
+
+s3:
+  packages: "archipelago-local-packages-artifacts"
+
+dynamodb:
+  packages: "archipelago-local.packages"
+  packages_versions: "archipelago-local.packages-versions"
+  packages_builds: "archipelago-local.packages-builds"
+  packages_builds_git: "archipelago-local.packages-builds-git"
+  accounts: "archipelago-local.accounts"
+  account-mapping: "archipelago-local.account-mapping"
+  accounts-git: "archipelago-local.accounts-git"
+
+aws:
   access:
-    id: "AKIARDAF5R4ODZ2LMPNZ"
-    key: "MS7flruyxp3QPlEVEd41NZVDG7WTkkZYBfZjfWEM"
+    id: "AKIARDAF5R4OIKW2KPCY"
+    key: "uGIejRuxAS/05zH6B0w8+0IdQhd9bPX2lxxuvZoG"
+
+---
+spring:
+  profiles: alpha
+
+---
+spring:
+  profiles: beta
+
+---
+spring:
+  profiles: prod

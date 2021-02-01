@@ -6,7 +6,11 @@ import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
 public class GuiceFactory implements IFactory {
-    private final Injector injector = Guice.createInjector(new ApplicationModule());
+    private final Injector injector;
+
+    public GuiceFactory(Injector injector) {
+        this.injector = injector;
+    }
 
     @Override
     public <K> K create(Class<K> aClass) throws Exception {

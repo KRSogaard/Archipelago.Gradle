@@ -1,35 +1,55 @@
+server:
+  port: 8080
 spring:
   jackson:
     mapper:
       accept_case_insensitive_properties: true
 
-aws:
-  region: "us-west-2"
-  access:
-    id: "AKIARDAF5R4ODZ2LMPNZ"
-    key: "MS7flruyxp3QPlEVEd41NZVDG7WTkkZYBfZjfWEM"
-
-services:
-  versionset:
-    url: "http://localhost:8091"
-  packages:
-    url: "http://localhost:8090"
-
-dynamodb:
-  build: "builds.alpha"
-  build-packages: "builds-packages.alpha"
-  accounts: "accounts.alpha"
-  account-mapping: "account-mapping.alpha"
-  accounts-git: "accounts-git.alpha"
-s3:
-  logs: "alpha-archipelago-build-log"
-  packages-logs: "alpha-archipelago-build-packages-log"
-
-sqs:
-  build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-queue-alpha"
-workspace:
-  path: "/Users/kasper.sogaard/Downloads/BuildServer"
-
 oauth:
   client-id: "49o8iok838r23u7ivmq5g106ci"
   client-secret: "19q4onmr0khqdod7ckohq362hjfs3sbtbfebp0u4ob13rugvfsqj"
+
+aws:
+  region: "us-west-2"
+
+---
+spring:
+  profiles: local
+
+aws:
+  access:
+    id: "AKIARDAF5R4OILLLRKQO"
+    key: "IlyL5Mcj/Lp8jkl+0oss8Mx9dp5BtcwqJWpzqiWx"
+
+services:
+  versionset: "http://localhost:8091"
+  packages: "http://localhost:8090"
+
+dynamodb:
+  build: "archipelago-local.builds"
+  build-packages: "archipelago-local.builds-packages"
+  accounts: "archipelago-local.accounts"
+  account-mapping: "archipelago-local.account-mapping"
+  accounts-git: "archipelago-local.accounts-git"
+
+s3:
+  stage-logs: "archipelago-local-stage-log"
+  packages-logs: "archipelago-local-packages-log"
+
+sqs:
+  build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-local-build-queue"
+
+workspace:
+  path: "/Users/kasper.sogaard/Downloads/BuildServer"
+
+---
+spring:
+ profiles: alpha
+
+---
+spring:
+ profiles: beta
+
+---
+spring:
+ profiles: prod

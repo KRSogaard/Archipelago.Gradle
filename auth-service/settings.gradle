@@ -1,0 +1,8 @@
+rootProject.name = "auth-service"
+
+if (file("../archipelago-common-rest").exists()) {
+    includeBuild "../archipelago-common-rest"
+}
+if (file("../archipelago-common-account").exists()) {
+    includeBuild "../archipelago-common-account"
+}

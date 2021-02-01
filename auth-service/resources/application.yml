@@ -7,16 +7,10 @@ spring:
   jackson:
     mapper:
       accept_case_insensitive_properties: true
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
-
-oauth:
-  client-id: "4ok75klvst0vf15lel5sdbdoc0"
-  client-secret: "1u7m9pa9njct19jbj51b592ci0ku151quhjo4n0pcm36h3lude91"
-
+  mvc:
+    view:
+      prefix: "/WEB-INF/jsp/"
+      suffix: ".jsp"
 aws:
   region: "us-west-2"
 
@@ -25,12 +19,7 @@ spring:
   profiles: local
 
 server:
-  port: 8093
-
-endpoints:
-  package-service: "http://localhost:8090"
-  versionset-service: "http://localhost:8091"
-  build-server-api: "http://localhost:8095"
+  port: 8087
 
 dynamodb:
   accounts: "archipelago-local.accounts"

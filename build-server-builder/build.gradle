@@ -102,7 +102,7 @@ task runlocal {
         project.logger.lifecycle("======================================")
         project.logger.lifecycle("= Running application in alpha stage =")
         project.logger.lifecycle("======================================")
-        systemProperty "spring.profiles.active", 'alpha'
+        systemProperty "spring.profiles.active", 'local'
     }
 }
 runlocal.finalizedBy run

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+    <head>
+        <title>Archipelago.build Auth</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <link rel="icon" href="/docs/4.0/assets/img/favicons/favicon.ico">
+
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+        <!-- Custom styles for this template -->
+        <link href="signin.css" rel="stylesheet">
+    </head>
+    <body class="text-center">
+        <form class="form-signin" th:action="@{/authorize}" th:object="${authorize}"  method="post">
+            <input type="hidden" name="response_type" th:value="*{response_type}">
+            <input type="hidden" name="response_mode" th:value="*{response_mode}">
+            <input type="hidden" name="client_id" th:value="*{client_id}">
+            <input type="hidden" name="redirect_uri" th:value="*{redirect_uri}">
+            <input type="hidden" name="scope" th:value="*{scope}">
+            <input type="hidden" name="state" th:value="*{state}">
+
+            <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+
+            <label for="inputEmail" class="sr-only">Email address</label>
+            <input type="email" id="inputEmail" th:field="*{email}" class="form-control" placeholder="Email address" required autofocus>
+
+            <label for="inputPassword" class="sr-only">Password</label>
+            <input type="password" id="inputPassword" th:field="*{password}" class="form-control" placeholder="Password" required>
+
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+        </form>
+    </body>
+</html>

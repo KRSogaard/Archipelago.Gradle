@@ -1,7 +1,7 @@
 .gradle
 **gradlew*
 gradle/
-#.idea/
+.idea/
 .vscode/*
 .classpath
 .project
@@ -10,6 +10,7 @@ bin/
 *.class
 .DS_Store
 
+
 archipelago-common/build/
 archipelago-common-account/build/
 archipelago-common-clients/build/
@@ -17,6 +18,7 @@ archipelago-common-concurrent/build/
 archipelago-common-dynamodb/build/
 archipelago-common-github/build/
 archipelago-common-rest/build/
+auth-service/build/
 build-server-api/build/
 build-server-api-client/build/
 build-server-builder/build/
