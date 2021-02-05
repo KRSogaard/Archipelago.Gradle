@@ -6,3 +6,6 @@ if (file("../archipelago-common-rest").exists()) {
 if (file("../archipelago-common-account").exists()) {
     includeBuild "../archipelago-common-account"
 }
+if (file("../archipelago-common-dynamodb").exists()) {
+    includeBuild "../archipelago-common-dynamodb"
+}

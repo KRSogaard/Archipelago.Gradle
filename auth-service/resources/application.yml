@@ -22,14 +22,17 @@ server:
   port: 8087
 
 dynamodb:
-  accounts: "archipelago-local.accounts"
-  account-mapping: "archipelago-local.account-mapping"
-  accounts-git: "archipelago-local.accounts-git"
+#  accounts: "archipelago-local.accounts"
+#  account-mapping: "archipelago-local.account-mapping"
+#  accounts-git: "archipelago-local.accounts-git"
+  auth-codes: "archipelago-local.auth-codes"
+  auth-users: "archipelago-local.auth-users"
+  auth-clients: "archipelago-local.auth-clients"
 
 aws:
   access:
-    id: "AKIARDAF5R4OFYCLE362"
-    key: "2kQ8dMOf066HoBlOkEo+Hqpd1zzgsqmO3E3qVAS7"
+    id: "AKIARDAF5R4OODU52YJR"
+    key: "HRG7W4XQESB1ixNknOhZ4dYRgnvAk/U3NgUOF7fH"
 
 ---
 spring:

@@ -1,4 +1,4 @@
-package build.archipelago.authservice.models;
+package build.archipelago.authservice.models.rest;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.*;

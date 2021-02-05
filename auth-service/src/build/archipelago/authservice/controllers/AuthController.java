@@ -1,7 +1,7 @@
 package build.archipelago.authservice.controllers;
 
-import build.archipelago.authservice.models.*;
-import build.archipelago.authservice.services.AuthService;
+import build.archipelago.authservice.models.rest.AuthorizeRestRequest;
+import build.archipelago.authservice.services.auth.AuthService;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -9,7 +9,6 @@ import org.springframework.ui.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import javax.validation.Valid;
 
 @Controller
 @Slf4j
