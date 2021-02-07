@@ -28,6 +28,7 @@ dynamodb:
   auth-codes: "archipelago-local.auth-codes"
   auth-users: "archipelago-local.auth-users"
   auth-clients: "archipelago-local.auth-clients"
+  auth-jwks: "archipelago-local.auth-jwks"
 
 aws:
   access:

@@ -3,19 +3,20 @@ package build.archipelago.authservice.controllers;
 import build.archipelago.authservice.models.*;
 import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.models.rest.*;
-import build.archipelago.authservice.models.tokens.AccessToken;
 import build.archipelago.authservice.services.auth.*;
 import build.archipelago.authservice.services.auth.models.AuthCodeResult;
 import build.archipelago.authservice.services.clients.*;
 import build.archipelago.authservice.services.clients.eceptions.*;
 import build.archipelago.authservice.services.auth.exceptions.*;
-import build.archipelago.authservice.services.keys.KeyService;
+import build.archipelago.authservice.services.keys.*;
 import build.archipelago.authservice.utils.*;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.http.*;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -37,15 +38,21 @@ public class OAuth2Controller {
     private ClientService clientService;
     private KeyService keyService;
 
+    public OAuth2Controller(AuthService authService, ClientService clientService, KeyService keyService) {
+        this.authService = authService;
+        this.clientService = clientService;
+        this.keyService = keyService;
+    }
+
     @GetMapping("authorize")
-    public ResponseEntity<String> getAuthorize(@CookieValue(value = "archipelago.auth") String authCookieToken,
-                                               @QueryParam("response_type") String responseType,
-                                               @QueryParam("response_mode") String responseMode,
-                                               @QueryParam("client_id") String clientId,
-                                               @QueryParam("redirect_uri") String redirectUri,
-                                               @QueryParam("scope") String scope,
-                                               @QueryParam("state") String state,
-                                               @QueryParam("nonce") String nonce) {
+    public ResponseEntity<String> getAuthorize(@CookieValue(value = "archipelago.auth", required = false) String authCookieToken,
+                                               @RequestParam(name = "response_type") String responseType,
+                                               @RequestParam(name = "response_mode") String responseMode,
+                                               @RequestParam(name = "client_id") String clientId,
+                                               @RequestParam(name = "redirect_uri") String redirectUri,
+                                               @RequestParam(name = "scope") String scope,
+                                               @RequestParam(name = "state") String state,
+                                               @RequestParam(name = "nonce") String nonce) {
         AuthorizeRequest request = AuthorizeRequest.builder()
                 .responseType(responseType)
                 .responseMode(responseMode)
@@ -56,6 +63,7 @@ public class OAuth2Controller {
                 .nonce(nonce)
                 .build();
         try {
+            // Todo this throws errors
             request.validate();
 
             if (!responseType.equalsIgnoreCase("code")) {
@@ -98,6 +106,24 @@ public class OAuth2Controller {
                     log.warn("The auth cookie was not found in our database");
                 }
             }
+
+            // TODO: This is for testing
+            if (state.equalsIgnoreCase("kasper-test")) {
+                String authToken = authService.createAuthToken("HMZSm2cvELCGRybg7BeA", request);
+                StringBuilder redirectUrlBuilder = new StringBuilder();
+                redirectUrlBuilder.append(redirectUri);
+                if (responseMode.equalsIgnoreCase("query")) {
+                    redirectUrlBuilder.append("?");
+                } else {
+                    redirectUrlBuilder.append("#");
+                }
+                redirectUrlBuilder.append("code=").append(authToken);
+                if (!Strings.isNullOrEmpty(state)) {
+                    redirectUrlBuilder.append("&state=").append(state);
+                }
+                return ResponseUtil.redirect(redirectUrlBuilder.toString());
+            }
+            // TODO: Remove here
 
             return createLoginUrl(request);
         } catch (ClientNotFoundException exp) {
@@ -179,9 +205,16 @@ public class OAuth2Controller {
     @PostMapping(path = "token",
     consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<String> postToken(
-            @RequestHeader("authorization") String authorizationHeader,
-            @RequestBody TokenRestRequest request) {
-
+           @RequestHeader(value = "authorization", required = false) String authorizationHeader,
+           @RequestParam MultiValueMap<String, String> formData
+    ) {
+        TokenRestRequest request = TokenRestRequest.builder()
+                .code(formData.getFirst("code"))
+                .clientId(formData.getFirst("client_id"))
+                .redirectUri(formData.getFirst("redirect_uri"))
+                .grantType(formData.getFirst("grant_type"))
+                .refreshToken(formData.getFirst("refresh_token"))
+                .build();
         if (!"authorization_code".equalsIgnoreCase(request.getGrantType()) &&
             !"refresh_token".equalsIgnoreCase(request.getGrantType())) {
             return ResponseUtil.invalidGrantType();
@@ -227,16 +260,16 @@ public class OAuth2Controller {
         TokenRestResponse response = new TokenRestResponse();
 
         Map<String, Object> accessTokenBody = createAccessToken(userAndScopes.getUserId(), userAndScopes.getScopes(), client.getClientId());
-        response.setIdToken(keyService.createJWTToken(accessTokenBody));
+        response.setAccessToken(createJWT(accessTokenBody));
 
         if (userAndScopes.getScopes().contains("openid")) {
             Map<String, Object> openIdTokenBody = createOpenIdToken(userAndScopes.getUserId(), userAndScopes.getScopes(), client.getClientId());
-            response.setIdToken(keyService.createJWTToken(openIdTokenBody));
+            response.setIdToken(createJWT(openIdTokenBody));
         }
 
         if ("authorization_code".equalsIgnoreCase(request.getGrantType())) {
             Map<String, Object> refreshTokenBody = createRefreshToken(userAndScopes.getUserId(), userAndScopes.getScopes(), client.getClientId());
-            response.setRefreshToken(keyService.createJWTToken(refreshTokenBody));
+            response.setRefreshToken(createJWT(refreshTokenBody));
         }
 
         response.setTokenType("Bearer");
@@ -249,9 +282,20 @@ public class OAuth2Controller {
                 .body(JSONUtil.serialize(response));
     }
 
+    private String createJWT(Map<String, Object> body) {
+        KeyDetails details = keyService.getSigningKey();
+
+        return Jwts.builder()
+                .setHeaderParam(JwsHeader.KEY_ID, details.getKeyId())
+                .setHeaderParam(JwsHeader.ALGORITHM, details.getAlgorithm())
+                .setClaims(body)
+                .signWith(details.getPrivatKey())
+                .compact();
+    }
+
     private Map<String, Object> createRefreshToken(String userId, List<String> scopes, String clientId) {
         Map<String, Object> token = new HashMap<>();
-        token.put("iss", "http://archipelago.build");
+        token.put("iss", "https://auth.archipelago.build");
         token.put("sub", userId);
         token.put("aud", clientId);
         token.put("iat", Instant.now().getEpochSecond());
@@ -262,11 +306,11 @@ public class OAuth2Controller {
 
     private Map<String, Object> createAccessToken(String userId, List<String> scopes, String clientId) {
         Map<String, Object> token = new HashMap<>();
-        token.put("iss", "http://archipelago.build");
+        token.put("iss", "https://auth.archipelago.build");
         token.put("sub", userId);
         token.put("aud", clientId);
         token.put("iat", Instant.now().getEpochSecond());
-        token.put("exp", Instant.now().plusSeconds(refreshTokenMaxAge).getEpochSecond());
+        token.put("exp", Instant.now().plusSeconds(accessTokenMaxAge).getEpochSecond());
         token.put("scopes", String.join(" ", scopes));
         return token;
     }
@@ -308,7 +352,20 @@ public class OAuth2Controller {
     }
 
     @GetMapping(".well-known/jwks.json")
-    public JWKSRestReponse getJWKS() {
-        return null;
+    public JWKSRestResponse getJWKS() {
+        List<JWKKey> keys = keyService.getActiveKeys();
+        List<JWKRestResponse> responseKeys = new ArrayList<>();
+        for (JWKKey k : keys) {
+            responseKeys.add(JWKRestResponse.builder()
+                    .alg(k.getAlg())
+                    .use("sig")
+                    .kid(k.getKid())
+                    .kty(k.getKty())
+                    .n(k.getPublicKey())
+                    .build());
+        }
+        return JWKSRestResponse.builder()
+                .keys(responseKeys)
+                .build();
     }
 }

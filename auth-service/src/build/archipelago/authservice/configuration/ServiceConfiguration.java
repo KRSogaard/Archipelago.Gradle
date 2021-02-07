@@ -2,6 +2,7 @@ package build.archipelago.authservice.configuration;
 
 import build.archipelago.authservice.services.auth.*;
 import build.archipelago.authservice.services.clients.*;
+import build.archipelago.authservice.services.keys.*;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -23,5 +24,12 @@ public class ServiceConfiguration {
     public ClientService clientService(AmazonDynamoDB dynamoDB,
                                      @Value("${dynamodb.auth-clients}") String clientsTableName) {
         return new DynamoDBClientService(dynamoDB, clientsTableName);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public KeyService keyService(AmazonDynamoDB dynamoDB,
+                                 @Value("${dynamodb.auth-jwks}") String keysTableName) {
+        return new DynamoDBKeyService(dynamoDB, keysTableName);
     }
 }

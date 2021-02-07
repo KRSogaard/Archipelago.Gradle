@@ -3,6 +3,6 @@ package build.archipelago.authservice.services.keys;
 import java.util.*;
 
 public interface KeyService {
-    String createJWTToken(Map<String, Object> claims);
+    KeyDetails getSigningKey();
     List<JWKKey> getActiveKeys();
 }

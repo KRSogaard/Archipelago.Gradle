@@ -2,6 +2,7 @@ package build.archipelago.authservice.services.clients;
 
 import lombok.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -11,6 +12,8 @@ import java.util.List;
 public class Client {
     private String clientId;
     private String clientSecret;
+    private Instant created;
+    private Instant updated;
     private List<String> allowedRedirects;
     private List<String> allowedScopes;
 }

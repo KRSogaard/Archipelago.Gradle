@@ -4,5 +4,4 @@ import build.archipelago.authservice.services.clients.eceptions.ClientNotFoundEx
 
 public interface ClientService {
     Client getClient(String clientId) throws ClientNotFoundException;
-
 }

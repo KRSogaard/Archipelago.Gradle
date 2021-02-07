@@ -11,4 +11,6 @@ public class JWKKey {
     private String privateKey;
     private String publicKey;
     private Instant expiresAt;
+    private String alg;
+    private String kty;
 }

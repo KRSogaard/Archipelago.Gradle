@@ -1,11 +1,11 @@
 package build.archipelago.authservice.models.exceptions;
 
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
 public class InvalidRedirectException extends RuntimeException {
 
-    private String redirectUri;
+    private final String redirectUri;
 
     public InvalidRedirectException(String redirect_uri) {
         super("The redirect uri '" + redirect_uri + "' was invalid");

@@ -18,22 +18,18 @@ public class AuthorizeRequest {
     private String state;
     private String nonce;
 
-    public List<String> validate() {
-        List<String> errors = new ArrayList<>();
-
+    public void validate() {
         if (Strings.isNullOrEmpty(responseType)) {
-            errors.add("response_type is required");
+            throw new IllegalArgumentException("response_type is required");
         }
         if (Strings.isNullOrEmpty(responseMode)) {
-            errors.add("response_mode is required");
+            throw new IllegalArgumentException("response_mode is required");
         }
         if (Strings.isNullOrEmpty(clientId)) {
-            errors.add("client_id is required");
+            throw new IllegalArgumentException("client_id is required");
         }
         if (Strings.isNullOrEmpty(redirectUri)) {
-            errors.add("redirect_uri is required");
+            throw new IllegalArgumentException("redirect_uri is required");
         }
-
-        return errors;
     }
 }

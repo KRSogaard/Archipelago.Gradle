@@ -75,9 +75,4 @@ public class DynamoDBAuthService implements AuthService {
                 .expires(AV.toInstant(item.get(DBK.EXPIRES)))
                 .build();
     }
-
-    @Override
-    public String createAccessToken(String userId, List<String> scopes) {
-        return null;
-    }
 }

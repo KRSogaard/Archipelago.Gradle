@@ -5,7 +5,6 @@ GET verify/
 
 REST:
 POST api/authenticate
-
 - Input:
   - email
   - password
@@ -15,7 +14,6 @@ POST api/authenticate
     - 401 - Bag login
 
 POST api/create
-
 - Input
 - email
 - password
@@ -27,7 +25,6 @@ POST api/create
 - 400: email or password is bad
 
 POST api/verify
-
 - Input:
   - Verification code
 - Out
@@ -41,18 +38,22 @@ GET oauth2/authorize
   - If we do redirect with 302 found back with access and renew token
   - If not redirect to the "GET login/"
 - If response_type is not code (other option is toke) then reply 501 for not implemented
+
 - Input
-  - response_type = grant type
-  - response_mode = query / fragment (How to create the response ? vs #), form_post and web_message should send 501 for not implemented
+  - response_type = grant type (if it contains "id_token" they also want an openid token, if id_token is in must the scope include "openid")
+  - response_mode = query / fragment (How to create the response ? vs #), form_post and web_message should send 501 for not implemented. (Fragment is good, as it is not sent to the server)
   - client_id
   - redirect_uri
   - scope
+    - Openid scopes (profile, email, adress, phone)
+      - https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+      https://auth0.com/docs/api/authentication#delegation
   - state
+  - nonce - should be passed to the ID token
 
 POST oauth2/token
 
 - grant type:
-
   - client_credentials
     - Client login, get auth code from header auth
     - scope
@@ -66,17 +67,17 @@ POST oauth2/token
     - client_id
   - refresh_token
     - scope - can be less, but not more
-    -
 
 - Response: 200 OK
-- access_token :
-- token_type : Just the string "bearer"
-- expires_in : The amount of seconds from now
-- refresh_token : (Only with code flow)
-- scope : the scope granted
+    - access_token :
+    - token_type : Just the string "bearer"
+    - expires_in : The amount of seconds from now
+    - refresh_token : (Only with code flow)
+    - scope : the scope granted
+    - id_token : if requested
 - Response headers:
-- Cache-Control: no-store
-- Pragma: no-cache
+    - Cache-Control: no-store
+    - Pragma: no-cache
 - 400 for error or bad token
   - error
     - https://www.oauth.com/oauth2-servers/access-tokens/access-token-response/
@@ -99,3 +100,12 @@ https://auth0.com/blog/navigating-rs256-and-jwks/
 
 - RSAPrivateCrtKeySpec should be used in java
 - https://developers.symphony.com/extension/docs/rsa-application-authentication-workflow
+
+
+ID Token:
+- iss : the url of the issuer
+- sub : the user id
+- aud : The requesters client_id
+- exp : when the token expires
+- iat : when the token was issued
+- nonce : a state token? (need to verify)

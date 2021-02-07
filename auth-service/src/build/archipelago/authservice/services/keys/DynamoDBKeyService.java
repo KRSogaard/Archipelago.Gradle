@@ -6,16 +6,21 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.google.common.collect.ImmutableMap;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
-
+import lombok.extern.slf4j.Slf4j;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 
 import java.security.spec.*;
 import java.time.Instant;
 import java.util.*;
 
+@Slf4j
 public class DynamoDBKeyService implements KeyService {
+    private final SignatureAlgorithm algorithm = SignatureAlgorithm.RS256;
 
+    // TODO this should be config
     private long longestTokenLife = 60 * 60 * 24 * 30;
     private long KeyLifeSpan = longestTokenLife * 2;
 
@@ -24,6 +29,7 @@ public class DynamoDBKeyService implements KeyService {
 
     private String currentKid;
     private PrivateKey currentPrivateKey;
+    private PublicKey currentPublicKey;
     private Instant replaceAt;
 
     public DynamoDBKeyService(AmazonDynamoDB dynamoDB, String keysTableName) {
@@ -45,21 +51,22 @@ public class DynamoDBKeyService implements KeyService {
     private void setKeyUsage(JWKKey key) {
         currentKid = key.getKid();
         replaceAt = key.getExpiresAt().minusSeconds(longestTokenLife);
-        PKCS8EncodedKeySpec encodedKeySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key.getPrivateKey()));
         try {
             KeyFactory kf = KeyFactory.getInstance("RSA");
-            currentPrivateKey = kf.generatePrivate(encodedKeySpec);
+            currentPrivateKey =
+                    kf.generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key.getPrivateKey().getBytes(StandardCharsets.UTF_8))));
+            currentPublicKey = kf.generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(key.getPublicKey().getBytes(StandardCharsets.UTF_8))));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
     }
 
     private JWKKey createNewKey() {
-        KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
+        KeyPair keyPair = Keys.keyPairFor(algorithm);
         JWKKey key = JWKKey.builder()
                 .kid(UUID.randomUUID().toString())
-                .privateKey(Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded()))
-                .publicKey(Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()))
+                .privateKey(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()))
+                .publicKey(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()))
                 .expiresAt(Instant.now().plusSeconds(KeyLifeSpan))
                 .build();
 
@@ -74,13 +81,18 @@ public class DynamoDBKeyService implements KeyService {
     }
 
     @Override
-    public String createJWTToken(Map<String, Object> claims) {
-        return Jwts.builder()
-                .setHeaderParam(JwsHeader.KEY_ID, currentKid)
-                .setHeaderParam(JwsHeader.ALGORITHM, SignatureAlgorithm.RS256.getValue())
-                .setClaims(claims)
-                .signWith(currentPrivateKey)
-                .compact();
+    public KeyDetails getSigningKey() {
+        if (replaceAt.isBefore(Instant.now())) {
+            loadKeyFromStorage();
+        }
+
+        return KeyDetails.builder()
+                .keyId(currentKid)
+                .algorithm(algorithm.getValue())
+                .type("RSA")
+                .privatKey(currentPrivateKey)
+                .publicKey(currentPublicKey)
+                .build();
     }
 
     public List<JWKKey> getActiveKeys() {
@@ -98,6 +110,7 @@ public class DynamoDBKeyService implements KeyService {
             }
         }
         if (deleteRequests.size() > 0) {
+            log.debug("Deleting '{}' expired keys", deleteRequests.size());
             BatchWriteItemRequest deleteRequest = new BatchWriteItemRequest();
             deleteRequest.addRequestItemsEntry(keysTableName, deleteRequests);
         }
@@ -110,6 +123,8 @@ public class DynamoDBKeyService implements KeyService {
                 .expiresAt(AV.toInstant(item.get(DBK.EXPIRES)))
                 .privateKey(item.get(DBK.PRIVATE_KEY).getS())
                 .publicKey(item.get(DBK.PUBLIC_KEY).getS())
+                .alg(algorithm.getValue())
+                .kty("RSA")
                 .build();
     }
 }
