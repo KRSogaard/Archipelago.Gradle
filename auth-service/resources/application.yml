@@ -7,12 +7,13 @@ spring:
   jackson:
     mapper:
       accept_case_insensitive_properties: true
-  mvc:
-    view:
-      prefix: "/WEB-INF/jsp/"
-      suffix: ".jsp"
 aws:
   region: "us-west-2"
+
+token:
+  age:
+    refresh: 2592000
+    access: 10800
 
 ---
 spring:
@@ -30,6 +31,9 @@ dynamodb:
   auth-clients: "archipelago-local.auth-clients"
   auth-jwks: "archipelago-local.auth-jwks"
 
+auth:
+  url: http://localhost:8087
+
 aws:
   access:
     id: "AKIARDAF5R4OODU52YJR"
@@ -39,10 +43,19 @@ aws:
 spring:
  profiles: alpha
 
+auth:
+  url: http://auth-alpha.archipelago.build
+
 ---
 spring:
  profiles: beta
 
+auth:
+  url: http://auth-beta.archipelago.build
+
 ---
 spring:
  profiles: prod
+
+auth:
+  url: http://auth.archipelago.build

@@ -4,10 +4,11 @@ import build.archipelago.authservice.models.*;
 import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.models.rest.*;
 import build.archipelago.authservice.services.auth.*;
-import build.archipelago.authservice.services.auth.models.AuthCodeResult;
+import build.archipelago.authservice.services.auth.models.*;
 import build.archipelago.authservice.services.clients.*;
 import build.archipelago.authservice.services.clients.eceptions.*;
-import build.archipelago.authservice.services.auth.exceptions.*;
+import build.archipelago.authservice.services.keys.exceptions.KeyNotFoundException;
+import build.archipelago.authservice.services.users.exceptions.*;
 import build.archipelago.authservice.services.keys.*;
 import build.archipelago.authservice.utils.*;
 import com.google.common.base.Strings;
@@ -18,19 +19,23 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.http.*;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
-
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.ws.rs.*;
+
+import static build.archipelago.authservice.controllers.Constants.AUTH_COOKIE;
 
 @RestController
 @RequestMapping("oauth2")
 @Slf4j
 public class OAuth2Controller {
 
-    private long refreshTokenMaxAge = 60 * 60 * 24 * 30;
-    private long accessTokenMaxAge = 60 * 60 * 3;
+    private long refreshTokenMaxAge;
+    private long accessTokenMaxAge;
+    private String authUrl;
 
     private ImmutableList<String> allowedScopes = ImmutableList.of("openId", "email", "profile", "other", "todo");
     private ImmutableList<String> allowedResponseMode = ImmutableList.of("query", "fragment");
@@ -38,14 +43,21 @@ public class OAuth2Controller {
     private ClientService clientService;
     private KeyService keyService;
 
-    public OAuth2Controller(AuthService authService, ClientService clientService, KeyService keyService) {
+    public OAuth2Controller(AuthService authService, ClientService clientService, KeyService keyService,
+                            String authUrl,
+                            long refreshTokenMaxAge,
+                            long accessTokenMaxAge) {
         this.authService = authService;
         this.clientService = clientService;
         this.keyService = keyService;
+
+        this.authUrl = authUrl;
+        this.refreshTokenMaxAge = refreshTokenMaxAge;
+        this.accessTokenMaxAge = accessTokenMaxAge;
     }
 
     @GetMapping("authorize")
-    public ResponseEntity<String> getAuthorize(@CookieValue(value = "archipelago.auth", required = false) String authCookieToken,
+    public ResponseEntity<String> getAuthorize(@CookieValue(value = AUTH_COOKIE, required = false) String authCookieToken,
                                                @RequestParam(name = "response_type") String responseType,
                                                @RequestParam(name = "response_mode") String responseMode,
                                                @RequestParam(name = "client_id") String clientId,
@@ -72,10 +84,15 @@ public class OAuth2Controller {
 
             Client client = clientService.getClient(clientId);
             if (!UrlUtil.checkRedirectUrl(redirectUri, client.getAllowedRedirects())) {
+                log.info("The redirect url '{}' was not allowed for client '{}'", redirectUri, client.getClientId());
+                return ResponseUtil.redirect("/error?error=unauthorized_client&state=" + state);
+            }
+            if (!Strings.isNullOrEmpty(client.getClientSecret())) {
+                log.info("The client '{}' has a secret, but it was not provided or was invalid", client.getClientId());
                 return ResponseUtil.redirect("/error?error=unauthorized_client&state=" + state);
             }
 
-            List<String> scopes = splitScopes(scope);
+            List<String> scopes = ScopeUtils.getScopes(scope);
             List<String> invalidScopes = getInvalidScope(scopes, client.getAllowedScopes());
             if (invalidScopes.size() > 0) {
                 return createErrorResponse("invalid_scope", request, Map.of("invalidScopes", invalidScopes));
@@ -87,7 +104,7 @@ public class OAuth2Controller {
 
             if (!Strings.isNullOrEmpty(authCookieToken)) {
                 try {
-                    String userId = authService.getUserFromAuthCode(authCookieToken);
+                    String userId = authService.getUserFromAuthCookie(authCookieToken);
                     String authToken = authService.createAuthToken(userId, request);
 
                     StringBuilder redirectUrlBuilder = new StringBuilder();
@@ -107,24 +124,6 @@ public class OAuth2Controller {
                 }
             }
 
-            // TODO: This is for testing
-            if (state.equalsIgnoreCase("kasper-test")) {
-                String authToken = authService.createAuthToken("HMZSm2cvELCGRybg7BeA", request);
-                StringBuilder redirectUrlBuilder = new StringBuilder();
-                redirectUrlBuilder.append(redirectUri);
-                if (responseMode.equalsIgnoreCase("query")) {
-                    redirectUrlBuilder.append("?");
-                } else {
-                    redirectUrlBuilder.append("#");
-                }
-                redirectUrlBuilder.append("code=").append(authToken);
-                if (!Strings.isNullOrEmpty(state)) {
-                    redirectUrlBuilder.append("&state=").append(state);
-                }
-                return ResponseUtil.redirect(redirectUrlBuilder.toString());
-            }
-            // TODO: Remove here
-
             return createLoginUrl(request);
         } catch (ClientNotFoundException exp) {
             return createErrorResponse("unauthorized_client", request, null);
@@ -136,59 +135,62 @@ public class OAuth2Controller {
     private ResponseEntity<String> createLoginUrl(AuthorizeRequest request) {
         StringBuilder redirectUrlBuilder = new StringBuilder();
         redirectUrlBuilder.append("/login?response_type=");
-        redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4(request.getResponseType()));
+        redirectUrlBuilder.append(encodeValue(request.getResponseType()));
         if (!Strings.isNullOrEmpty(request.getResponseType())) {
             redirectUrlBuilder.append("&response_mode=");
-            redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4(request.getResponseType()));
+            redirectUrlBuilder.append(encodeValue(request.getResponseMode()));
         }
         redirectUrlBuilder.append("&client_id=");
-        redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4(request.getClientId()));
+        redirectUrlBuilder.append(encodeValue(request.getClientId()));
         redirectUrlBuilder.append("&redirect_uri=");
-        redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4(request.getRedirectUri()));
+        redirectUrlBuilder.append(encodeValue(request.getRedirectUri()));
         redirectUrlBuilder.append("&scope=");
-        redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4(request.getScope()));
+        redirectUrlBuilder.append(encodeValue(request.getScope()));
         if (!Strings.isNullOrEmpty(request.getState())) {
             redirectUrlBuilder.append("&state=");
-            redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4(request.getState()));
+            redirectUrlBuilder.append(encodeValue(request.getState()));
         }
         if (!Strings.isNullOrEmpty(request.getNonce())) {
             redirectUrlBuilder.append("&nonce=");
-            redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4(request.getNonce()));
+            redirectUrlBuilder.append(encodeValue(request.getNonce()));
         }
 
         return ResponseUtil.redirect(redirectUrlBuilder.toString());
     }
+    private String encodeValue(String value) {
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private ResponseEntity<String> createErrorResponse(String error, AuthorizeRequest request, Map<String, Object> data) {
         StringBuilder redirectUrlBuilder = new StringBuilder();
-        redirectUrlBuilder.append("/error?error=");
+        redirectUrlBuilder.append("/auth-error?error=");
         redirectUrlBuilder.append(error);
         if (!Strings.isNullOrEmpty(request.getState())) {
             redirectUrlBuilder.append("&state=");
-            redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4(request.getState()));
+            redirectUrlBuilder.append(encodeValue(request.getState()));
         }
         if (data != null) {
             for (String key : data.keySet()) {
                 if (data.get(key) instanceof List) {
                     redirectUrlBuilder.append("&");
-                    redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4(key));
+                    redirectUrlBuilder.append(encodeValue(key));
                     redirectUrlBuilder.append("=");
                     redirectUrlBuilder.append(((List<String>) data.get(key)).stream()
                         .map(StringEscapeUtils::escapeHtml4)
                         .collect(Collectors.joining(",")));
                 } else if (data.get(key) instanceof String) {
                     redirectUrlBuilder.append("&");
-                    redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4(key));
+                    redirectUrlBuilder.append(encodeValue(key));
                     redirectUrlBuilder.append("=");
-                    redirectUrlBuilder.append(StringEscapeUtils.escapeHtml4((String) data.get(key)));
+                    redirectUrlBuilder.append(encodeValue((String) data.get(key)));
                 }
             }
         }
         return ResponseUtil.redirect(redirectUrlBuilder.toString());
-    }
-
-    private List<String> splitScopes(String scope) {
-        return List.of(scope.split(" "));
     }
 
     private List<String> getInvalidScope(List<String> scopes, List<String> clientAllowedScopes) {
@@ -207,7 +209,7 @@ public class OAuth2Controller {
     public ResponseEntity<String> postToken(
            @RequestHeader(value = "authorization", required = false) String authorizationHeader,
            @RequestParam MultiValueMap<String, String> formData
-    ) {
+    ) throws KeyNotFoundException, TokenNotValidException, ClientNotFoundException, ClientSecretRequiredException {
         TokenRestRequest request = TokenRestRequest.builder()
                 .code(formData.getFirst("code"))
                 .clientId(formData.getFirst("client_id"))
@@ -220,32 +222,7 @@ public class OAuth2Controller {
             return ResponseUtil.invalidGrantType();
         }
 
-        Client client;
-        try {
-            if (!Strings.isNullOrEmpty(authorizationHeader)) {
-                UserCredential authHeader = HeaderUtil.extractCredential(authorizationHeader);
-                if (authHeader == null) {
-                    return ResponseUtil.invalidClient();
-                }
-                client = clientService.getClient(authHeader.getUsername());
-                if (!client.getClientSecret().equalsIgnoreCase(authHeader.getPassword())) {
-                    log.warn("Client password was incorrect");
-                    return ResponseUtil.invalidClient();
-                }
-            } else {
-                if (Strings.isNullOrEmpty(request.getClientId())) {
-                    return ResponseUtil.invalidClient();
-                }
-                client = clientService.getClient(request.getClientId());
-                if (!Strings.isNullOrEmpty(client.getClientSecret())) {
-                    log.warn("Client '{}' has a secret but it was not provided", request.getClientId());
-                    return ResponseUtil.invalidClient();
-                }
-            }
-        } catch (ClientNotFoundException exp) {
-            log.warn("The client not found '{}'", exp.getClientId());
-            return ResponseUtil.invalidClient();
-        }
+        Client client = getClient(request.getClientId(), authorizationHeader);
 
         UserAndScopes userAndScopes;
         if ("authorization_code".equalsIgnoreCase(request.getGrantType())) {
@@ -258,22 +235,29 @@ public class OAuth2Controller {
         }
 
         TokenRestResponse response = new TokenRestResponse();
-
-        Map<String, Object> accessTokenBody = createAccessToken(userAndScopes.getUserId(), userAndScopes.getScopes(), client.getClientId());
-        response.setAccessToken(createJWT(accessTokenBody));
+        response.setTokenType("Bearer");
+        response.setExpiresIn(3600);
+        response.setAccessToken(createJWT(JWTClaims.builder()
+                .withIssuer("https://auth.archipelago.build")
+                .withSubject(userAndScopes.getUserId())
+                .withAudience(client.getClientId())
+                .withIssuedAt(Instant.now())
+                .withExpires(Instant.now().plusSeconds(accessTokenMaxAge))
+                .withScope(String.join(" ", userAndScopes.getScopes()))
+                .build().getClaims()));
+        response.setRefreshToken(createJWT(JWTClaims.builder()
+                .withIssuer("https://auth.archipelago.build")
+                .withSubject(userAndScopes.getUserId())
+                .withAudience(client.getClientId())
+                .withIssuedAt(Instant.now())
+                .withExpires(Instant.now().plusSeconds(refreshTokenMaxAge))
+                .withScope(String.join(" ", userAndScopes.getScopes()))
+                .build().getClaims()));
 
         if (userAndScopes.getScopes().contains("openid")) {
             Map<String, Object> openIdTokenBody = createOpenIdToken(userAndScopes.getUserId(), userAndScopes.getScopes(), client.getClientId());
             response.setIdToken(createJWT(openIdTokenBody));
         }
-
-        if ("authorization_code".equalsIgnoreCase(request.getGrantType())) {
-            Map<String, Object> refreshTokenBody = createRefreshToken(userAndScopes.getUserId(), userAndScopes.getScopes(), client.getClientId());
-            response.setRefreshToken(createJWT(refreshTokenBody));
-        }
-
-        response.setTokenType("Bearer");
-        response.setExpiresIn(3600);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .header("Content-Type", "application/json")
@@ -282,9 +266,41 @@ public class OAuth2Controller {
                 .body(JSONUtil.serialize(response));
     }
 
+    private Client getClient(String requestClientId, String authorizationHeader) throws ClientNotFoundException,
+            ClientSecretRequiredException {
+        Client client;
+        String clientId = null;
+        String clientSecret = null;
+
+        if (!Strings.isNullOrEmpty(authorizationHeader)) {
+            UserCredential authHeader = HeaderUtil.extractCredential(authorizationHeader);
+            if (authHeader == null || Strings.isNullOrEmpty(authHeader.getUsername())) {
+                throw new ClientNotFoundException(null);
+            }
+            clientId = authHeader.getUsername();
+            clientSecret = authHeader.getPassword();
+        } else {
+            if (Strings.isNullOrEmpty(requestClientId)) {
+                throw new ClientNotFoundException(null);
+            }
+            clientId = requestClientId;
+            clientSecret = null; // Client secret should only be given as auth header
+        }
+
+        client = clientService.getClient(clientId);
+        if (!Strings.isNullOrEmpty(client.getClientSecret()) && Strings.isNullOrEmpty(clientSecret)) {
+            log.warn("Client '{}' has a secret but it was not provided", clientId);
+            throw new ClientSecretRequiredException(client.getClientSecret());
+        }
+        if (!client.getClientSecret().equalsIgnoreCase(clientSecret)) {
+            log.warn("Client secret was incorrect");
+            throw new ClientNotFoundException(clientId);
+        }
+        return client;
+    }
+
     private String createJWT(Map<String, Object> body) {
         KeyDetails details = keyService.getSigningKey();
-
         return Jwts.builder()
                 .setHeaderParam(JwsHeader.KEY_ID, details.getKeyId())
                 .setHeaderParam(JwsHeader.ALGORITHM, details.getAlgorithm())
@@ -293,38 +309,37 @@ public class OAuth2Controller {
                 .compact();
     }
 
-    private Map<String, Object> createRefreshToken(String userId, List<String> scopes, String clientId) {
-        Map<String, Object> token = new HashMap<>();
-        token.put("iss", "https://auth.archipelago.build");
-        token.put("sub", userId);
-        token.put("aud", clientId);
-        token.put("iat", Instant.now().getEpochSecond());
-        token.put("exp", Instant.now().plusSeconds(refreshTokenMaxAge).getEpochSecond());
-        token.put("scopes", String.join(" ", scopes));
-        return token;
-    }
-
-    private Map<String, Object> createAccessToken(String userId, List<String> scopes, String clientId) {
-        Map<String, Object> token = new HashMap<>();
-        token.put("iss", "https://auth.archipelago.build");
-        token.put("sub", userId);
-        token.put("aud", clientId);
-        token.put("iat", Instant.now().getEpochSecond());
-        token.put("exp", Instant.now().plusSeconds(accessTokenMaxAge).getEpochSecond());
-        token.put("scopes", String.join(" ", scopes));
-        return token;
-    }
-
     private Map<String, Object> createOpenIdToken(String userId, List<String> scopes, String clientId) {
         return null;
     }
 
-    private UserAndScopes getUserFromRefreshToken(TokenRestRequest request) {
+    private UserAndScopes getUserFromRefreshToken(TokenRestRequest request) throws KeyNotFoundException, TokenNotValidException {
         if (Strings.isNullOrEmpty(request.getRefreshToken())) {
             throw new IllegalArgumentException("refresh_token is missing");
         }
-        // TODO: verify and parse token
-        return null;
+
+        Map<String, String> tokenHead = JWTUtil.getHeader(request.getRefreshToken());
+        if (!tokenHead.containsKey("kid") || Strings.isNullOrEmpty(tokenHead.get("kid"))) {
+            throw new UnauthorizedAuthTokenException();
+        }
+        String kid = tokenHead.get("kid");
+        KeyDetails details = keyService.getKey(kid);
+        Jws<Claims> token = null;
+        try {
+            token = Jwts.parserBuilder().setSigningKey(details.getPublicKey()).build().parseClaimsJws(request.getRefreshToken());
+        } catch (JwtException e) {
+            log.info("The refresh token failed validation");
+            throw new TokenNotValidException();
+        }
+
+        List<String> currentScopes = ScopeUtils.getScopes(token.getBody().get("scope", String.class));
+        List<String> requestedScopes = ScopeUtils.getScopes(request.getScope());
+        List<String> newScopes = ScopeUtils.ensureNoNewScopes(currentScopes, requestedScopes);
+
+        return UserAndScopes.builder()
+                .userId(token.getBody().getSubject())
+                .scopes(newScopes)
+                .build();
     }
 
     private UserAndScopes getUserFromNewAuth(TokenRestRequest request) {
@@ -338,6 +353,11 @@ public class OAuth2Controller {
             log.warn("Request uri did not match '{}' during the authorize request and '{}' during the token",
                     codeResult.getRedirectURI(), request.getRedirectUri());
             throw new InvalidRedirectException(request.getRedirectUri());
+        }
+
+        if (!Strings.isNullOrEmpty(request.getScope())) {
+            log.warn("Authorization_code request contained a scope request, this is not allowed");
+            throw new IllegalArgumentException("scope is not allowed on authorization_code requests");
         }
 
         return UserAndScopes.builder()
@@ -366,6 +386,28 @@ public class OAuth2Controller {
         }
         return JWKSRestResponse.builder()
                 .keys(responseKeys)
+                .build();
+    }
+
+    @PostMapping("/device_authorization")
+    public DeviceActivationRestResponse deviceActivation(
+            @RequestHeader(value = "authorization", required = false) String authorizationHeader,
+            @RequestParam(name = "client_id") String clientId,
+            @RequestParam(name = "scope") String scope) throws ClientSecretRequiredException, ClientNotFoundException {
+        if (Strings.isNullOrEmpty(clientId)) {
+            throw new IllegalArgumentException("client_id is required");
+        }
+        // This will throw exception if the client auth is not valid
+        getClient(clientId, authorizationHeader);
+
+        CodeResponse deviceCode = authService.createDeviceCode(clientId, scope);
+
+        return DeviceActivationRestResponse.builder()
+                .deviceCode(deviceCode.getCode())
+                .expiresIn(deviceCode.getExpires().getEpochSecond() - Instant.now().getEpochSecond())
+                .verificationUri(authUrl + "/device")
+                .verificationUriComplete(authUrl + "/device?user_code=" + deviceCode.getCode())
+                .interval(5)
                 .build();
     }
 }

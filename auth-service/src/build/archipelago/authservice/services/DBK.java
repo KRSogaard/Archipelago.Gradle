@@ -16,4 +16,9 @@ public class DBK {
     public static final String PRIVATE_KEY = "private-key";
     public static final String PUBLIC_KEY = "public-key";
     public static final String ALGO = "algorithm";
+    public static final String EMAIL = "email";
+    public static final String PASSWORD_SALT = "password-salt";
+    public static final String PASSWORD = "password";
+    public static final String CODE_TYPE = "code-type";
+    public static final String DEVICE_CODE = "device-code";
 }

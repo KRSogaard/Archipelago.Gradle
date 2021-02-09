@@ -15,4 +15,5 @@ public class TokenRestRequest {
     private String refreshToken;
     private String redirectUri;
     private String clientId;
+    private String scope;
 }

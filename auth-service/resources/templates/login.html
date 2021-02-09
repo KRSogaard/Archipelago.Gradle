@@ -16,7 +16,7 @@
         <link href="signin.css" rel="stylesheet">
     </head>
     <body class="text-center">
-        <form class="form-signin" th:action="@{/authorize}" th:object="${authorize}"  method="post">
+        <form class="form-signin" th:action="@{/login}" th:object="${authorize}"  method="post">
             <input type="hidden" name="response_type" th:value="*{response_type}">
             <input type="hidden" name="response_mode" th:value="*{response_mode}">
             <input type="hidden" name="client_id" th:value="*{client_id}">
@@ -25,6 +25,10 @@
             <input type="hidden" name="state" th:value="*{state}">
 
             <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+
+            <div class="alert alert-danger" role="alert" th:each="error : ${errors}">
+                <span th:text="${error}" />
+            </div>
 
             <label for="inputEmail" class="sr-only">Email address</label>
             <input type="email" id="inputEmail" th:field="*{email}" class="form-control" placeholder="Email address" required autofocus>

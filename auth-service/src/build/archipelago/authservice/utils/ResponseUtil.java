@@ -23,24 +23,10 @@ public class ResponseUtil {
         }
     }
 
-    public static ResponseEntity<String> invalidClient() {
-        return ResponseUtil.respons(HttpStatus.UNAUTHORIZED, ErrorRestResponse.builder()
-                .error("invalid_client")
-                .error_description("Client authentication failed")
-                .build());
-    }
-
     public static ResponseEntity<String> unauthorizedAuthToken() {
         return ResponseUtil.respons(HttpStatus.UNAUTHORIZED, ErrorRestResponse.builder()
                 .error("invalid_client")
                 .error_description("Auth Token not approved")
-                .build());
-    }
-
-    public static ResponseEntity<String> invalidRedirect() {
-        return ResponseUtil.respons(HttpStatus.BAD_REQUEST, ErrorRestResponse.builder()
-                .error("invalid_request")
-                .error_description("Invalid redirection uri")
                 .build());
     }
 

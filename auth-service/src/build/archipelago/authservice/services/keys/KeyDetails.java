@@ -3,6 +3,7 @@ package build.archipelago.authservice.services.keys;
 import lombok.*;
 
 import java.security.*;
+import java.time.Instant;
 
 @Builder
 @Value
@@ -12,4 +13,5 @@ public class KeyDetails {
     private PublicKey publicKey;
     private String algorithm;
     private String type;
+    private Instant expiresAt;
 }
