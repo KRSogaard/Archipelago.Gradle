@@ -1,4 +1,4 @@
-package build.archipelago.authservice.services.clients;
+package build.archipelago.authservice.services.clients.models;
 
 import lombok.*;
 

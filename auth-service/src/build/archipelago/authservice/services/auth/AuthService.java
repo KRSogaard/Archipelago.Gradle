@@ -16,4 +16,6 @@ public interface AuthService {
     void updateDeviceCode(String userCode, String userId);
     DeviceCode getDeviceCodeByDeviceId(String deviceCode) throws TokenNotFoundException, TokenExpiredException;
     void removeDeviceCode(String userCode);
+
+    void clearExpiredCodes();
 }

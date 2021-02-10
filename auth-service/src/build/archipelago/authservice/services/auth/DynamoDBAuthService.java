@@ -9,28 +9,38 @@ import com.amazonaws.services.dynamodbv2.*;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.google.common.base.*;
 import com.google.common.collect.*;
+import lombok.extern.slf4j.*;
 import org.apache.commons.lang3.*;
 
 import java.time.*;
 import java.util.*;
 
+@Slf4j
 public class DynamoDBAuthService implements AuthService {
 
-    private static final int authTokenExpiresSec = 60*10;
-    private static final int deviceCodeExpiresSec = 60*10;
-    private static final int authCookieExpiresSec = 60*60*24*30;
     private static final String CODE_TYPE_AUTH_CODE = "auth";
     private static final String CODE_TYPE_COOKIE = "cookie";
     private static final String CODE_TYPE_USER_CODE = "user-code";
     private static final String CODE_TYPE_DEVICE_CODE = "device-code";
 
+    private final int authTokenExpiresSec;
+    private final int deviceCodeExpiresSec;
+    private final int authCookieExpiresSec;
+
     private AmazonDynamoDB dynamoDB;
     private String authCodesTableName;
 
     public DynamoDBAuthService(AmazonDynamoDB dynamoDB,
-                               String authCodesTableName) {
+                               String authCodesTableName,
+                               int authTokenExpiresSec,
+                               int deviceCodeExpiresSec,
+                               int authCookieExpiresSec) {
         this.dynamoDB = dynamoDB;
         this.authCodesTableName = authCodesTableName;
+
+        this.authTokenExpiresSec = authTokenExpiresSec;
+        this.deviceCodeExpiresSec = deviceCodeExpiresSec;
+        this.authCookieExpiresSec = authCookieExpiresSec;
     }
 
     @Override
@@ -204,6 +214,41 @@ public class DynamoDBAuthService implements AuthService {
 
     }
 
+    @Override
+    public void clearExpiredCodes() {
+        Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
+        expressionAttributeValues.put(":expires", AV.of(Instant.now()));
+
+        Map<String, String> expressionAttributeNames = new HashMap<>();
+        expressionAttributeNames.put("#expires", DBK.EXPIRES);
+        expressionAttributeNames.put("#authcodes", DBK.AUTH_CODE);
+
+        ScanRequest scanRequest = new ScanRequest()
+                .withTableName(authCodesTableName)
+                .withFilterExpression("#expires < :expires")
+                .withProjectionExpression("#authcodes")
+                .withExpressionAttributeValues(expressionAttributeValues)
+                .withExpressionAttributeNames(expressionAttributeNames);
+
+        List<WriteRequest> deleteRequests = new ArrayList<>();
+        ScanResult result = dynamoDB.scan(scanRequest);
+        for (Map<String, AttributeValue> item : result.getItems()) {
+            deleteRequests.add(new WriteRequest(new DeleteRequest(ImmutableMap.<String, AttributeValue>builder()
+                    .put(DBK.AUTH_CODE, AV.of(item.get(DBK.AUTH_CODE).getS()))
+                    .build())));
+        }
+
+        log.debug("Deleting '{}' expired keys", deleteRequests.size());
+
+        if (deleteRequests.size() > 0) {
+            log.debug("Deleting '{}' expired keys", deleteRequests.size());
+            BatchWriteItemRequest deleteRequest = new BatchWriteItemRequest();
+            deleteRequest.addRequestItemsEntry(authCodesTableName, deleteRequests);
+            dynamoDB.batchWriteItem(deleteRequest);
+        }
+    }
+
+    @Override
     public void updateDeviceCode(String userCode, String userId) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(userCode));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(userId));

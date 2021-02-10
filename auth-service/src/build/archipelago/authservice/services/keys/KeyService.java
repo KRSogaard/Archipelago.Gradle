@@ -1,6 +1,7 @@
 package build.archipelago.authservice.services.keys;
 
 import build.archipelago.authservice.services.keys.exceptions.KeyNotFoundException;
+import build.archipelago.authservice.services.keys.models.*;
 
 import java.util.*;
 

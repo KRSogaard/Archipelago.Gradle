@@ -2,6 +2,7 @@ package build.archipelago.authservice.services.keys;
 
 import build.archipelago.authservice.services.DBK;
 import build.archipelago.authservice.services.keys.exceptions.KeyNotFoundException;
+import build.archipelago.authservice.services.keys.models.*;
 import build.archipelago.common.dynamodb.AV;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
@@ -10,7 +11,6 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.K;
 
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -112,6 +112,7 @@ public class DynamoDBKeyService implements KeyService {
             log.debug("Deleting '{}' expired keys", deleteRequests.size());
             BatchWriteItemRequest deleteRequest = new BatchWriteItemRequest();
             deleteRequest.addRequestItemsEntry(keysTableName, deleteRequests);
+            dynamoDB.batchWriteItem(deleteRequest);
         }
         return activeKeys;
     }

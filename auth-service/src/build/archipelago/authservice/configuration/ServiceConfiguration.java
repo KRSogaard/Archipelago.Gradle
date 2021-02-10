@@ -15,8 +15,11 @@ public class ServiceConfiguration {
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public AuthService authService(AmazonDynamoDB dynamoDB,
-                                   @Value("${dynamodb.auth-codes}") String authCodesTablesName) {
-        return new DynamoDBAuthService(dynamoDB, authCodesTablesName);
+                                   @Value("${dynamodb.auth-codes}") String authCodesTablesName,
+                                   @Value("${token.age.authToken}") int authTokenExpiresSec,
+                                   @Value("${token.age.deviceCode}") int deviceCodeExpiresSec,
+                                   @Value("${token.age.authCookie}") int authCookieExpiresSec) {
+        return new DynamoDBAuthService(dynamoDB, authCodesTablesName, authTokenExpiresSec, deviceCodeExpiresSec, authCookieExpiresSec);
     }
 
     @Bean
