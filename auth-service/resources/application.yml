@@ -7,12 +7,16 @@ spring:
   jackson:
     mapper:
       accept_case_insensitive_properties: true
-  mvc:
-    view:
-      prefix: "/WEB-INF/jsp/"
-      suffix: ".jsp"
 aws:
   region: "us-west-2"
+
+token:
+  age:
+    refresh: 2592000
+    access: 10800
+    authToken: 600
+    deviceCode: 600
+    authCookie: 2592000
 
 ---
 spring:
@@ -22,23 +26,39 @@ server:
   port: 8087
 
 dynamodb:
-  accounts: "archipelago-local.accounts"
-  account-mapping: "archipelago-local.account-mapping"
-  accounts-git: "archipelago-local.accounts-git"
+#  accounts: "archipelago-local.accounts"
+#  account-mapping: "archipelago-local.account-mapping"
+#  accounts-git: "archipelago-local.accounts-git"
+  auth-codes: "archipelago-local.auth-codes"
+  auth-users: "archipelago-local.auth-users"
+  auth-clients: "archipelago-local.auth-clients"
+  auth-jwks: "archipelago-local.auth-jwks"
+
+auth:
+  url: http://localhost:8087
 
 aws:
   access:
-    id: "AKIARDAF5R4OFYCLE362"
-    key: "2kQ8dMOf066HoBlOkEo+Hqpd1zzgsqmO3E3qVAS7"
+    id: "AKIARDAF5R4OODU52YJR"
+    key: "HRG7W4XQESB1ixNknOhZ4dYRgnvAk/U3NgUOF7fH"
 
 ---
 spring:
  profiles: alpha
 
+auth:
+  url: http://auth-alpha.archipelago.build
+
 ---
 spring:
  profiles: beta
 
+auth:
+  url: http://auth-beta.archipelago.build
+
 ---
 spring:
  profiles: prod
+
+auth:
+  url: http://auth.archipelago.build

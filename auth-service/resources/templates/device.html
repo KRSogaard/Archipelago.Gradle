@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+    <title>Archipelago.build Auth</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="/docs/4.0/assets/img/favicons/favicon.ico">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+    <!-- Custom styles for this template -->
+    <link href="signin.css" rel="stylesheet">
+</head>
+<body class="text-center">
+<form class="form-signin" th:action="@{/device}" th:object="${deviceRequest}" method="post">
+
+    <div class="alert alert-danger" role="alert" th:if="${!#strings.isEmpty(error)}">
+        <span th:text="${error}" />
+    </div>
+
+
+    <div class="alert alert-info" role="alert">
+        We will make this nicer later, write the device code here in upper case letters and remember the dash!
+    </div>
+    <label for="inputDeviceCode" class="sr-only">Device activation code:</label>
+    <input type="text" id="inputDeviceCode" th:field="*{user_code}" class="form-control" placeholder="ABCD-EFGH" required autofocus>
+
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Activate Device</button>
+</form>
+</body>
+</html>

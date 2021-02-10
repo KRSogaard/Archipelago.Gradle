@@ -67,10 +67,6 @@ public class DynamoDbVersionSetService implements VersionSetService {
             updateExpression.add("#target = :target");
         }
 
-        // TODO: Remove
-        String test = "set " + String.join(", ", updateExpression);
-        log.info("Test '{}'", test);
-
         UpdateItemRequest updateItemRequest = new UpdateItemRequest()
                 .withTableName(config.getVersionSetTable())
                 .addKeyEntry(Keys.ACCOUNT_ID, AV.of(this.sanitizeName(accountId)))
