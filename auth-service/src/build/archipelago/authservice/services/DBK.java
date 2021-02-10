@@ -21,4 +21,5 @@ public class DBK {
     public static final String PASSWORD = "password";
     public static final String CODE_TYPE = "code-type";
     public static final String DEVICE_CODE = "device-code";
+    public static final String USER_CODE = "user-code";
 }

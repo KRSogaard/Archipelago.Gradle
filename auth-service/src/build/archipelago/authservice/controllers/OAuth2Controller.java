@@ -7,27 +7,28 @@ import build.archipelago.authservice.services.auth.*;
 import build.archipelago.authservice.services.auth.models.*;
 import build.archipelago.authservice.services.clients.*;
 import build.archipelago.authservice.services.clients.eceptions.*;
-import build.archipelago.authservice.services.keys.exceptions.KeyNotFoundException;
-import build.archipelago.authservice.services.users.exceptions.*;
 import build.archipelago.authservice.services.keys.*;
+import build.archipelago.authservice.services.keys.exceptions.*;
+import build.archipelago.authservice.services.users.exceptions.*;
 import build.archipelago.authservice.utils.*;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.*;
+import com.google.common.collect.*;
 import io.jsonwebtoken.*;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringEscapeUtils;
+import lombok.extern.slf4j.*;
+import org.apache.commons.lang3.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.http.*;
-import org.springframework.util.MultiValueMap;
+import org.springframework.util.*;
 import org.springframework.web.bind.annotation.*;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
 
-import static build.archipelago.authservice.controllers.Constants.AUTH_COOKIE;
+import java.io.*;
+import java.net.*;
+import java.nio.charset.*;
+import java.time.*;
+import java.util.*;
+import java.util.stream.*;
+
+import static build.archipelago.authservice.controllers.Constants.*;
 
 @RestController
 @RequestMapping("oauth2")
@@ -122,8 +123,8 @@ public class OAuth2Controller {
                         redirectUrlBuilder.append("&state=").append(state);
                     }
                     return ResponseUtil.redirect(redirectUrlBuilder.toString());
-                } catch (UserNotFoundException exp) {
-                    log.warn("The auth cookie was not found in our database");
+                } catch (UserNotFoundException | TokenNotFoundException | TokenExpiredException exp) {
+                    log.info("The auth cookie was not found in our database, got '{}'", exp.getClass().getName());
                 }
             }
 
@@ -212,29 +213,38 @@ public class OAuth2Controller {
     public ResponseEntity<String> postToken(
            @RequestHeader(value = "authorization", required = false) String authorizationHeader,
            @RequestParam MultiValueMap<String, String> formData
-    ) throws KeyNotFoundException, TokenNotValidException, ClientNotFoundException, ClientSecretRequiredException {
+    ) throws KeyNotFoundException, TokenNotValidException, ClientNotFoundException, ClientSecretRequiredException,
+            InvalidGrantTypeException, AuthorizationPendingException, TokenNotFoundException, TokenExpiredException {
         TokenRestRequest request = TokenRestRequest.builder()
                 .code(formData.getFirst("code"))
                 .clientId(formData.getFirst("client_id"))
                 .redirectUri(formData.getFirst("redirect_uri"))
                 .grantType(formData.getFirst("grant_type"))
                 .refreshToken(formData.getFirst("refresh_token"))
+                .deviceCode(formData.getFirst("device_code"))
                 .build();
         if (!"authorization_code".equalsIgnoreCase(request.getGrantType()) &&
-            !"refresh_token".equalsIgnoreCase(request.getGrantType())) {
-            return ResponseUtil.invalidGrantType();
+            !"refresh_token".equalsIgnoreCase(request.getGrantType()) &&
+            !"urn:ietf:params:oauth:grant-type:device_code".equalsIgnoreCase(request.getGrantType())) {
+            throw new InvalidGrantTypeException();
         }
 
         Client client = getClient(request.getClientId(), authorizationHeader);
 
         UserAndScopes userAndScopes;
-        if ("authorization_code".equalsIgnoreCase(request.getGrantType())) {
-            userAndScopes = getUserFromNewAuth(request);
-        } else if ("refresh_token".equalsIgnoreCase(request.getGrantType())) {
-            userAndScopes = getUserFromRefreshToken(request);
-        } else {
-            log.error("Unknown grant type '{}'", request.getGrantType());
-            return ResponseUtil.invalidGrantType();
+        switch (request.getGrantType().toLowerCase().trim()) {
+            case "authorization_code":
+                userAndScopes = getUserFromNewAuth(request);
+                break;
+            case "refresh_token":
+                userAndScopes = getUserFromRefreshToken(request);
+                break;
+            case "urn:ietf:params:oauth:grant-type:device_code":
+                userAndScopes = getUserFromDeviceCode(request);
+                break;
+            default:
+                throw new InvalidGrantTypeException();
+
         }
 
         TokenRestResponse response = new TokenRestResponse();
@@ -347,12 +357,8 @@ public class OAuth2Controller {
                 .build();
     }
 
-    private UserAndScopes getUserFromNewAuth(TokenRestRequest request) {
+    private UserAndScopes getUserFromNewAuth(TokenRestRequest request) throws TokenExpiredException, TokenNotFoundException {
         AuthCodeResult codeResult = authService.getRequestFromAuthToken(request.getCode());
-        if (codeResult == null || Instant.now().isAfter(codeResult.getExpires())) {
-            log.debug("Auth code was not found or the code has expired");
-            throw new UnauthorizedAuthTokenException();
-        }
 
         if (!codeResult.getRedirectURI().equalsIgnoreCase(request.getRedirectUri())) {
             log.warn("Request uri did not match '{}' during the authorize request and '{}' during the token",
@@ -368,6 +374,27 @@ public class OAuth2Controller {
         return UserAndScopes.builder()
                 .userId(codeResult.getUserId())
                 .scopes(ScopeUtils.getScopes(codeResult.getScopes()))
+                .build();
+    }
+
+
+    private UserAndScopes getUserFromDeviceCode(TokenRestRequest request) throws AuthorizationPendingException,
+            TokenExpiredException, TokenNotFoundException {
+        if (Strings.isNullOrEmpty(request.getDeviceCode())) {
+            throw new IllegalArgumentException("device_code is required");
+        }
+
+        DeviceCode deviceCode = authService.getDeviceCodeByDeviceId(request.getDeviceCode());
+        if (Strings.isNullOrEmpty(deviceCode.getUserId())) {
+            throw new AuthorizationPendingException();
+        }
+
+        log.info("Removing the device code: '{}' ", deviceCode.getUserCode());
+        authService.removeDeviceCode(deviceCode.getUserCode());
+
+        return UserAndScopes.builder()
+                .userId(deviceCode.getUserId())
+                .scopes(ScopeUtils.getScopes(deviceCode.getScopes()))
                 .build();
     }
 

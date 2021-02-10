@@ -16,4 +16,5 @@ public class TokenRestRequest {
     private String redirectUri;
     private String clientId;
     private String scope;
+    private String deviceCode;
 }

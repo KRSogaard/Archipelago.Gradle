@@ -1,17 +1,17 @@
 package build.archipelago.authservice.services.auth;
 
-import build.archipelago.authservice.models.AuthorizeRequest;
-import build.archipelago.authservice.services.DBK;
-import build.archipelago.authservice.services.auth.exceptions.DeviceCodeNotFoundException;
+import build.archipelago.authservice.models.*;
+import build.archipelago.authservice.models.exceptions.*;
+import build.archipelago.authservice.services.*;
 import build.archipelago.authservice.services.auth.models.*;
-import build.archipelago.common.dynamodb.AV;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import build.archipelago.common.dynamodb.*;
+import com.amazonaws.services.dynamodbv2.*;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.google.common.base.*;
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.RandomStringUtils;
+import com.google.common.collect.*;
+import org.apache.commons.lang3.*;
 
-import java.time.Instant;
+import java.time.*;
 import java.util.*;
 
 public class DynamoDBAuthService implements AuthService {
@@ -21,7 +21,8 @@ public class DynamoDBAuthService implements AuthService {
     private static final int authCookieExpiresSec = 60*60*24*30;
     private static final String CODE_TYPE_AUTH_CODE = "auth";
     private static final String CODE_TYPE_COOKIE = "cookie";
-    private static final String CODE_TYPE_DEVICE = "device";
+    private static final String CODE_TYPE_USER_CODE = "user-code";
+    private static final String CODE_TYPE_DEVICE_CODE = "device-code";
 
     private AmazonDynamoDB dynamoDB;
     private String authCodesTableName;
@@ -51,18 +52,18 @@ public class DynamoDBAuthService implements AuthService {
     }
 
     @Override
-    public AuthCodeResult getRequestFromAuthToken(String code) {
+    public AuthCodeResult getRequestFromAuthToken(String code) throws TokenNotFoundException, TokenExpiredException {
         GetItemResult result = dynamoDB.getItem(new GetItemRequest(authCodesTableName, ImmutableMap.<String, AttributeValue>builder()
                 .put(DBK.AUTH_CODE, AV.of(code))
                 .build()));
-        if (result.getItem() == null) {
-            return null;
-        }
         Map<String, AttributeValue> item = result.getItem();
-        if (!CODE_TYPE_AUTH_CODE.equalsIgnoreCase(item.get(DBK.CODE_TYPE).getS()) ||
-                item.get(DBK.EXPIRES) == null ||
-                Instant.now().isAfter(AV.toInstant(item.get(DBK.EXPIRES)))) {
-            return null;
+        if (item == null ||
+            !CODE_TYPE_COOKIE.equalsIgnoreCase(AV.getStringOrNull(item, DBK.CODE_TYPE))) {
+            throw new TokenNotFoundException(code);
+        }
+        if (Instant.now().isAfter(AV.toInstant(item.get(DBK.EXPIRES)))) {
+            removeCodeItem(item.get(DBK.AUTH_CODE).getS());
+            throw new TokenExpiredException(code);
         }
 
         return AuthCodeResult.builder()
@@ -77,14 +78,20 @@ public class DynamoDBAuthService implements AuthService {
     }
 
     @Override
-    public String getUserFromAuthCookie(String authCookieToken) {
+    public String getUserFromAuthCookie(String authCookieToken) throws TokenExpiredException, TokenNotFoundException {
         GetItemResult result = dynamoDB.getItem(new GetItemRequest(authCodesTableName, ImmutableMap.<String, AttributeValue>builder()
                 .put(DBK.AUTH_CODE, AV.of(authCookieToken))
                 .build()));
-        if (result.getItem() == null) {
-            return null;
-        }
         Map<String, AttributeValue> item = result.getItem();
+        if (item == null ||
+            !CODE_TYPE_COOKIE.equalsIgnoreCase(AV.getStringOrNull(item, DBK.CODE_TYPE))) {
+            throw new TokenNotFoundException(authCookieToken);
+        }
+        if (Instant.now().isAfter(AV.toInstant(item.get(DBK.EXPIRES)))) {
+            removeCodeItem(item.get(DBK.AUTH_CODE).getS());
+            throw new TokenExpiredException();
+        }
+
         if (!CODE_TYPE_COOKIE.equalsIgnoreCase(item.get(DBK.CODE_TYPE).getS()) ||
             item.get(DBK.EXPIRES) == null ||
             Instant.now().isAfter(AV.toInstant(item.get(DBK.EXPIRES)))) {
@@ -121,12 +128,19 @@ public class DynamoDBAuthService implements AuthService {
 
         dynamoDB.putItem(new PutItemRequest(authCodesTableName, ImmutableMap.<String, AttributeValue>builder()
                 .put(DBK.AUTH_CODE, AV.of(userCode))
-                .put(DBK.CODE_TYPE, AV.of(CODE_TYPE_DEVICE))
+                .put(DBK.CODE_TYPE, AV.of(CODE_TYPE_USER_CODE))
                 .put(DBK.DEVICE_CODE, AV.of(deviceCode))
                 .put(DBK.CLIENT_ID, AV.of(clientId))
                 .put(DBK.SCOPES, AV.of(scope))
                 .put(DBK.EXPIRES, AV.of(expires))
                 .build()));
+        dynamoDB.putItem(new PutItemRequest(authCodesTableName, ImmutableMap.<String, AttributeValue>builder()
+                .put(DBK.AUTH_CODE, AV.of(deviceCode))
+                .put(DBK.CODE_TYPE, AV.of(CODE_TYPE_DEVICE_CODE))
+                .put(DBK.USER_CODE, AV.of(userCode))
+                .put(DBK.EXPIRES, AV.of(expires))
+                .build()));
+
         return DeviceCodeResponse.builder()
                 .userCode(userCode)
                 .deviceCode(deviceCode)
@@ -134,7 +148,7 @@ public class DynamoDBAuthService implements AuthService {
                 .build();
     }
 
-    public DeviceCode getDeviceCode(String userCode) throws DeviceCodeNotFoundException {
+    public DeviceCode getDeviceCode(String userCode) throws TokenNotFoundException, TokenExpiredException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(userCode));
 
         GetItemResult result = dynamoDB.getItem(new GetItemRequest(authCodesTableName, ImmutableMap.<String, AttributeValue>builder()
@@ -142,9 +156,13 @@ public class DynamoDBAuthService implements AuthService {
                 .build()));
         Map<String, AttributeValue> item = result.getItem();
         if (item == null ||
-            Instant.now().isAfter(AV.toInstant(item.get(DBK.EXPIRES))) ||
-            !CODE_TYPE_DEVICE.equalsIgnoreCase(AV.getStringOrNull(item, DBK.CODE_TYPE))) {
-            throw new DeviceCodeNotFoundException(userCode);
+            !CODE_TYPE_USER_CODE.equalsIgnoreCase(AV.getStringOrNull(item, DBK.CODE_TYPE))) {
+            throw new TokenNotFoundException(userCode);
+        }
+        if (Instant.now().isAfter(AV.toInstant(item.get(DBK.EXPIRES)))) {
+            removeCodeItem(item.get(DBK.AUTH_CODE).getS());
+            removeCodeItem(item.get(DBK.DEVICE_CODE).getS());
+            throw new TokenExpiredException(userCode);
         }
 
         return DeviceCode.builder()
@@ -156,6 +174,34 @@ public class DynamoDBAuthService implements AuthService {
                 .updatedAt(AV.toInstantOrNull(item.get(DBK.UPDATED)))
                 .userId(AV.getStringOrNull(item, DBK.USER_ID))
                 .build();
+    }
+    public DeviceCode getDeviceCodeByDeviceId(String deviceCode) throws TokenNotFoundException, TokenExpiredException {
+        GetItemResult result = dynamoDB.getItem(new GetItemRequest(authCodesTableName, ImmutableMap.<String, AttributeValue>builder()
+                .put(DBK.AUTH_CODE, AV.of(deviceCode))
+                .build()));
+        Map<String, AttributeValue> item = result.getItem();
+        if (result.getItem() == null ||
+            !CODE_TYPE_DEVICE_CODE.equalsIgnoreCase(AV.getStringOrNull(item, DBK.CODE_TYPE))) {
+            throw new TokenNotFoundException(deviceCode);
+        }
+        if (Instant.now().isAfter(AV.toInstant(item.get(DBK.EXPIRES)))) {
+            removeCodeItem(item.get(DBK.AUTH_CODE).getS());
+            removeCodeItem(item.get(DBK.USER_CODE).getS());
+            throw new TokenExpiredException(deviceCode);
+        }
+
+        return getDeviceCode(item.get(DBK.USER_CODE).getS());
+    }
+
+    public void removeDeviceCode(String userCode) {
+        try {
+            DeviceCode deviceCode = getDeviceCode(userCode);
+            removeCodeItem(deviceCode.getUserCode());
+            removeCodeItem(deviceCode.getDeviceCode());
+        } catch (TokenNotFoundException | TokenExpiredException e) {
+            return;
+        }
+
     }
 
     public void updateDeviceCode(String userCode, String userId) {
@@ -170,7 +216,7 @@ public class DynamoDBAuthService implements AuthService {
         }};
         Map<String, AttributeValue> attributeValues = new HashMap<>() {{
             put(":userCode", AV.of(userCode.toUpperCase()));
-            put(":codeType", AV.of(CODE_TYPE_DEVICE));
+            put(":codeType", AV.of(CODE_TYPE_USER_CODE));
             put(":userId", AV.of(userId));
             put(":updated", AV.of(Instant.now()));
         }};
@@ -188,5 +234,11 @@ public class DynamoDBAuthService implements AuthService {
                 .withExpressionAttributeNames(attributeNames)
                 .withExpressionAttributeValues(attributeValues);
         dynamoDB.updateItem(updateItemRequest);
+    }
+
+    private void removeCodeItem(String code) {
+        dynamoDB.deleteItem(new DeleteItemRequest(authCodesTableName, ImmutableMap.<String, AttributeValue>builder()
+                .put(DBK.AUTH_CODE, AV.of(code))
+                .build()));
     }
 }

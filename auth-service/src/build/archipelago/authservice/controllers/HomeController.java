@@ -1,9 +1,9 @@
 package build.archipelago.authservice.controllers;
 
 import build.archipelago.authservice.models.*;
+import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.models.rest.*;
 import build.archipelago.authservice.services.auth.*;
-import build.archipelago.authservice.services.auth.exceptions.*;
 import build.archipelago.authservice.services.auth.models.*;
 import build.archipelago.authservice.services.users.*;
 import build.archipelago.authservice.services.users.exceptions.*;
@@ -79,8 +79,8 @@ public class HomeController {
                 cookie.setMaxAge(cookieMaxAge);
                 return "redirect:" + buildRedirectUrl(request.toInternal(), authToken);
 
-            } catch (UserNotFoundException exp) {
-                log.info("The user had an auth cookie, but it was not valid");
+            } catch (UserNotFoundException | TokenExpiredException | TokenNotFoundException exp) {
+                log.info("The user had an auth cookie, but it was not valid. Got '{}'", exp.getClass().getName());
                 Cookie cookie = new Cookie(AUTH_COOKIE, "");
                 cookie.setMaxAge(0);
                 httpServletResponse.addCookie(cookie);
@@ -176,7 +176,7 @@ public class HomeController {
         DeviceCode code;
         try {
             code = authService.getDeviceCode(user_code.toUpperCase());
-        } catch (DeviceCodeNotFoundException e) {
+        } catch (TokenNotFoundException | TokenExpiredException e) {
             model.addAttribute("error", "User code was not found");
             return "device";
         }
@@ -185,7 +185,7 @@ public class HomeController {
         if (!Strings.isNullOrEmpty(authCookieToken)) {
             try {
                 userId = authService.getUserFromAuthCookie(authCookieToken);
-            } catch (UserNotFoundException e) {
+            } catch (UserNotFoundException | TokenExpiredException | TokenNotFoundException e) {
                 log.info("Request had an invalid auth cookie code, removing it");
                 Cookie cookie = new Cookie(AUTH_COOKIE, "");
                 cookie.setMaxAge(0);
