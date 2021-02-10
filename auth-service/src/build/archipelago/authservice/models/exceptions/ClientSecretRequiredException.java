@@ -1,8 +1,8 @@
 package build.archipelago.authservice.models.exceptions;
 
-import lombok.Value;
+import lombok.Getter;
 
-@Value
+@Getter
 public class ClientSecretRequiredException extends Exception {
     private final String clientId;
 

@@ -1,26 +1,28 @@
 package build.archipelago.authservice.controllers;
 
-import build.archipelago.authservice.models.AuthorizeRequest;
-import build.archipelago.authservice.models.rest.AuthorizeRestRequest;
-import build.archipelago.authservice.services.auth.AuthService;
-import build.archipelago.authservice.services.auth.models.CodeResponse;
-import build.archipelago.authservice.services.users.UserService;
-import com.google.common.base.Strings;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Controller;
+import build.archipelago.authservice.models.*;
+import build.archipelago.authservice.models.rest.*;
+import build.archipelago.authservice.services.auth.*;
+import build.archipelago.authservice.services.auth.exceptions.*;
+import build.archipelago.authservice.services.auth.models.*;
+import build.archipelago.authservice.services.users.*;
+import build.archipelago.authservice.services.users.exceptions.*;
+import com.google.common.base.*;
+import lombok.extern.slf4j.*;
+import org.springframework.stereotype.*;
 import org.springframework.ui.*;
 import org.springframework.web.bind.annotation.*;
-import java.util.*;
-import build.archipelago.authservice.services.users.exceptions.*;
 
 import javax.servlet.http.*;
+import java.util.*;
 
-import static build.archipelago.authservice.controllers.Constants.AUTH_COOKIE;
+import static build.archipelago.authservice.controllers.Constants.*;
 
 @Controller
 @Slf4j
 public class HomeController {
 
+    private int cookieMaxAge = 60 * 60 * 24 * 30;
     private AuthService authService;
     private UserService userService;
 
@@ -30,12 +32,12 @@ public class HomeController {
         this.userService = userService;
     }
 
-    @RequestMapping(value = "/")
+    @GetMapping(value = "/")
     public String index() {
         return "index";
     }
 
-    @RequestMapping(value = "/login")
+    @GetMapping(value = "/login")
     public String login(
             @CookieValue(value = AUTH_COOKIE, required = false) String authCookieToken,
             @RequestParam(name="response_type") String response_type,
@@ -74,10 +76,14 @@ public class HomeController {
                 CodeResponse authCookie = authService.createAuthCookie(userId);
                 Cookie cookie = new Cookie(AUTH_COOKIE, authCookie.getCode());
                 httpServletResponse.addCookie(cookie);
+                cookie.setMaxAge(cookieMaxAge);
                 return "redirect:" + buildRedirectUrl(request.toInternal(), authToken);
 
             } catch (UserNotFoundException exp) {
                 log.info("The user had an auth cookie, but it was not valid");
+                Cookie cookie = new Cookie(AUTH_COOKIE, "");
+                cookie.setMaxAge(0);
+                httpServletResponse.addCookie(cookie);
             }
         }
 
@@ -89,8 +95,8 @@ public class HomeController {
 
     @PostMapping(value = "/login")
     public String postLogin(@ModelAttribute AuthorizeRestRequest request,
-                                    ModelMap model,
-                                    HttpServletResponse httpServletResponse) {
+                            ModelMap model,
+                            HttpServletResponse httpServletResponse) {
         List<String> errors = new ArrayList<>();
         model.addAttribute("authorize", request);
         if (Strings.isNullOrEmpty(request.getEmail())) {
@@ -110,7 +116,6 @@ public class HomeController {
         try {
             String userId = userService.authenticate(request.getEmail(), request.getPassword());
             String authToken = authService.createAuthToken(userId, request.toInternal());
-
 
             CodeResponse authCookie = authService.createAuthCookie(userId);
             Cookie cookie = new Cookie(AUTH_COOKIE, authCookie.getCode());
@@ -139,16 +144,70 @@ public class HomeController {
         return redirectUrlBuilder.toString();
     }
 
-    @RequestMapping(value = "/auth-error")
+    @GetMapping(value = "/auth-error")
     public String error() {
         return "error";
     }
 
-    @RequestMapping(value = "/device")
-    public String device(
-            @CookieValue(value = AUTH_COOKIE, required = false) String authCookieToken,
-            @RequestParam(name="user_code") String user_code) {
-        
+    @GetMapping(value = "/device")
+    public String device(@RequestParam(name="user_code", required = false) String user_code,
+                         ModelMap model) {
+        model.addAttribute("deviceRequest", new DeviceRestRequest() {{
+            setUser_code(user_code);
+        }});
         return "device";
+    }
+
+    @PostMapping(value = "/device")
+    public String devicePost(
+            @CookieValue(value = AUTH_COOKIE, required = false) String authCookieToken,
+            @RequestParam(name="user_code") String user_code,
+            @RequestParam(name="email", required=false) String email,
+            @RequestParam(name="password", required=false) String password,
+            ModelMap model,
+            HttpServletResponse httpServletResponse) {
+        String userCode = user_code.toUpperCase();
+        model.addAttribute("deviceRequest", new DeviceRestRequest() {{
+            setUser_code(user_code);
+            setEmail(email);
+        }});
+
+
+        DeviceCode code;
+        try {
+            code = authService.getDeviceCode(user_code.toUpperCase());
+        } catch (DeviceCodeNotFoundException e) {
+            model.addAttribute("error", "User code was not found");
+            return "device";
+        }
+
+        String userId = null;
+        if (!Strings.isNullOrEmpty(authCookieToken)) {
+            try {
+                userId = authService.getUserFromAuthCookie(authCookieToken);
+            } catch (UserNotFoundException e) {
+                log.info("Request had an invalid auth cookie code, removing it");
+                Cookie cookie = new Cookie(AUTH_COOKIE, "");
+                cookie.setMaxAge(0);
+                httpServletResponse.addCookie(cookie);
+            }
+        } else if (!Strings.isNullOrEmpty(email) && !Strings.isNullOrEmpty(password)) {
+            try {
+                userId = userService.authenticate(email, password);
+
+                CodeResponse authCookie = authService.createAuthCookie(userId);
+                Cookie cookie = new Cookie(AUTH_COOKIE, authCookie.getCode());
+                httpServletResponse.addCookie(cookie);
+            } catch (UserNotFoundException e) {
+                model.addAttribute("error", "Invalid email or password");
+            }
+        }
+        if (Strings.isNullOrEmpty(userId)) {
+            return "deviceLogin";
+        }
+
+        authService.updateDeviceCode(userCode, userId);
+
+        return "deviceSuccess";
     }
 }

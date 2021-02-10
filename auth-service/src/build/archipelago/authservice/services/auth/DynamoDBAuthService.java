@@ -141,7 +141,9 @@ public class DynamoDBAuthService implements AuthService {
                 .put(DBK.AUTH_CODE, AV.of(userCode))
                 .build()));
         Map<String, AttributeValue> item = result.getItem();
-        if (item == null || Instant.now().isAfter(AV.toInstant(item.get(DBK.EXPIRES)))) {
+        if (item == null ||
+            Instant.now().isAfter(AV.toInstant(item.get(DBK.EXPIRES))) ||
+            !CODE_TYPE_DEVICE.equalsIgnoreCase(AV.getStringOrNull(item, DBK.CODE_TYPE))) {
             throw new DeviceCodeNotFoundException(userCode);
         }
 
@@ -167,8 +169,8 @@ public class DynamoDBAuthService implements AuthService {
             put("#updated", DBK.UPDATED);
         }};
         Map<String, AttributeValue> attributeValues = new HashMap<>() {{
-            put("#userCode", AV.of(userCode.toUpperCase()));
-            put("#codeType", AV.of(CODE_TYPE_DEVICE));
+            put(":userCode", AV.of(userCode.toUpperCase()));
+            put(":codeType", AV.of(CODE_TYPE_DEVICE));
             put(":userId", AV.of(userId));
             put(":updated", AV.of(Instant.now()));
         }};
@@ -180,7 +182,7 @@ public class DynamoDBAuthService implements AuthService {
         UpdateItemRequest updateItemRequest = new UpdateItemRequest()
                 .withTableName(authCodesTableName)
                 .addKeyEntry(DBK.AUTH_CODE, AV.of(userCode.toUpperCase()))
-                .withConditionExpression("#userCode = :userCode and #codeType = #codeType")
+                .withConditionExpression("#userCode = :userCode and #codeType = :codeType")
                 .withUpdateExpression("set " + String.join(", ", updateExpression))
                 .withReturnItemCollectionMetrics(ReturnItemCollectionMetrics.SIZE)
                 .withExpressionAttributeNames(attributeNames)

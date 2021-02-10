@@ -18,6 +18,7 @@ public class ServiceConfiguration {
                                    @Value("${dynamodb.auth-codes}") String authCodesTablesName) {
         return new DynamoDBAuthService(dynamoDB, authCodesTablesName);
     }
+
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public UserService userService(AmazonDynamoDB dynamoDB,

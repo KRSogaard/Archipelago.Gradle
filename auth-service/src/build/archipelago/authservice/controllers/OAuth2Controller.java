@@ -16,6 +16,7 @@ import com.google.common.collect.ImmutableList;
 import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.http.*;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
@@ -43,10 +44,12 @@ public class OAuth2Controller {
     private ClientService clientService;
     private KeyService keyService;
 
-    public OAuth2Controller(AuthService authService, ClientService clientService, KeyService keyService,
-                            String authUrl,
-                            long refreshTokenMaxAge,
-                            long accessTokenMaxAge) {
+    public OAuth2Controller(AuthService authService,
+                            ClientService clientService,
+                            KeyService keyService,
+                            @Value("${auth.url}") String authUrl,
+                            @Value("${token.age.refresh}") long refreshTokenMaxAge,
+                            @Value("${token.age.access}") long accessTokenMaxAge) {
         this.authService = authService;
         this.clientService = clientService;
         this.keyService = keyService;
@@ -288,13 +291,15 @@ public class OAuth2Controller {
         }
 
         client = clientService.getClient(clientId);
-        if (!Strings.isNullOrEmpty(client.getClientSecret()) && Strings.isNullOrEmpty(clientSecret)) {
-            log.warn("Client '{}' has a secret but it was not provided", clientId);
-            throw new ClientSecretRequiredException(client.getClientSecret());
-        }
-        if (!client.getClientSecret().equalsIgnoreCase(clientSecret)) {
-            log.warn("Client secret was incorrect");
-            throw new ClientNotFoundException(clientId);
+        if (!Strings.isNullOrEmpty(client.getClientSecret())) {
+            if (Strings.isNullOrEmpty(clientSecret)) {
+                log.warn("Client '{}' has a secret but it was not provided", clientId);
+                throw new ClientSecretRequiredException(client.getClientSecret());
+            }
+            if (!client.getClientSecret().equalsIgnoreCase(clientSecret)) {
+                log.warn("Client secret was incorrect");
+                throw new ClientNotFoundException(clientId);
+            }
         }
         return client;
     }
@@ -400,13 +405,14 @@ public class OAuth2Controller {
         // This will throw exception if the client auth is not valid
         getClient(clientId, authorizationHeader);
 
-        CodeResponse deviceCode = authService.createDeviceCode(clientId, scope);
+        DeviceCodeResponse deviceCode = authService.createDeviceCode(clientId, scope);
 
         return DeviceActivationRestResponse.builder()
-                .deviceCode(deviceCode.getCode())
+                .deviceCode(deviceCode.getDeviceCode())
+                .userCode(deviceCode.getUserCode())
                 .expiresIn(deviceCode.getExpires().getEpochSecond() - Instant.now().getEpochSecond())
                 .verificationUri(authUrl + "/device")
-                .verificationUriComplete(authUrl + "/device?user_code=" + deviceCode.getCode())
+                .verificationUriComplete(authUrl + "/device?user_code=" + deviceCode.getUserCode())
                 .interval(5)
                 .build();
     }
