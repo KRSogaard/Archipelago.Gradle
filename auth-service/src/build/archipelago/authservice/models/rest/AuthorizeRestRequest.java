@@ -1,10 +1,8 @@
 package build.archipelago.authservice.models.rest;
 
-import build.archipelago.authservice.models.AuthorizeRequest;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import build.archipelago.authservice.models.*;
 import com.google.common.base.*;
 import lombok.*;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.*;
 
@@ -19,6 +17,7 @@ public class AuthorizeRestRequest {
     private String redirect_uri;
     private String scope;
     private String state;
+    private String nonce;
 
     private String email;
     private String password;

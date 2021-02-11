@@ -18,6 +18,20 @@ token:
     deviceCode: 600
     authCookie: 2592000
 
+spring:
+  jackson:
+    mapper:
+      accept_case_insensitive_properties: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+
+oauth:
+  client-id: "3ad886knkeo0vuvvpnvtp6rtlq"
+  client-secret: "r5qd4fhj931vvlbf2oi3dhe58kjtfk2n7i70da7kc2d08sccch5"
+
 ---
 spring:
   profiles: local

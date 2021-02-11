@@ -23,6 +23,7 @@
             <input type="hidden" name="redirect_uri" th:value="*{redirect_uri}">
             <input type="hidden" name="scope" th:value="*{scope}">
             <input type="hidden" name="state" th:value="*{state}">
+            <input type="hidden" name="nonce" th:value="*{nonce}">
 
             <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
 
@@ -37,6 +38,11 @@
             <input type="password" id="inputPassword" th:field="*{password}" class="form-control" placeholder="Password" required>
 
             <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+
+            <a
+                    th:href="@{'/create-account?response_type=' + *{response_type} + '&response_mode=' + *{response_mode} + '&client_id=' + *{client_id} + '&redirect_uri=' + *{redirect_uri} + '&scope=' + *{scope} + '&state=' + *{state} + '&nonce=' + *{nonce}}">
+                Create new account
+            </a>
         </form>
     </body>
 </html>
