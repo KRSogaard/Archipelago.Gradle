@@ -62,10 +62,6 @@ dependencies {
 
     implementation 'org.slf4j:slf4j-api:1.7.30'
 
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
-    implementation 'org.springframework.security:spring-security-oauth2-jose'
-    implementation 'org.springframework.security:spring-security-config'
 
     // Google Guava
     implementation 'com.google.guava:guava:28.0-jre'
