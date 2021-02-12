@@ -1,7 +1,7 @@
 package build.archipelago.authservice.services.keys;
 
 import build.archipelago.authservice.services.DBK;
-import build.archipelago.authservice.services.keys.exceptions.KeyNotFoundException;
+import build.archipelago.authservice.models.exceptions.KeyNotFoundException;
 import build.archipelago.authservice.services.keys.models.*;
 import build.archipelago.common.dynamodb.AV;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;

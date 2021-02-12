@@ -61,6 +61,7 @@ dependencies {
     api "build.archipelago:version-set-service-client:1.0"
     api "build.archipelago:package-service-client:1.0"
     api "build.archipelago:build-server-api-client:1.0"
+    api "build.archipelago:auth-service-client:1.0"
 
     implementation 'org.springframework.boot:spring-boot-starter-jersey'
     implementation 'org.springframework.boot:spring-boot-starter-web'

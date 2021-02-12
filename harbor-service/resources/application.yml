@@ -31,6 +31,7 @@ endpoints:
   package-service: "http://localhost:8090"
   versionset-service: "http://localhost:8091"
   build-server-api: "http://localhost:8095"
+  auth-service: "http://localhost:8087"
 
 dynamodb:
   accounts: "archipelago-local.accounts"

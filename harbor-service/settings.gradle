@@ -27,3 +27,7 @@ if (file("../version-set-service-client").exists()) {
 if (file("../build-server-api-client").exists()) {
     includeBuild "../build-server-api-client"
 }
+
+if (file("../auth-service-client").exists()) {
+    includeBuild "../auth-service-client"
+}

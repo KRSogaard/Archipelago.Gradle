@@ -46,8 +46,8 @@ public class PackageExceptionHandler {
 
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(PackageExistsException exp) {
         return ProblemDetailRestResponse.builder()
-                .type("package/exists")
-                .title(TYPE_PACKAGE_EXISTS)
+                .type(TYPE_PACKAGE_EXISTS)
+                .title("The package exists")
                 .status(409)
                 .detail(exp.getMessage())
                 .data(new HashMap<>() {{

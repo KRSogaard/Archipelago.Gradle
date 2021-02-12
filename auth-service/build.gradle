@@ -53,6 +53,8 @@ configurations {
 }
 
 dependencies {
+    api "build.archipelago:auth-service-models:1.0"
+    api "build.archipelago:auth-service-client:1.0"
     api "build.archipelago:common-dynamodb:1.0"
     api "build.archipelago:common-rest:1.0"
 

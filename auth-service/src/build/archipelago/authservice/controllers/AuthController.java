@@ -2,10 +2,8 @@ package build.archipelago.authservice.controllers;
 
 import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.models.rest.*;
-import build.archipelago.authservice.services.auth.AuthService;
-import build.archipelago.authservice.services.auth.models.*;
-import build.archipelago.authservice.services.users.UserService;
-import com.google.common.base.*;
+import build.archipelago.authservice.services.auth.*;
+import build.archipelago.authservice.services.users.*;
 import lombok.extern.slf4j.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,28 +28,6 @@ public class AuthController {
 
         return LogInRestResponse.builder()
                 .authToken(authToken)
-                .build();
-    }
-
-    @PostMapping("/cookie")
-    public CreateAuthCookieResult createAuthCookie(@RequestBody CreateAuthCookieRequest model) {
-        CodeResponse cookieCode = authService.createAuthCookie(model.getUserId());
-
-        return CreateAuthCookieResult.builder()
-                .cookieCode(cookieCode.getCode())
-                .expires(cookieCode.getExpires().getEpochSecond())
-                .build();
-    }
-
-    @GetMapping("/cookie/{authCookie}")
-    public GetUserFromAuthCookieResult getUserFromAuthCookie(@PathVariable("authCookie") String authCookie)
-            throws UserNotFoundException, TokenNotFoundException, TokenExpiredException {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(authCookie), "authCookie is required");
-
-        String userId = authService.getUserFromAuthCookie(authCookie);
-
-        return GetUserFromAuthCookieResult.builder()
-                .userId(userId)
                 .build();
     }
 

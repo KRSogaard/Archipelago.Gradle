@@ -1,17 +1,17 @@
 package build.archipelago.authservice.models.rest;
 
-import build.archipelago.authservice.models.AuthorizeRequest;
-import com.google.common.base.Strings;
+import build.archipelago.authservice.models.*;
+import build.archipelago.authservice.models.client.*;
+import com.google.common.base.*;
 import lombok.*;
-
-import java.util.*;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class LogInRestRequest {
     private String responseType;
-    private String responseNode;
+    private String responseMode;
     private String clientId;
     private String redirectUri;
     private String scope;
@@ -36,10 +36,24 @@ public class LogInRestRequest {
         }
     }
 
+    public static LogInRestRequest from(LogInRequest request) {
+        return LogInRestRequest.builder()
+                .responseType(request.getResponseType())
+                .responseMode(request.getResponseMode())
+                .clientId(request.getClientId())
+                .redirectUri(request.getRedirectUri())
+                .scope(request.getScope())
+                .state(request.getState())
+                .nonce(request.getNonce())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .build();
+    }
+
     public AuthorizeRequest toInternal() {
         return AuthorizeRequest.builder()
                 .responseType(getResponseType())
-                .responseMode(getResponseNode())
+                .responseMode(getResponseMode())
                 .clientId(getClientId())
                 .redirectUri(getRedirectUri())
                 .scope(getScope())

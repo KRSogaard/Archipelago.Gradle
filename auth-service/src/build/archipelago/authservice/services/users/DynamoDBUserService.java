@@ -1,7 +1,7 @@
 package build.archipelago.authservice.services.users;
 
+import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.services.*;
-import build.archipelago.authservice.services.users.exceptions.*;
 import build.archipelago.authservice.services.users.models.*;
 import build.archipelago.common.dynamodb.*;
 import com.amazonaws.services.dynamodbv2.*;
@@ -39,7 +39,7 @@ public class DynamoDBUserService implements UserService {
         QueryResult result = dynamoDB.query(queryRequest);
         if (result.getItems() == null || result.getItems().size() == 0) {
             log.debug("No user with the email '{}' was found", email);
-            throw new UserNotFoundException();
+            throw new UserNotFoundException(email);
         }
 
         Map<String, AttributeValue> item = result.getItems().stream().findFirst().get();
@@ -48,7 +48,7 @@ public class DynamoDBUserService implements UserService {
         String storedPassword = item.get(DBK.PASSWORD).getS();
         if (!hashedPassword.equals(storedPassword)) {
             log.debug("The password for '{}' did not match", email);
-            throw new UserNotFoundException();
+            throw new UserNotFoundException(email);
         }
 
         return item.get(DBK.USER_ID).getS();

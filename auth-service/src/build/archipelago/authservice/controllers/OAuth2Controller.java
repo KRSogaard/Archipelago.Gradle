@@ -6,12 +6,9 @@ import build.archipelago.authservice.models.rest.*;
 import build.archipelago.authservice.services.auth.*;
 import build.archipelago.authservice.services.auth.models.*;
 import build.archipelago.authservice.services.clients.*;
-import build.archipelago.authservice.services.clients.eceptions.*;
 import build.archipelago.authservice.services.clients.models.*;
 import build.archipelago.authservice.services.keys.*;
-import build.archipelago.authservice.services.keys.exceptions.*;
 import build.archipelago.authservice.services.keys.models.*;
-import build.archipelago.authservice.services.users.exceptions.*;
 import build.archipelago.authservice.utils.*;
 import com.google.common.base.*;
 import com.google.common.collect.*;
@@ -30,7 +27,7 @@ import java.time.*;
 import java.util.*;
 import java.util.stream.*;
 
-import static build.archipelago.authservice.controllers.Constants.*;
+import static build.archipelago.authservice.Constants.*;
 
 @RestController
 @RequestMapping("oauth2")
