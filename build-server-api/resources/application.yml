@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${APP_PORT:8095}
   error:
     include-stacktrace: never
 
@@ -11,26 +11,23 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+          issuer-uri: ${OAUTH_ISSUER:https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf}
 
 oauth:
-  client-id: "3e7d5fgp0bekt1o8k29rn6vleh"
-  client-secret: "19qso7avuot68i69jl9j6d9qr49datlrrajbf4u7bq6kndmipqj6"
+  client-id: ${OAUTH_ID:"3e7d5fgp0bekt1o8k29rn6vleh"}
+  client-secret: ${OAUTH_SECRET:"19qso7avuot68i69jl9j6d9qr49datlrrajbf4u7bq6kndmipqj6"}
 
 aws:
-  region: "us-west-2"
+  region: ${AWS_REGION:"us-west-2"}
 
 ---
 spring:
   profiles: local
 
-server:
-  port: 8095
-
 aws:
   access:
-    id: "AKIARDAF5R4OLOFUKTG6"
-    key: "LfLZdIQAT7xpEMAaa3toXioXC/rMm1G6CFu3Vq+0"
+    id: ${AWS_KEY:"AKIARDAF5R4OLOFUKTG6"}
+    key: ${AWS_SECRET:"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"}
 
 dynamodb:
   build: "archipelago-local.builds"
@@ -41,11 +38,11 @@ s3:
   packages-logs: "archipelago-local-packages-log"
 
 sqs:
-  build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-local-build-queue"
+  build-queue: ${BUILD_QUEUE:"https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-local-build-queue"}
 
 endpoints:
-  package-service: "http://localhost:8090"
-  versionset-service: "http://localhost:8091"
+  package-service: ${PACKAGE_SERVICE_URL:"http://localhost:8090"}
+  versionset-service: ${VERSIONSET_SERVICE_URL:"http://localhost:8091"}
 
 ---
 spring:
