@@ -50,14 +50,6 @@ services:
       - SPRING_PROFILE=local
     ports:
       - 8095:8080
-  maui:
-    image: build.archipelago/maui:latest
-    environment:
-      - APP_PORT=8080
-      - APP_URL=http://maui:8080
-      - SPRING_PROFILE=local
-    ports:
-      - 8085:8080
   package-service:
     image: build.archipelago/package-service:latest
     environment:

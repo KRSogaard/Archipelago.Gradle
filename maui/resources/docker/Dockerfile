@@ -1,7 +1,6 @@
 FROM adoptopenjdk/openjdk11:alpine
 RUN apk --no-cache add curl
 RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
 
 ARG APP_JAR_NAME=build-service-1.0.jar
 ENV APP_JAR_NAME_ENV=$APP_JAR_NAME
@@ -13,6 +12,10 @@ ENV APP_URL=http://localhost:8080
 
 ADD . ./
 WORKDIR /opt
+RUN chown spring:spring /opt
+
+USER spring:spring
+
 
 ENTRYPOINT java \
     -Dspring.profiles.active=$SPRING_PROFILE \
