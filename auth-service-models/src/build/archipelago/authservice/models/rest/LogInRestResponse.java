@@ -4,7 +4,9 @@ import build.archipelago.authservice.models.client.*;
 import lombok.*;
 
 @Builder
-@Value
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@Getter
 public class LogInRestResponse {
     private String authToken;
 

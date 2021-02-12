@@ -11,11 +11,11 @@ build/archipelago/authservice/models/exceptions/UserExistsException.java
  build.archipelago.authservice.models.exceptions.UserExistsException
 build/archipelago/authservice/models/exceptions/UserNotFoundException.java
  build.archipelago.authservice.models.exceptions.UserNotFoundException
+build/archipelago/authservice/models/exceptions/KeyNotFoundException.java
+ build.archipelago.authservice.models.exceptions.KeyNotFoundException
 build/archipelago/authservice/models/client/ActivateDeviceRequest.java
  build.archipelago.authservice.models.client.ActivateDeviceRequest
  build.archipelago.authservice.models.client.ActivateDeviceRequest$ActivateDeviceRequestBuilder
-build/archipelago/authservice/models/exceptions/KeyNotFoundException.java
- build.archipelago.authservice.models.exceptions.KeyNotFoundException
 build/archipelago/authservice/models/rest/LogInRestRequest.java
  build.archipelago.authservice.models.rest.LogInRestRequest
  build.archipelago.authservice.models.rest.LogInRestRequest$LogInRestRequestBuilder
@@ -23,11 +23,11 @@ build/archipelago/authservice/models/exceptions/InvalidRedirectException.java
  build.archipelago.authservice.models.exceptions.InvalidRedirectException
 build/archipelago/authservice/models/exceptions/ClientNotFoundException.java
  build.archipelago.authservice.models.exceptions.ClientNotFoundException
+build/archipelago/authservice/models/exceptions/InvalidGrantTypeException.java
+ build.archipelago.authservice.models.exceptions.InvalidGrantTypeException
 build/archipelago/authservice/models/client/LogInRequest.java
  build.archipelago.authservice.models.client.LogInRequest
  build.archipelago.authservice.models.client.LogInRequest$LogInRequestBuilder
-build/archipelago/authservice/models/exceptions/InvalidGrantTypeException.java
- build.archipelago.authservice.models.exceptions.InvalidGrantTypeException
 build/archipelago/authservice/models/exceptions/DeviceCodeNotFoundException.java
  build.archipelago.authservice.models.exceptions.DeviceCodeNotFoundException
 build/archipelago/authservice/models/client/LogInResponse.java
@@ -40,8 +40,8 @@ build/archipelago/authservice/models/AuthorizeRequest.java
  build.archipelago.authservice.models.AuthorizeRequest$AuthorizeRequestBuilder
 build/archipelago/authservice/models/exceptions/TokenExpiredException.java
  build.archipelago.authservice.models.exceptions.TokenExpiredException
+build/archipelago/authservice/models/exceptions/AuthorizationPendingException.java
+ build.archipelago.authservice.models.exceptions.AuthorizationPendingException
 build/archipelago/authservice/models/rest/LogInRestResponse.java
  build.archipelago.authservice.models.rest.LogInRestResponse
  build.archipelago.authservice.models.rest.LogInRestResponse$LogInRestResponseBuilder
-build/archipelago/authservice/models/exceptions/AuthorizationPendingException.java
- build.archipelago.authservice.models.exceptions.AuthorizationPendingException

@@ -5,7 +5,7 @@ build/archipelago/authservice/client/AuthExceptionHandler.java
  build.archipelago.authservice.client.AuthExceptionHandler$3
  build.archipelago.authservice.client.AuthExceptionHandler$4
  build.archipelago.authservice.client.AuthExceptionHandler$5
-build/archipelago/authservice/client/rest/RestAuthClient.java
- build.archipelago.authservice.client.rest.RestAuthClient
 build/archipelago/authservice/client/AuthClient.java
  build.archipelago.authservice.client.AuthClient
+build/archipelago/authservice/client/rest/RestAuthClient.java
+ build.archipelago.authservice.client.rest.RestAuthClient

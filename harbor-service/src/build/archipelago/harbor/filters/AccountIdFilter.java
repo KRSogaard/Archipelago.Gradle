@@ -27,29 +27,29 @@ public class AccountIdFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         log.info("Setting account id");
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        List<String> headers = Collections.list(httpRequest.getHeaders("Authorization"));
-        String authorization;
-        if (headers.size() != 1) {
-            chain.doFilter(request, response);
-            return;
-        }
-        authorization = headers.get(0);
-
-        String[] split = authorization.split(" ", 2);
-        if (split.length != 2) {
-            throw new UnauthorizedException("Invalid Authorization token");
-        }
-        String JWT = split[1];
-
-        try {
-            AdminGetUserResult result = cognitoIdentityProvider.adminGetUser(new AdminGetUserRequest().withUserPoolId("us-west-2_DWQyxBTOf").withUsername("test"));
-            String userId = result.getUserAttributes().stream().filter(a -> "sub".equalsIgnoreCase(a.getName())).map(AttributeType::getValue).findFirst().get();
-            String accountId = accountService.getAccountIdForUser(userId);
-            request.setAttribute("account-id", accountId);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+//        HttpServletRequest httpRequest = (HttpServletRequest) request;
+//        List<String> headers = Collections.list(httpRequest.getHeaders("Authorization"));
+//        String authorization;
+//        if (headers.size() != 1) {
+//            chain.doFilter(request, response);
+//            return;
+//        }
+//        authorization = headers.get(0);
+//
+//        String[] split = authorization.split(" ", 2);
+//        if (split.length != 2) {
+//            throw new UnauthorizedException("Invalid Authorization token");
+//        }
+//        String JWT = split[1];
+//
+//        try {
+//            AdminGetUserResult result = cognitoIdentityProvider.adminGetUser(new AdminGetUserRequest().withUserPoolId("us-west-2_DWQyxBTOf").withUsername("test"));
+//            String userId = result.getUserAttributes().stream().filter(a -> "sub".equalsIgnoreCase(a.getName())).map(AttributeType::getValue).findFirst().get();
+//            String accountId = accountService.getAccountIdForUser(userId);
+//            request.setAttribute("account-id", accountId);
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
 
         chain.doFilter(request, response);
     }

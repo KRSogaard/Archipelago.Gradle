@@ -7,11 +7,11 @@ spring:
   jackson:
     mapper:
       accept_case_insensitive_properties: true
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
 
 oauth:
   client-id: "4ok75klvst0vf15lel5sdbdoc0"
