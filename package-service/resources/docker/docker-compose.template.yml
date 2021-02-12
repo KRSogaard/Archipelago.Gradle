@@ -1,0 +1,16 @@
+version: '3.7'
+services:
+    {{service.name}}:
+      image: {{service.image}}
+      environment:
+        - APP_PORT=8080
+        - APP_URL=http://{{service.name}}:8080
+        - OAUTH_ID=H4L36UXifMqdt4T3pLgajGvap0oJ63HD
+        - OAUTH_SECRET=3YLhyrPbphWtZtD0quk-H_3sp9HoGMVdPej0DQNZXJ3_WTgYqeNTNzCe6bVGfPnO
+        - OAUTH_ISSUER=https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+        - AWS_REGION=us-west-2
+        - AWS_KEY=AKIARDAF5R4OIKW2KPCY
+        - AWS_SECRET=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
+        - SPRING_PROFILE=local
+      ports:
+        - 8090:8080

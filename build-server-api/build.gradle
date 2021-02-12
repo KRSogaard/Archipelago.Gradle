@@ -13,6 +13,11 @@ buildscript {
     }
 }
 
+plugins {
+    id 'com.palantir.docker' version '0.26.0'
+    id 'com.palantir.docker-compose' version '0.26.0'
+}
+
 repositories {
     jcenter()
     maven { url 'https://plugins.gradle.org/m2/' }
@@ -32,6 +37,8 @@ apply plugin: 'java-library'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'application'
+apply plugin: 'com.palantir.docker'
+apply plugin: 'com.palantir.docker-compose'
 
 group "build.archipelago"
 version "1.0"
@@ -99,6 +106,9 @@ dependencies {
     compile 'org.projectlombok:lombok:1.18.12'  // utilities for POJOs
     annotationProcessor 'org.projectlombok:lombok:1.18.12'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+
+    // name for docker-compose
+    docker "${group}:${project.name}:${version}"
 }
 
 task runlocal {
@@ -110,3 +120,27 @@ task runlocal {
     }
 }
 runlocal.finalizedBy run
+
+bootJar {
+    archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
+}
+
+docker {
+    dockerfile file('resources/docker/Dockerfile')
+    files project.tasks.bootJar.outputs
+    copySpec.into("/opt")
+    noCache true
+    name "${project.group}/${project.name}:latest"
+    buildArgs([
+            APP_JAR_NAME: "${project.tasks.bootJar.archiveFileName.get()}" ,
+    ])
+}
+
+dockerCompose {
+    template "resources/docker/docker-compose.template.yml"
+    templateTokens([
+            'service.image': "${project.group}/${project.name}:latest",
+            'service.name': project.name
+    ])
+    dockerComposeFile "$buildDir/docker/docker-compose.yml"
+}

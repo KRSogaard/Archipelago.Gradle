@@ -1,0 +1,10 @@
+version: '3.7'
+services:
+    {{service.name}}:
+      image: {{service.image}}
+      environment:
+        - APP_PORT=8080
+        - APP_URL=http://{{service.name}}:8080
+        - SPRING_PROFILE=local
+      ports:
+        - 8085:8080
