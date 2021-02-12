@@ -17,7 +17,6 @@ services:
       - SPRING_PROFILE=local
     ports:
       - 8081:8080
-
   auth-service:
     image: build.archipelago/auth-service:latest
     environment:
@@ -88,4 +87,3 @@ services:
       - SPRING_PROFILE=local
     ports:
       - 8091:8080
-
