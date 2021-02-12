@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${APP_PORT:8090}
   error:
     include-stacktrace: never
 
@@ -11,21 +11,18 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+          issuer-uri: ${OAUTH_ISSUER:https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf}
 
 aws:
-  region: "us-west-2"
+  region: ${AWS_REGION":us-west-2"}
 
 oauth:
-  client-id: "H4L36UXifMqdt4T3pLgajGvap0oJ63HD"
-  client-secret: "3YLhyrPbphWtZtD0quk-H_3sp9HoGMVdPej0DQNZXJ3_WTgYqeNTNzCe6bVGfPnO"
+  client-id: ${OAUTH_ID:"H4L36UXifMqdt4T3pLgajGvap0oJ63HD"}
+  client-secret: ${OAUTH_SECRET:"3YLhyrPbphWtZtD0quk-H_3sp9HoGMVdPej0DQNZXJ3_WTgYqeNTNzCe6bVGfPnO"}
 
 ---
 spring:
   profiles: local
-
-server:
-  port: 8090
 
 s3:
   packages: "archipelago-local-packages-artifacts"
@@ -41,8 +38,8 @@ dynamodb:
 
 aws:
   access:
-    id: "AKIARDAF5R4OIKW2KPCY"
-    key: "uGIejRuxAS/05zH6B0w8+0IdQhd9bPX2lxxuvZoG"
+    id: ${AWS_KEY:"AKIARDAF5R4OIKW2KPCY"}
+    key: ${AWS_SECRET:"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"}
 
 ---
 spring:

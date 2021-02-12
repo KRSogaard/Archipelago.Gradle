@@ -1,0 +1,91 @@
+version: '3.7'
+services:
+  harbor-service:
+    image: build.archipelago/harbor-service:latest
+    environment:
+      - APP_PORT=8080
+      - APP_URL=http://harbor-service:8080
+      - OAUTH_ID=4ok75klvst0vf15lel5sdbdoc0
+      - OAUTH_SECRET=1u7m9pa9njct19jbj51b592ci0ku151quhjo4n0pcm36h3lude91
+      - OAUTH_ISSUER=https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+      - AWS_REGION=us-west-2
+      - AWS_KEY=AKIARDAF5R4OFYCLE362
+      - AWS_SECRET=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
+      - PACKAGE_SERVICE_URL=http://package-service:8080
+      - VERSIONSET_SERVICE_URL=http://version-set-service:8080
+      - BUILD_SERVICE_URL=http://build-server-api:8080
+      - SPRING_PROFILE=local
+    ports:
+      - 8081:8080
+
+  auth-service:
+    image: build.archipelago/auth-service:latest
+    environment:
+      - APP_PORT=8080
+      - APP_URL=http://auth-service:8080
+      - OAUTH_ID=3ad886knkeo0vuvvpnvtp6rtlq
+      - OAUTH_SECRET=r5qd4fhj931vvlbf2oi3dhe58kjtfk2n7i70da7kc2d08sccch5
+      - OAUTH_ISSUER=https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+      - AWS_REGION=us-west-2
+      - AWS_KEY=AKIARDAF5R4OODU52YJR
+      - AWS_SECRET=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
+      - PACKAGE_SERVICE_URL=http://package-service:8080
+      - VERSIONSET_SERVICE_URL=http://package-service:8080
+      - BUILD_SERVICE_URL=http://package-service:8080
+      - SPRING_PROFILE=local
+    ports:
+      - 8087:8080
+  build-server-api:
+    image: build.archipelago/build-server-api:latest
+    environment:
+      - APP_PORT=8080
+      - APP_URL=http://build-server-api:8080
+      - OAUTH_ID=3e7d5fgp0bekt1o8k29rn6vleh
+      - OAUTH_SECRET=19qso7avuot68i69jl9j6d9qr49datlrrajbf4u7bq6kndmipqj6
+      - OAUTH_ISSUER=https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+      - AWS_REGION=us-west-2
+      - AWS_KEY=AKIARDAF5R4OLOFUKTG6
+      - AWS_SECRET=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
+      - PACKAGE_SERVICE_URL=http://package-service:8080
+      - VERSIONSET_SERVICE_URL=http://package-service:8080
+      - SPRING_PROFILE=local
+    ports:
+      - 8095:8080
+  maui:
+    image: build.archipelago/maui:latest
+    environment:
+      - APP_PORT=8080
+      - APP_URL=http://maui:8080
+      - SPRING_PROFILE=local
+    ports:
+      - 8085:8080
+  package-service:
+    image: build.archipelago/package-service:latest
+    environment:
+      - APP_PORT=8080
+      - APP_URL=http://package-service:8080
+      - OAUTH_ID=H4L36UXifMqdt4T3pLgajGvap0oJ63HD
+      - OAUTH_SECRET=3YLhyrPbphWtZtD0quk-H_3sp9HoGMVdPej0DQNZXJ3_WTgYqeNTNzCe6bVGfPnO
+      - OAUTH_ISSUER=https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+      - AWS_REGION=us-west-2
+      - AWS_KEY=AKIARDAF5R4OIKW2KPCY
+      - AWS_SECRET=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
+      - SPRING_PROFILE=local
+    ports:
+      - 8090:8080
+  version-set-service:
+    image: build.archipelago/version-set-service:latest
+    environment:
+      - APP_PORT=8080
+      - APP_URL=http://version-set-service:8080
+      - OAUTH_ID=1iv0c51b2f7a2nsl0hnphthnq6
+      - OAUTH_SECRET=n1uv2fh8o1hf0medie0luo85ksh5hju0s0na1p3i7lv6c82h0ic
+      - OAUTH_ISSUER=https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+      - AWS_REGION=us-west-2
+      - AWS_KEY=AKIARDAF5R4OHE3DO6XE
+      - AWS_SECRET=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
+      - PACKAGE_SERVICE_URL=http://package-service:8080
+      - SPRING_PROFILE=local
+    ports:
+      - 8091:8080
+

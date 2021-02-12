@@ -1,14 +1,10 @@
 server:
-  port: 8080
+  port: ${APP_PORT:8087}
   error:
     include-stacktrace: never
 
-spring:
-  jackson:
-    mapper:
-      accept_case_insensitive_properties: true
 aws:
-  region: "us-west-2"
+  region: ${AWS_REGION:"us-west-2"}
 
 token:
   age:
@@ -26,18 +22,15 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
+          issuer-uri: ${OAUTH_ISSUER:https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf}
 
 oauth:
-  client-id: "3ad886knkeo0vuvvpnvtp6rtlq"
-  client-secret: "r5qd4fhj931vvlbf2oi3dhe58kjtfk2n7i70da7kc2d08sccch5"
+  client-id: ${OAUTH_ID:"3ad886knkeo0vuvvpnvtp6rtlq"}
+  client-secret: ${OAUTH_SECRET:"r5qd4fhj931vvlbf2oi3dhe58kjtfk2n7i70da7kc2d08sccch5"}
 
 ---
 spring:
   profiles: local
-
-server:
-  port: 8087
 
 dynamodb:
 #  accounts: "archipelago-local.accounts"
@@ -49,30 +42,30 @@ dynamodb:
   auth-jwks: "archipelago-local.auth-jwks"
 
 auth:
-  url: http://localhost:8087
+  url: ${APP_URL:http://localhost:8087}
 
 aws:
   access:
-    id: "AKIARDAF5R4OODU52YJR"
-    key: "HRG7W4XQESB1ixNknOhZ4dYRgnvAk/U3NgUOF7fH"
+    id: ${AWS_KEY:"AKIARDAF5R4OODU52YJR"}
+    key: ${AWS_SECRET:"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"}
 
 ---
 spring:
  profiles: alpha
 
 auth:
-  url: http://auth-alpha.archipelago.build
+  url: ${APP_URL:http://auth-alpha.archipelago.build}
 
 ---
 spring:
  profiles: beta
 
 auth:
-  url: http://auth-beta.archipelago.build
+  url: ${APP_URL:http://auth-beta.archipelago.build}
 
 ---
 spring:
  profiles: prod
 
 auth:
-  url: http://auth.archipelago.build
+  url: ${APP_URL:http://auth.archipelago.build}
