@@ -45,3 +45,6 @@ build/archipelago/authservice/models/rest/LogInRestResponse.java
  build.archipelago.authservice.models.rest.LogInRestResponse$LogInRestResponseBuilder
 build/archipelago/authservice/models/exceptions/AuthorizationPendingException.java
  build.archipelago.authservice.models.exceptions.AuthorizationPendingException
+build/archipelago/authservice/models/rest/CreateAuthTokenRestRequest.java
+ build.archipelago.authservice.models.rest.CreateAuthTokenRestRequest
+ build.archipelago.authservice.models.rest.CreateAuthTokenRestRequest$CreateAuthTokenRestRequestBuilder

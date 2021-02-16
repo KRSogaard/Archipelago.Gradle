@@ -63,21 +63,22 @@ dependencies {
     api "build.archipelago:build-server-api-client:1.0"
     api "build.archipelago:auth-service-client:1.0"
 
+
+    compile 'io.jsonwebtoken:jjwt-api:0.11.2'
+    runtime 'io.jsonwebtoken:jjwt-impl:0.11.2'
+    runtime 'io.jsonwebtoken:jjwt-jackson:0.11.2'
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'net.dongliu:gson-java8-datatype:1.1.0'
+
     implementation 'org.springframework.boot:spring-boot-starter-jersey'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-log4j2'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
-    implementation 'org.springframework.security:spring-security-oauth2-jose'
-    implementation 'org.springframework.security:spring-security-config'
     implementation 'io.springfox:springfox-swagger2:2.9.2'
     implementation 'io.springfox:springfox-swagger-ui:2.9.2'
     implementation 'com.amazonaws:aws-java-sdk-cognitoidp:1.11.928'
     implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
     implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
 
-    testImplementation 'com.google.code.gson:gson:2.8.6'
-    testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }

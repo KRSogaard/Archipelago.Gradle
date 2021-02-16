@@ -31,6 +31,19 @@ public class AuthController {
                 .build();
     }
 
+    @PostMapping("/user/{userId}/create-token")
+    public LogInRestResponse createAuthToken(
+            @PathVariable("userId") String userId,
+            @RequestBody CreateAuthTokenRestRequest request) {
+        request.validate();
+
+        String authToken = authService.createAuthToken(userId, request.toInternal());
+
+        return LogInRestResponse.builder()
+                .authToken(authToken)
+                .build();
+    }
+
     @PostMapping("/device")
     public void device(ActivateDeviceRestRequest request) throws TokenNotFoundException, TokenExpiredException {
         String userCode = request.getUserCode().toUpperCase();

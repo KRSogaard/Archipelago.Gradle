@@ -16,7 +16,7 @@ public class BuildsExceptionHandler {
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(BuildNotFoundException exp) {
         Preconditions.checkNotNull(exp);
         return ProblemDetailRestResponse.builder()
-                .type(TYPE_BUILD_NOT_FOUND)
+                .error(TYPE_BUILD_NOT_FOUND)
                 .title("Build was not found")
                 .status(404)
                 .detail(exp.getMessage())
@@ -30,7 +30,7 @@ public class BuildsExceptionHandler {
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(StageLogNotFoundException exp) {
         Preconditions.checkNotNull(exp);
         return ProblemDetailRestResponse.builder()
-                .type(TYPE_STAGE_LOG_NOT_FOUND)
+                .error(TYPE_STAGE_LOG_NOT_FOUND)
                 .title("Build log was not found")
                 .status(404)
                 .detail(exp.getMessage())
@@ -47,7 +47,7 @@ public class BuildsExceptionHandler {
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(PackageLogNotFoundException exp) {
         Preconditions.checkNotNull(exp);
         return ProblemDetailRestResponse.builder()
-                .type(TYPE_PACKAGE_LOG_NOT_FOUND)
+                .error(TYPE_PACKAGE_LOG_NOT_FOUND)
                 .title("Package build log was not found")
                 .status(404)
                 .detail(exp.getMessage())
@@ -63,7 +63,7 @@ public class BuildsExceptionHandler {
 
     public static Exception createException(ProblemDetailRestResponse problem) {
         Preconditions.checkNotNull(problem);
-        switch (problem.getType()) {
+        switch (problem.getError()) {
             case TYPE_BUILD_NOT_FOUND:
                 return new BuildNotFoundException(
                         (String) problem.getData().get("buildId"));
@@ -77,7 +77,7 @@ public class BuildsExceptionHandler {
                         (String) problem.getData().get("buildId"),
                         ArchipelagoPackage.parse((String) problem.getData().get("pkg")));
             default:
-                throw new RuntimeException(problem.getType() + " was not a known version set error");
+                throw new RuntimeException(problem.getError() + " was not a known version set error");
         }
     }
 }

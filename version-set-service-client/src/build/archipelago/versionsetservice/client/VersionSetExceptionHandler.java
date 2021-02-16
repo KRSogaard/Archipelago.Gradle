@@ -16,7 +16,7 @@ public class VersionSetExceptionHandler {
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(VersionSetDoseNotExistsException exp) {
         Preconditions.checkNotNull(exp);
         return ProblemDetailRestResponse.builder()
-                .type(TYPE_VERSION_SET_NOT_FOUND)
+                .error(TYPE_VERSION_SET_NOT_FOUND)
                 .title("Version set was not found")
                 .status(404)
                 .detail(exp.getMessage())
@@ -33,7 +33,7 @@ public class VersionSetExceptionHandler {
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(VersionSetExistsException exp) {
         Preconditions.checkNotNull(exp);
         return ProblemDetailRestResponse.builder()
-                .type(TYPE_VERSION_SET_EXISTS)
+                .error(TYPE_VERSION_SET_EXISTS)
                 .title("Version set already exists")
                 .status(409)
                 .detail(exp.getMessage())
@@ -47,7 +47,7 @@ public class VersionSetExceptionHandler {
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(MissingTargetPackageException exp) {
         Preconditions.checkNotNull(exp);
         return ProblemDetailRestResponse.builder()
-                .type(TYPE_VERSION_SET_TARGET_MISSING)
+                .error(TYPE_VERSION_SET_TARGET_MISSING)
                 .title("A target was not in version set")
                 .status(400)
                 .detail(exp.getMessage())
@@ -64,7 +64,7 @@ public class VersionSetExceptionHandler {
     public static Exception createException(ProblemDetailRestResponse problem) {
         Preconditions.checkNotNull(problem);
 
-        switch (problem.getType()) {
+        switch (problem.getError()) {
             case TYPE_VERSION_SET_NOT_FOUND:
                 if (problem.getData().containsKey("revision")) {
                     return new VersionSetDoseNotExistsException(
@@ -81,7 +81,7 @@ public class VersionSetExceptionHandler {
                         (String) problem.getData().get("packageName"),
                         (String) problem.getData().get("version")));
             default:
-                throw new RuntimeException(problem.getType() + " was not a known version set error");
+                throw new RuntimeException(problem.getError() + " was not a known version set error");
         }
     }
 }

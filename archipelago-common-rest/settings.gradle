@@ -1,1 +1,5 @@
 rootProject.name = "common-rest"
+
+if (file("../archipelago-common").exists()) {
+    includeBuild "../archipelago-common"
+}

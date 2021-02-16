@@ -34,7 +34,7 @@ public class GitController {
     }
 
     @PostMapping(consumes = "application/json")
-    public void saveGithub(@RequestAttribute(AccountIdFilter.Key) String accountId,
+    public void saveGithub(@RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
                                      @RequestBody GitAccessRequest request) {
         log.info("Updating git details for account: {}", accountId);
         Preconditions.checkArgument(request != null, "Git details required");
