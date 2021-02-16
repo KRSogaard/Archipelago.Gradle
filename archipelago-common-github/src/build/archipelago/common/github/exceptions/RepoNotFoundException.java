@@ -1,8 +1,8 @@
 package build.archipelago.common.github.exceptions;
 
-import lombok.Value;
+import lombok.*;
 
-@Value
+@Getter
 public class RepoNotFoundException extends Exception {
     private String repo;
 
