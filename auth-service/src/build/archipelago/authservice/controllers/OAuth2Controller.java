@@ -10,6 +10,7 @@ import build.archipelago.authservice.services.clients.models.*;
 import build.archipelago.authservice.services.keys.*;
 import build.archipelago.authservice.services.keys.models.*;
 import build.archipelago.authservice.utils.*;
+import build.archipelago.common.exceptions.*;
 import com.google.common.base.*;
 import com.google.common.collect.*;
 import io.jsonwebtoken.*;
@@ -230,8 +231,13 @@ public class OAuth2Controller {
                 .build();
         if (!"authorization_code".equalsIgnoreCase(request.getGrantType()) &&
             !"refresh_token".equalsIgnoreCase(request.getGrantType()) &&
-            !"urn:ietf:params:oauth:grant-type:device_code".equalsIgnoreCase(request.getGrantType())) {
+            !"urn:ietf:params:oauth:grant-type:device_code".equalsIgnoreCase(request.getGrantType()) &&
+            !"client_credentials".equalsIgnoreCase(request.getGrantType())) {
             throw new InvalidGrantTypeException();
+        }
+
+        if ("client_credentials".equalsIgnoreCase(request.getGrantType())) {
+            return createClientCredToken(request, authorizationHeader);
         }
 
         Client client = getClient(request.getClientId(), authorizationHeader);
@@ -284,6 +290,58 @@ public class OAuth2Controller {
                 .body(JSONUtil.serialize(response));
     }
 
+    private ResponseEntity<String> createClientCredToken(TokenRestRequest request, String authorizationHeader) throws ClientNotFoundException, ClientSecretRequiredException {
+        if (Strings.isNullOrEmpty(authorizationHeader) ||
+            !authorizationHeader.toLowerCase().startsWith("basic ") ||
+            authorizationHeader.split(" ", 2).length != 2 ||
+            Strings.isNullOrEmpty(authorizationHeader.split(" ", 2)[1])) {
+            throw new UnauthorizedException();
+        }
+        UserCredential authHeader = HeaderUtil.extractCredential(authorizationHeader);
+        if (authHeader == null) {
+            throw new UnauthorizedException();
+        }
+        String clientId = authHeader.getUsername();
+        String clientSecret = authHeader.getPassword();
+
+        Client client = clientService.getClient(clientId);
+        if (Strings.isNullOrEmpty(client.getClientSecret())) {
+            log.warn("Client secret was required");
+            throw new UnauthorizedException(clientId);
+        }
+        if (!client.getClientSecret().equalsIgnoreCase(clientSecret)) {
+            log.warn("Client secret was incorrect");
+            throw new UnauthorizedException(clientId);
+        }
+
+        // TODO: Verify scope
+        List<String> scopes = ScopeUtils.getScopes(request.getScope());
+
+        TokenRestResponse response = new TokenRestResponse();
+        response.setTokenType("Bearer");
+        response.setExpiresIn(3600);
+        response.setAccessToken(createJWT(JWTClaims.builder()
+                .withIssuer(issuer)
+                .withIssuedAt(Instant.now())
+                .withExpires(Instant.now().plusSeconds(accessTokenMaxAge))
+                .withScope(String.join(" ", scopes))
+                .withOClaim("client_id", clientId)
+                .build().getClaims()));
+        response.setRefreshToken(createJWT(JWTClaims.builder()
+                .withIssuer(issuer)
+                .withIssuedAt(Instant.now())
+                .withExpires(Instant.now().plusSeconds(refreshTokenMaxAge))
+                .withScope(String.join(" ", scopes))
+                .withOClaim("client_id", clientId)
+                .build().getClaims()));
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .header("Cache-Control", "no-store")
+                .header("Pragma", "no-cache")
+                .body(JSONUtil.serialize(response));
+    }
+
     private Client getClient(String requestClientId, String authorizationHeader) throws ClientNotFoundException,
             ClientSecretRequiredException {
         Client client;
@@ -309,7 +367,7 @@ public class OAuth2Controller {
         if (!Strings.isNullOrEmpty(client.getClientSecret())) {
             if (Strings.isNullOrEmpty(clientSecret)) {
                 log.warn("Client '{}' has a secret but it was not provided", clientId);
-                throw new ClientSecretRequiredException(client.getClientSecret());
+                throw new ClientSecretRequiredException(clientSecret);
             }
             if (!client.getClientSecret().equalsIgnoreCase(clientSecret)) {
                 log.warn("Client secret was incorrect");

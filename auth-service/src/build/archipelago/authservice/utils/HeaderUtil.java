@@ -5,7 +5,7 @@ import org.apache.commons.codec.binary.Base64;
 
 public class HeaderUtil {
     public static UserCredential extractCredential(String authHeader) {
-        if (!authHeader.contains("basic")) {
+        if (!authHeader.toLowerCase().startsWith("basic ")) {
             return null;
         }
         String[] split;

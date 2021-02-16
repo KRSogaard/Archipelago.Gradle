@@ -53,6 +53,13 @@ public class AccountIdFilter implements Filter {
             Jws<Claims> claims = getClaims(publicKey, accessToken);
             String userId = claims.getBody().getSubject();
             if (Strings.isNullOrEmpty(userId)) {
+                String clientId = (String)claims.getBody().get("client_id");
+                if (Strings.isNullOrEmpty(clientId)) {
+                    throw new UnauthorizedException();
+                }
+                userId = httpServletRequest.getHeader("user_id");
+            }
+            if (Strings.isNullOrEmpty(userId)) {
                 throw new UnauthorizedException();
             }
             String accountId = getAccountId(userId);
