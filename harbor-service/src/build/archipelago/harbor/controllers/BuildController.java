@@ -30,7 +30,7 @@ public class BuildController {
     }
 
     @GetMapping
-    public BuildsRestResponse getBuilds(@RequestAttribute(AccountIdFilter.Key) String accountId) {
+    public BuildsRestResponse getBuilds(@RequestAttribute(AccountIdFilter.AccountIdKey) String accountId) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 
         Builds builds = buildServerAPIClient.getBuilds(accountId);
@@ -46,7 +46,7 @@ public class BuildController {
     }
 
     @PostMapping
-    public NewBuildRestResponse startBuild(@RequestAttribute(AccountIdFilter.Key) String accountId,
+    public NewBuildRestResponse startBuild(@RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
                                            @RequestBody NewBuildRestRequest request) throws VersionSetDoseNotExistsException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(request != null);
@@ -64,7 +64,7 @@ public class BuildController {
 
     @GetMapping("{buildId}")
     public BuildRestResponse getBuild(
-            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
             @PathVariable("buildId") String buildId) throws BuildNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(buildId));
@@ -75,7 +75,7 @@ public class BuildController {
 
     @GetMapping("{buildId}/packages")
     public BuildPackagesRestResponse getBuildPackages(
-            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
             @PathVariable("buildId") String buildId) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(buildId));
@@ -89,7 +89,7 @@ public class BuildController {
 
     @GetMapping("{buildId}/log/stage/{stage}")
     public LogFileRestResponse getStageBuildLog(
-            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
             @PathVariable("buildId") String buildId,
             @PathVariable("stage") String stage) throws StageLogNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
@@ -107,7 +107,7 @@ public class BuildController {
 
     @GetMapping("{buildId}/log/package/{pkgNameVersion}")
     public LogFileRestResponse getPackageBuildLog(
-            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
             @PathVariable("buildId") String buildId,
             @PathVariable("pkgNameVersion") String pkgNameVersion) throws PackageLogNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));

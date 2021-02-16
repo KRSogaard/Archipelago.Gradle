@@ -1,4 +1,4 @@
-package build.archipelago.authservice.services.clients.eceptions;
+package build.archipelago.authservice.models.exceptions;
 
 import lombok.*;
 

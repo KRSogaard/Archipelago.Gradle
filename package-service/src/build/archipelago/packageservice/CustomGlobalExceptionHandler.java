@@ -3,7 +3,6 @@ package build.archipelago.packageservice;
 import build.archipelago.account.common.exceptions.GitDetailsNotFound;
 import build.archipelago.common.rest.models.errors.*;
 import build.archipelago.packageservice.client.PackageExceptionHandler;
-import build.archipelago.packageservice.exceptions.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +27,7 @@ public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
     @ExceptionHandler(GitDetailsNotFound.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleGitDetailsNotFound(HttpServletRequest req, Exception ex) {
         return this.createResponse(req, ProblemDetailRestResponse.builder()
-                .type("git/detailsNotFound")
+                .error("git/detailsNotFound")
                 .title("No git details was found for the account")
                 .status(HttpStatus.BAD_REQUEST.value())
                 .detail(ex.getMessage()));

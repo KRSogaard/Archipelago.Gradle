@@ -28,7 +28,7 @@ public class PackageController {
 
     @GetMapping(value = {"{name}/{version}/{hash}/artifact"})
     public GetBuildArtifactRestResponse getBuildArtifact(
-            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
             @PathVariable("hash") String hash) throws PackageNotFoundException, IOException {
@@ -42,7 +42,7 @@ public class PackageController {
 
     @PostMapping()
     public void createPackage(
-            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
             @RequestBody CreatePackageRestRequest request) throws PackageExistsException {
         log.info("Request to create package '{}' for account '{}'", request.getName(), accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
@@ -58,7 +58,7 @@ public class PackageController {
 
     @GetMapping("{name}/{version}/{hash}/config")
     public String getConfig(
-            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
             @PathVariable("hash") String hash) throws PackageNotFoundException {
@@ -71,7 +71,7 @@ public class PackageController {
 
     @GetMapping("{name}")
     public GetPackageRestResponse getPackage(
-            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
             @PathVariable("name") String packageName) throws PackageNotFoundException {
         log.info("Request to get package '{}' for account '{}'", packageName, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
@@ -81,7 +81,7 @@ public class PackageController {
     }
 
     @GetMapping("all")
-    public GetPackagesRestResponse getAllPackages(@RequestAttribute(AccountIdFilter.Key) String accountId) {
+    public GetPackagesRestResponse getAllPackages(@RequestAttribute(AccountIdFilter.AccountIdKey) String accountId) {
         log.info("Request to get all packages for account '{}'", accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 

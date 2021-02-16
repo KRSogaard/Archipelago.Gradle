@@ -1,6 +1,8 @@
 package build.archipelago.harbor.configuration;
 
 import build.archipelago.account.common.AccountService;
+import build.archipelago.authservice.client.*;
+import build.archipelago.authservice.client.rest.*;
 import build.archipelago.buildserver.api.client.BuildServerAPIClient;
 import build.archipelago.buildserver.api.client.rest.RestBuildServerAPIClient;
 import build.archipelago.common.github.GitServiceFactory;
@@ -29,6 +31,16 @@ public class ServiceConfiguration {
             @Value("${oauth.client-secret}") String clientSecret
     ) {
         return new RestPackageServiceClient(packageServiceEndpoint, clientId, clientSecret);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public AuthClient authClient(
+            @Value("${endpoints.auth-service}") String authServiceEndpoint,
+            @Value("${oauth.client-id}") String clientId,
+            @Value("${oauth.client-secret}") String clientSecret
+    ) {
+        return new RestAuthClient(authServiceEndpoint, clientId, clientSecret);
     }
 
     @Bean

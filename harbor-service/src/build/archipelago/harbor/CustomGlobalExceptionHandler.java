@@ -1,7 +1,10 @@
 package build.archipelago.harbor;
 
+import build.archipelago.authservice.client.*;
+import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.buildserver.api.client.BuildsExceptionHandler;
 import build.archipelago.buildserver.models.exceptions.*;
+import build.archipelago.common.exceptions.*;
 import build.archipelago.common.rest.models.errors.*;
 import build.archipelago.packageservice.client.PackageExceptionHandler;
 import build.archipelago.packageservice.exceptions.*;
@@ -57,5 +60,17 @@ public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
     public ResponseEntity<ProblemDetailRestResponse> springHandlePackageLogNotFoundException(HttpServletRequest req, Exception ex) {
         log.warn("Got exception PackageLogNotFoundException: " + ex.getMessage());
         return this.createResponse(req, BuildsExceptionHandler.from((PackageLogNotFoundException) ex));
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ProblemDetailRestResponse> springHandleUserNotFoundException(HttpServletRequest req, Exception ex) {
+        log.warn("Got exception UserNotFoundException: " + ex.getMessage());
+        return this.createResponse(req, AuthExceptionHandler.from((UserNotFoundException) ex));
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ProblemDetailRestResponse> springHandleUnauthorizedException(HttpServletRequest req, Exception ex) {
+        log.warn("Got exception UserNotFoundException: " + ex.getMessage());
+        return this.createResponse(req, CommonExceptionHandler.from((UnauthorizedException) ex));
     }
 }

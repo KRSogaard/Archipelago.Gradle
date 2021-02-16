@@ -1,5 +1,8 @@
 package build.archipelago.authservice.models.exceptions;
 
+import lombok.*;
+
+@Getter
 public class TokenExpiredException extends Exception {
     private String deviceCode;
 

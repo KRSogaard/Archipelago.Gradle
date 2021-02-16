@@ -32,7 +32,7 @@ public class VersionSetController {
     }
 
     @GetMapping
-    public VersionSetsRestResponse getMyVersionSets(@RequestAttribute(AccountIdFilter.Key) String accountId) {
+    public VersionSetsRestResponse getMyVersionSets(@RequestAttribute(AccountIdFilter.AccountIdKey) String accountId) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 
         List<VersionSet> versionSets = versionSetServiceClient.getVersionSets(accountId);
@@ -42,7 +42,7 @@ public class VersionSetController {
     }
 
     @GetMapping("{versionSet}")
-    public VersionSetRestResponse getVersionSet(@RequestAttribute(AccountIdFilter.Key) String accountId,
+    public VersionSetRestResponse getVersionSet(@RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
                                                 @PathVariable("versionSet") String versionSetName) throws VersionSetDoseNotExistsException {
         log.info("Request to get version set '{}'", versionSetName);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
@@ -57,7 +57,7 @@ public class VersionSetController {
 
     @GetMapping("{versionSet}/{revision}")
     public VersionSetRevisionRestResponse getVersionSetRevision(
-            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
             @PathVariable("versionSet") String versionSetName,
             @PathVariable("revision") String revisionId)
             throws VersionSetDoseNotExistsException {
@@ -81,7 +81,7 @@ public class VersionSetController {
     }
 
     @PostMapping
-    public void createVersionSet(@RequestAttribute(AccountIdFilter.Key) String accountId,
+    public void createVersionSet(@RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
                                  @RequestBody CreateVersionSetRestRequest request)
             throws VersionSetExistsException, VersionSetDoseNotExistsException, PackageNotFoundException {
         log.info("Request to create new version set");
@@ -109,7 +109,7 @@ public class VersionSetController {
     @PutMapping("/{versionSet}")
     @ResponseStatus(HttpStatus.OK)
     public void updateVersionSet(
-            @RequestAttribute(AccountIdFilter.Key) String accountId,
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
             @PathVariable("versionSet") String versionSetName,
             @RequestBody UpdateVersionSetRestRequest request) throws PackageNotFoundException, VersionSetDoseNotExistsException, PackageExistsException {
         log.info("Request to update version set '{}' for account '{}'", versionSetName, accountId);

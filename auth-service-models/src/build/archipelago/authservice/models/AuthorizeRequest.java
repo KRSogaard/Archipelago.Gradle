@@ -1,9 +1,7 @@
 package build.archipelago.authservice.models;
 
-import com.google.common.base.Strings;
+import com.google.common.base.*;
 import lombok.*;
-
-import java.util.*;
 
 @Data
 @Builder

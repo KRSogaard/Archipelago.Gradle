@@ -1,5 +1,8 @@
-package build.archipelago.authservice.services.keys.exceptions;
+package build.archipelago.authservice.models.exceptions;
 
+import lombok.*;
+
+@Getter
 public class KeyNotFoundException extends Exception {
     private String kid;
 

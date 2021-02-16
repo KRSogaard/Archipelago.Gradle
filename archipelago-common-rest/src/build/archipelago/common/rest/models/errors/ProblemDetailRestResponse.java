@@ -15,8 +15,8 @@ public class ProblemDetailRestResponse {
             = new com.fasterxml.jackson.databind.ObjectMapper();
     public static final MediaType JSON_MEDIA_TYPE = MediaType.APPLICATION_PROBLEM_JSON;
 
-    private final boolean error = true;
-    private String type;
+    private final boolean hasError = true;
+    private String error;
     private String title;
     private String detail;
     private Integer status;

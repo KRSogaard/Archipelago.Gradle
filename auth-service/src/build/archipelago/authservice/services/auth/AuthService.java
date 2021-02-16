@@ -3,7 +3,6 @@ package build.archipelago.authservice.services.auth;
 import build.archipelago.authservice.models.*;
 import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.services.auth.models.*;
-import build.archipelago.authservice.services.users.exceptions.*;
 
 
 public interface AuthService {

@@ -1,10 +1,8 @@
 package build.archipelago.authservice;
 
+import build.archipelago.authservice.client.*;
 import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.models.rest.*;
-import build.archipelago.authservice.services.auth.exceptions.*;
-import build.archipelago.authservice.services.clients.eceptions.*;
-import build.archipelago.authservice.services.keys.exceptions.*;
 import build.archipelago.authservice.utils.*;
 import build.archipelago.common.rest.models.errors.*;
 import lombok.extern.slf4j.*;
@@ -18,72 +16,65 @@ import javax.servlet.http.*;
 public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
 
     @ExceptionHandler(UnauthorizedAuthTokenException.class)
-    public ResponseEntity<String> springHandleUnauthorizedAuthTokenException(HttpServletRequest req, Exception ex) {
+    public ResponseEntity<ProblemDetailRestResponse> springHandleUnauthorizedAuthTokenException(HttpServletRequest req, Exception ex) {
         log.warn("Got exception UnauthorizedAuthTokenException: " + ex.getMessage());
-        return ResponseUtil.unauthorizedAuthToken();
+        return this.createResponse(req, AuthExceptionHandler.from((UnauthorizedAuthTokenException) ex));
     }
 
     @ExceptionHandler(KeyNotFoundException.class)
-    public ResponseEntity<String> springHandleKeyNotFoundException(HttpServletRequest req, Exception ex) {
+    public ResponseEntity<ProblemDetailRestResponse> springHandleKeyNotFoundException(HttpServletRequest req, Exception ex) {
         log.warn("Got exception KeyNotFoundException: " + ex.getMessage());
-        return ResponseUtil.unauthorizedAuthToken();
+        return this.createResponse(req, AuthExceptionHandler.from((KeyNotFoundException) ex));
     }
 
     @ExceptionHandler(TokenNotValidException.class)
-    public ResponseEntity<String> springHandleTokenNotValidException(HttpServletRequest req, Exception ex) {
+    public ResponseEntity<ProblemDetailRestResponse> springHandleTokenNotValidException(HttpServletRequest req, Exception ex) {
         log.warn("Got exception TokenNotValidException: " + ex.getMessage());
-        return ResponseUtil.unauthorizedAuthToken();
+        return this.createResponse(req, AuthExceptionHandler.from((TokenNotValidException) ex));
     }
 
     @ExceptionHandler(ClientNotFoundException.class)
-    public ResponseEntity<String> springHandleClientNotFoundException(HttpServletRequest req, Exception ex) {
+    public ResponseEntity<ProblemDetailRestResponse> springHandleClientNotFoundException(HttpServletRequest req, Exception ex) {
         log.warn("Got exception ClientNotFoundException: " + ex.getMessage());
-        return ResponseUtil.unauthorizedAuthToken();
+        return this.createResponse(req, AuthExceptionHandler.from((ClientNotFoundException) ex));
     }
 
     @ExceptionHandler(ClientSecretRequiredException.class)
-    public ResponseEntity<String> springHandleClientSecretRequiredException(HttpServletRequest req, Exception ex) {
+    public ResponseEntity<ProblemDetailRestResponse> springHandleClientSecretRequiredException(HttpServletRequest req, Exception ex) {
         log.warn("Got exception ClientSecretRequiredException: " + ex.getMessage());
-        return ResponseUtil.unauthorizedAuthToken();
+        return this.createResponse(req, AuthExceptionHandler.from((ClientSecretRequiredException) ex));
     }
 
     @ExceptionHandler(InvalidGrantTypeException.class)
-    public ResponseEntity<String> springHandleInvalidGrantTypeException(HttpServletRequest req, Exception ex) {
+    public ResponseEntity<ProblemDetailRestResponse> springHandleInvalidGrantTypeException(HttpServletRequest req, Exception ex) {
         log.warn("Got exception InvalidGrantTypeException: " + ex.getMessage());
-        return ResponseUtil.invalidGrantType();
+        return this.createResponse(req, AuthExceptionHandler.from((InvalidGrantTypeException) ex));
     }
 
     @ExceptionHandler(TokenExpiredException.class)
-    public ResponseEntity<String> springHandleTokenExpiredExceptionn(HttpServletRequest req, Exception ex) {
+    public ResponseEntity<ProblemDetailRestResponse> springHandleTokenExpiredExceptionn(HttpServletRequest req, Exception ex) {
         log.warn("Got exception TokenExpiredException: " + ex.getMessage());
-
-        return ResponseUtil.respons(HttpStatus.BAD_REQUEST, ErrorRestResponse.builder()
-                .error("expired_token")
-                .error_description("Invalid grant type")
-                .build());
+        return this.createResponse(req, AuthExceptionHandler.from((TokenExpiredException) ex));
     }
 
     @ExceptionHandler(AuthorizationPendingException.class)
-    public ResponseEntity<String> springHandleAuthorizationPendingException(HttpServletRequest req, Exception ex) {
+    public ResponseEntity<ProblemDetailRestResponse> springHandleAuthorizationPendingException(HttpServletRequest req, Exception ex) {
         log.warn("Got exception AuthorizationPendingException: " + ex.getMessage());
-
-        return ResponseUtil.respons(HttpStatus.FORBIDDEN, ErrorRestResponse.builder()
-                .error("authorization_pending")
-                .error_description("The user has yet to approve the device code")
-                .build());
+        return this.createResponse(req, AuthExceptionHandler.from((AuthorizationPendingException) ex));
     }
 
     @ExceptionHandler(DeviceCodeNotFoundException.class)
-    public ResponseEntity<String> springHandleDeviceCodeNotFoundException(HttpServletRequest req, Exception ex) {
-        log.warn("Got exception AuthorizationPendingException: " + ex.getMessage());
-
-        return ResponseUtil.respons(HttpStatus.FORBIDDEN, ErrorRestResponse.builder()
-                .error("invalid_grant")
-                .error_description("Invalid grant")
-                .build());
+    public ResponseEntity<ProblemDetailRestResponse> springHandleDeviceCodeNotFoundException(HttpServletRequest req, Exception ex) {
+        log.warn("Got exception UserNotFoundException: " + ex.getMessage());
+        return this.createResponse(req, AuthExceptionHandler.from((DeviceCodeNotFoundException) ex));
     }
 
-
+    // Non OAuth exceptions
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ProblemDetailRestResponse> springHandleUserNotFoundException(HttpServletRequest req, Exception ex) {
+        log.warn("Got exception UserNotFoundException: " + ex.getMessage());
+        return this.createResponse(req, AuthExceptionHandler.from((UserNotFoundException) ex));
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleIllegalArgumentException(HttpServletRequest req, Exception ex) {

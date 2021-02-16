@@ -26,6 +26,7 @@ public class DynamoDBAuthService implements AuthService {
     private final int authTokenExpiresSec;
     private final int deviceCodeExpiresSec;
     private final int authCookieExpiresSec;
+    private final int expiresBufferSec = 10;
 
     private AmazonDynamoDB dynamoDB;
     private String authCodesTableName;
@@ -55,7 +56,7 @@ public class DynamoDBAuthService implements AuthService {
                 .put(DBK.REDIRECT_URI, AV.of(request.getRedirectUri()))
                 .put(DBK.SCOPES, AV.of(request.getScope()))
                 .put(DBK.CREATED, AV.of(Instant.now()))
-                .put(DBK.EXPIRES, AV.of(Instant.now().plusSeconds(authTokenExpiresSec)))
+                .put(DBK.EXPIRES, AV.of(Instant.now().plusSeconds(authTokenExpiresSec + expiresBufferSec)))
                 .build()));
 
         return authCode;
@@ -67,8 +68,7 @@ public class DynamoDBAuthService implements AuthService {
                 .put(DBK.AUTH_CODE, AV.of(code))
                 .build()));
         Map<String, AttributeValue> item = result.getItem();
-        if (item == null ||
-            !CODE_TYPE_COOKIE.equalsIgnoreCase(AV.getStringOrNull(item, DBK.CODE_TYPE))) {
+        if (item == null || !CODE_TYPE_AUTH_CODE.equalsIgnoreCase(AV.getStringOrNull(item, DBK.CODE_TYPE))) {
             throw new TokenNotFoundException(code);
         }
         if (Instant.now().isAfter(AV.toInstant(item.get(DBK.EXPIRES)))) {
@@ -118,7 +118,7 @@ public class DynamoDBAuthService implements AuthService {
                 .put(DBK.AUTH_CODE, AV.of(authCookieCode))
                 .put(DBK.CODE_TYPE, AV.of(CODE_TYPE_COOKIE))
                 .put(DBK.USER_ID, AV.of(userId))
-                .put(DBK.EXPIRES, AV.of(expires))
+                .put(DBK.EXPIRES, AV.of(expires.plusSeconds(expiresBufferSec)))
                 .build()));
         return CodeResponse.builder()
                 .code(authCookieCode)
@@ -142,13 +142,13 @@ public class DynamoDBAuthService implements AuthService {
                 .put(DBK.DEVICE_CODE, AV.of(deviceCode))
                 .put(DBK.CLIENT_ID, AV.of(clientId))
                 .put(DBK.SCOPES, AV.of(scope))
-                .put(DBK.EXPIRES, AV.of(expires))
+                .put(DBK.EXPIRES, AV.of(expires.plusSeconds(expiresBufferSec)))
                 .build()));
         dynamoDB.putItem(new PutItemRequest(authCodesTableName, ImmutableMap.<String, AttributeValue>builder()
                 .put(DBK.AUTH_CODE, AV.of(deviceCode))
                 .put(DBK.CODE_TYPE, AV.of(CODE_TYPE_DEVICE_CODE))
                 .put(DBK.USER_CODE, AV.of(userCode))
-                .put(DBK.EXPIRES, AV.of(expires))
+                .put(DBK.EXPIRES, AV.of(expires.plusSeconds(expiresBufferSec)))
                 .build()));
 
         return DeviceCodeResponse.builder()

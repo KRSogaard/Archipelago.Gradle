@@ -1,4 +1,4 @@
-package build.archipelago.authservice.services.auth.exceptions;
+package build.archipelago.authservice.models.exceptions;
 
 public class DeviceCodeNotFoundException extends Exception {
     private String deviceCode;

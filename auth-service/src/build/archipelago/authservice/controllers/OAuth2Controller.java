@@ -6,12 +6,9 @@ import build.archipelago.authservice.models.rest.*;
 import build.archipelago.authservice.services.auth.*;
 import build.archipelago.authservice.services.auth.models.*;
 import build.archipelago.authservice.services.clients.*;
-import build.archipelago.authservice.services.clients.eceptions.*;
 import build.archipelago.authservice.services.clients.models.*;
 import build.archipelago.authservice.services.keys.*;
-import build.archipelago.authservice.services.keys.exceptions.*;
 import build.archipelago.authservice.services.keys.models.*;
-import build.archipelago.authservice.services.users.exceptions.*;
 import build.archipelago.authservice.utils.*;
 import com.google.common.base.*;
 import com.google.common.collect.*;
@@ -30,17 +27,20 @@ import java.time.*;
 import java.util.*;
 import java.util.stream.*;
 
-import static build.archipelago.authservice.controllers.Constants.*;
+import static build.archipelago.authservice.Constants.*;
 
 @RestController
 @RequestMapping("oauth2")
 @Slf4j
+@CrossOrigin(origins = "*")
 public class OAuth2Controller {
 
     private long refreshTokenMaxAge;
     private long accessTokenMaxAge;
     private String authUrl;
+    private String frontendUrl;
 
+    private String issuer = "https://auth.archipelago.build";
     private ImmutableList<String> allowedScopes = ImmutableList.of("openId", "email", "profile", "other", "todo");
     private ImmutableList<String> allowedResponseMode = ImmutableList.of("query", "fragment");
     private AuthService authService;
@@ -50,7 +50,8 @@ public class OAuth2Controller {
     public OAuth2Controller(AuthService authService,
                             ClientService clientService,
                             KeyService keyService,
-                            @Value("${auth.url}") String authUrl,
+                            @Value("${url.auth-server}") String authUrl,
+                            @Value("${url.frontend}") String frontendUrl,
                             @Value("${token.age.refresh}") long refreshTokenMaxAge,
                             @Value("${token.age.access}") long accessTokenMaxAge) {
         this.authService = authService;
@@ -58,8 +59,10 @@ public class OAuth2Controller {
         this.keyService = keyService;
 
         this.authUrl = authUrl;
+        this.frontendUrl = frontendUrl;
         this.refreshTokenMaxAge = refreshTokenMaxAge;
         this.accessTokenMaxAge = accessTokenMaxAge;
+        this.issuer = authUrl + "/oauth2";
     }
 
     @GetMapping("authorize")
@@ -253,7 +256,7 @@ public class OAuth2Controller {
         response.setTokenType("Bearer");
         response.setExpiresIn(3600);
         response.setAccessToken(createJWT(JWTClaims.builder()
-                .withIssuer("https://auth.archipelago.build")
+                .withIssuer(issuer)
                 .withSubject(userAndScopes.getUserId())
                 .withAudience(client.getClientId())
                 .withIssuedAt(Instant.now())
@@ -261,7 +264,7 @@ public class OAuth2Controller {
                 .withScope(String.join(" ", userAndScopes.getScopes()))
                 .build().getClaims()));
         response.setRefreshToken(createJWT(JWTClaims.builder()
-                .withIssuer("https://auth.archipelago.build")
+                .withIssuer(issuer)
                 .withSubject(userAndScopes.getUserId())
                 .withAudience(client.getClientId())
                 .withIssuedAt(Instant.now())
@@ -416,12 +419,46 @@ public class OAuth2Controller {
                     .kid(k.getKid())
                     .kty(k.getKty())
                     .n(k.getPublicKey())
+                    .e("AQAB") // why is this?
                     .build());
         }
         return JWKSRestResponse.builder()
                 .keys(responseKeys)
                 .build();
     }
+
+
+    @GetMapping(".well-known/openid-configuration")
+    public OpenIdConfigRestResponse openIdConfig() {
+        // TODO: Improve this https://openid.net/specs/openid-connect-discovery-1_0.html
+        return OpenIdConfigRestResponse.builder()
+                .issuer(issuer)
+                .authorizationEndpoint(frontendUrl + "/authorize")
+                .tokenEndpoint(authUrl + "/oauth2/token")
+                .userinfoEndpoint(authUrl + "/oauth2/userinfo")
+                .jwksUri(authUrl + "/oauth2/.well-known/jwks.json")
+                .scopesSupported(new ArrayList<>())
+                .responseTypesSupported(ImmutableList.of(
+                        "code", "id_token", "token id_token"
+                ))
+                .tokenEndpointAuthMethodsSupported(ImmutableList.of(
+                        "client_secret_basic"
+                ))
+                .responseModesSupported(ImmutableList.of(
+                        "query", "fragment"
+                ))
+                .grantTypesSupported(ImmutableList.of(
+                        "authorization_code"
+                ))
+                .subjectTypesSupported(ImmutableList.of(
+                        "public"
+                ))
+                .idTokenSigningAlgValuesSupported(ImmutableList.of(
+                        "RS256"
+                ))
+                .build();
+    }
+
 
     @PostMapping("/device_authorization")
     public DeviceActivationRestResponse deviceActivation(

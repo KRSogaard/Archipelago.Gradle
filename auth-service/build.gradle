@@ -60,8 +60,11 @@ configurations {
 }
 
 dependencies {
+    api "build.archipelago:auth-service-models:1.0"
+    api "build.archipelago:auth-service-client:1.0"
     api "build.archipelago:common-dynamodb:1.0"
     api "build.archipelago:common-rest:1.0"
+    api "build.archipelago:common:1.0"
 
     compile 'io.jsonwebtoken:jjwt-api:0.11.2'
     runtime 'io.jsonwebtoken:jjwt-impl:0.11.2'
@@ -69,10 +72,6 @@ dependencies {
 
     implementation 'org.slf4j:slf4j-api:1.7.30'
 
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
-    implementation 'org.springframework.security:spring-security-oauth2-jose'
-    implementation 'org.springframework.security:spring-security-config'
 
     // Google Guava
     implementation 'com.google.guava:guava:28.0-jre'
