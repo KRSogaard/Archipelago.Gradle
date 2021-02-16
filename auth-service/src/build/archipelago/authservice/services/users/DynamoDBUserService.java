@@ -28,6 +28,7 @@ public class DynamoDBUserService implements UserService {
 
     @Override
     public String authenticate(String email, String password) throws UserNotFoundException {
+        String emailKey = email.toLowerCase().trim();
         QueryRequest queryRequest = new QueryRequest()
                 .withIndexName("gsiEmail")
                 .withTableName(usersTableName)
@@ -35,11 +36,11 @@ public class DynamoDBUserService implements UserService {
                 .withExpressionAttributeNames(ImmutableMap.of(
                         "#email", DBK.EMAIL
                 ))
-                .withExpressionAttributeValues(ImmutableMap.of(":email", AV.of(email)));
+                .withExpressionAttributeValues(ImmutableMap.of(":email", AV.of(emailKey)));
         QueryResult result = dynamoDB.query(queryRequest);
         if (result.getItems() == null || result.getItems().size() == 0) {
-            log.debug("No user with the email '{}' was found", email);
-            throw new UserNotFoundException(email);
+            log.debug("No user with the email '{}' was found", emailKey);
+            throw new UserNotFoundException(emailKey);
         }
 
         Map<String, AttributeValue> item = result.getItems().stream().findFirst().get();
@@ -47,8 +48,8 @@ public class DynamoDBUserService implements UserService {
         String hashedPassword = hash(password, salt);
         String storedPassword = item.get(DBK.PASSWORD).getS();
         if (!hashedPassword.equals(storedPassword)) {
-            log.debug("The password for '{}' did not match", email);
-            throw new UserNotFoundException(email);
+            log.debug("The password for '{}' did not match", emailKey);
+            throw new UserNotFoundException(emailKey);
         }
 
         return item.get(DBK.USER_ID).getS();
@@ -56,6 +57,7 @@ public class DynamoDBUserService implements UserService {
 
     @Override
     public String createUser(UserModel model) throws UserExistsException {
+        String emailKey = model.getEmail().toLowerCase().trim();
         QueryRequest queryRequest = new QueryRequest()
                 .withIndexName("gsiEmail")
                 .withTableName(usersTableName)
@@ -63,7 +65,7 @@ public class DynamoDBUserService implements UserService {
                 .withExpressionAttributeNames(ImmutableMap.of(
                         "#email", DBK.EMAIL
                 ))
-                .withExpressionAttributeValues(ImmutableMap.of(":email", AV.of(model.getEmail())));
+                .withExpressionAttributeValues(ImmutableMap.of(":email", AV.of(emailKey)));
         QueryResult result = dynamoDB.query(queryRequest);
         if (result.getItems() != null && result.getItems().size() != 0) {
             throw new UserExistsException(model.getEmail());
@@ -78,7 +80,7 @@ public class DynamoDBUserService implements UserService {
                 .put(DBK.PASSWORD, AV.of(password))
                 .put(DBK.PASSWORD_SALT, AV.of(passwordSalt))
                 .put(DBK.NAME, AV.of(model.getName()))
-                .put(DBK.EMAIL, AV.of(model.getEmail()))
+                .put(DBK.EMAIL, AV.of(emailKey))
                 .build()));
 
         return userId;

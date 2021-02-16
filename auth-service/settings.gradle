@@ -9,6 +9,9 @@ if (file("../archipelago-common-account").exists()) {
 if (file("../archipelago-common-dynamodb").exists()) {
     includeBuild "../archipelago-common-dynamodb"
 }
+if (file("../archipelago-common").exists()) {
+    includeBuild "../archipelago-common"
+}
 
 if (file("../auth-service-client").exists()) {
     includeBuild "../auth-service-client"

@@ -43,8 +43,9 @@ dynamodb:
   auth-clients: "archipelago-local.auth-clients"
   auth-jwks: "archipelago-local.auth-jwks"
 
-auth:
-  url: http://localhost:8087
+url:
+  auth-server: http://localhost:8087
+  frontend: http://localhost:8087
 
 aws:
   access:

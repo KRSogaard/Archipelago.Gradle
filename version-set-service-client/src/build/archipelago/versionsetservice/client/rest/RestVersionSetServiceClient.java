@@ -106,13 +106,13 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
             case 404:
                 log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
                 problem = ProblemDetailRestResponse.from(httpResponse.body());
-                switch (problem.getType()) {
+                switch (problem.getError()) {
                     case VersionSetExceptionHandler.TYPE_VERSION_SET_NOT_FOUND:
                         throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
                     case PackageExceptionHandler.TYPE_PACKAGE_NOT_FOUND:
                         throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
                     default:
-                        throw new RuntimeException("The problem type " + problem.getType() + " was not known");
+                        throw new RuntimeException("The problem type " + problem.getError() + " was not known");
                 }
             default:
                 throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
@@ -160,13 +160,13 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
             case 404:
                 log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
                 problem = ProblemDetailRestResponse.from(httpResponse.body());
-                switch (problem.getType()) {
+                switch (problem.getError()) {
                     case VersionSetExceptionHandler.TYPE_VERSION_SET_NOT_FOUND:
                         throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
                     case PackageExceptionHandler.TYPE_PACKAGE_NOT_FOUND:
                         throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
                     default:
-                        throw new RuntimeException("The problem type " + problem.getType() + " was not known");
+                        throw new RuntimeException("The problem type " + problem.getError() + " was not known");
                 }
             default:
                 throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
@@ -212,13 +212,13 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
             case 404:
                 log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
                 problem = ProblemDetailRestResponse.from(httpResponse.body());
-                switch (problem.getType()) {
+                switch (problem.getError()) {
                     case VersionSetExceptionHandler.TYPE_VERSION_SET_NOT_FOUND:
                         throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
                     case PackageExceptionHandler.TYPE_PACKAGE_NOT_FOUND:
                         throw (PackageNotFoundException) PackageExceptionHandler.createException(problem);
                     default:
-                        throw new RuntimeException("The problem type " + problem.getType() + " was not known");
+                        throw new RuntimeException("The problem type " + problem.getError() + " was not known");
                 }
             default:
                 throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);

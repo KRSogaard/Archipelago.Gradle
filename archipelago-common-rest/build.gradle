@@ -43,6 +43,8 @@ sourceSets {
 }
 
 dependencies {
+    implementation "build.archipelago:common:1.0";
+
     implementation 'org.springframework:spring-web:5.2.5.RELEASE'
     implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.33'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'

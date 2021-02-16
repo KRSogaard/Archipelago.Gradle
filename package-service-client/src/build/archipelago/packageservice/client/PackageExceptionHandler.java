@@ -19,13 +19,13 @@ public class PackageExceptionHandler {
             exp.getPackages().forEach(p -> {
                 packages.put(p.getName(), p.getVersion());
             });
-            builder.type(TYPE_MULTIPLE_PACKAGE_NOT_FOUND)
+            builder.error(TYPE_MULTIPLE_PACKAGE_NOT_FOUND)
                     .title("Multiple packages was not found")
                     .status(404)
                     .detail(exp.getMessage())
                     .data(packages);
         } else {
-            builder.type(TYPE_PACKAGE_NOT_FOUND)
+            builder.error(TYPE_PACKAGE_NOT_FOUND)
                     .title("Package was not found")
                     .status(404)
                     .detail(exp.getMessage())
@@ -46,7 +46,7 @@ public class PackageExceptionHandler {
 
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(PackageExistsException exp) {
         return ProblemDetailRestResponse.builder()
-                .type(TYPE_PACKAGE_EXISTS)
+                .error(TYPE_PACKAGE_EXISTS)
                 .title("The package exists")
                 .status(409)
                 .detail(exp.getMessage())
@@ -64,7 +64,7 @@ public class PackageExceptionHandler {
     }
 
     public static Exception createException(ProblemDetailRestResponse problem) {
-        switch (problem.getType()) {
+        switch (problem.getError()) {
             case TYPE_PACKAGE_NOT_FOUND:
                 if (problem.getData().containsKey("hash") &&
                         !Strings.isNullOrEmpty((String) problem.getData().get("hash"))) {
@@ -92,7 +92,7 @@ public class PackageExceptionHandler {
                         (String) problem.getData().get("packageName"),
                         (String) problem.getData().get("version")));
             default:
-                throw new RuntimeException(problem.getType() + " was not a known package error");
+                throw new RuntimeException(problem.getError() + " was not a known package error");
         }
     }
 }

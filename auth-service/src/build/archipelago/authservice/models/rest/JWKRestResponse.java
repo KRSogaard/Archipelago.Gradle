@@ -10,4 +10,5 @@ public class JWKRestResponse {
     private String kid;
     private String alg;
     private String n;
+    private String e;
 }

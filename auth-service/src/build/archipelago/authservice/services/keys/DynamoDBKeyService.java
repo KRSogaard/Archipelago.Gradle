@@ -57,22 +57,30 @@ public class DynamoDBKeyService implements KeyService {
     }
 
     private JWKKey createNewKey() {
-        KeyPair keyPair = Keys.keyPairFor(algorithm);
-        JWKKey key = JWKKey.builder()
-                .kid(UUID.randomUUID().toString())
-                .privateKey(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()))
-                .publicKey(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()))
-                .expiresAt(Instant.now().plusSeconds(KeyLifeSpan))
-                .build();
+        try {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+            kpg.initialize(2048);
+            KeyPair keyPair = kpg.generateKeyPair();
 
-        dynamoDB.putItem(new PutItemRequest(keysTableName, ImmutableMap.<String, AttributeValue>builder()
-                .put(DBK.KID, AV.of(key.getKid()))
-                .put(DBK.EXPIRES, AV.of(key.getExpiresAt()))
-                .put(DBK.PRIVATE_KEY, AV.of(key.getPrivateKey()))
-                .put(DBK.PUBLIC_KEY, AV.of(key.getPublicKey()))
-                .build()));
+            //KeyPair keyPair = Keys.keyPairFor(algorithm);
+            JWKKey key = JWKKey.builder()
+                    .kid(UUID.randomUUID().toString())
+                    .privateKey(Encoders.BASE64.encode(keyPair.getPrivate().getEncoded()))
+                    .publicKey(Encoders.BASE64.encode(keyPair.getPublic().getEncoded()))
+                    .expiresAt(Instant.now().plusSeconds(KeyLifeSpan))
+                    .build();
 
-        return key;
+            dynamoDB.putItem(new PutItemRequest(keysTableName, ImmutableMap.<String, AttributeValue>builder()
+                    .put(DBK.KID, AV.of(key.getKid()))
+                    .put(DBK.EXPIRES, AV.of(key.getExpiresAt()))
+                    .put(DBK.PRIVATE_KEY, AV.of(key.getPrivateKey()))
+                    .put(DBK.PUBLIC_KEY, AV.of(key.getPublicKey()))
+                    .build()));
+
+            return key;
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
