@@ -19,6 +19,8 @@ archipelago-common-dynamodb/build/
 archipelago-common-github/build/
 archipelago-common-rest/build/
 auth-service/build/
+auth-service-models/build/
+auth-service-client/build/
 build-server-api/build/
 build-server-api-client/build/
 build-server-builder/build/
