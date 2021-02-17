@@ -60,13 +60,13 @@ configurations {
 }
 
 dependencies {
-    api "build.archipelago:common:1.0"
-    api "build.archipelago:common-github:1.0"
-    api "build.archipelago:common-rest:1.0"
-    api "build.archipelago:account-common:1.0"
-    api "build.archipelago:package-service-core:1.0"
-    api "build.archipelago:package-service-models:1.0"
-    api "build.archipelago:package-service-client:1.0"
+    implementation "build.archipelago:common:1.0"
+    implementation "build.archipelago:common-github:1.0"
+    implementation "build.archipelago:common-rest:1.0"
+    implementation "build.archipelago:account-common:1.0"
+    implementation "build.archipelago:package-service-core:1.0"
+    implementation "build.archipelago:package-service-models:1.0"
+    implementation "build.archipelago:package-service-client:1.0"
 
     implementation 'org.springframework.boot:spring-boot-starter-jersey'
     implementation 'org.springframework.boot:spring-boot-starter-web'

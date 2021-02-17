@@ -2,6 +2,7 @@ package build.archipelago.versionsetservice.controllers;
 
 import build.archipelago.versionsetservice.core.delegates.*;
 import com.google.gson.*;
+import org.springframework.test.context.*;
 import net.dongliu.gson.GsonJava8TypeAdapterFactory;
 import org.junit.*;
 import org.junit.runner.RunWith;
@@ -17,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("local")
 public class VersionRestResponseSetControllerTest {
 
     @Autowired

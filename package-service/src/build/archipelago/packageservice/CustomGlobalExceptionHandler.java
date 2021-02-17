@@ -3,6 +3,7 @@ package build.archipelago.packageservice;
 import build.archipelago.account.common.exceptions.GitDetailsNotFound;
 import build.archipelago.common.rest.models.errors.*;
 import build.archipelago.packageservice.client.PackageExceptionHandler;
+import build.archipelago.packageservice.exceptions.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;

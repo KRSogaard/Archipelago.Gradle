@@ -7,12 +7,6 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-<<<<<<< HEAD
-=======
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-@Getter
->>>>>>> origin/AuthApi
 public class LogInRestResponse {
     private String authToken;
 
