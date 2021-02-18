@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 services:
   harbor-service:
     image: build.archipelago/harbor-service:latest
@@ -16,7 +16,7 @@ services:
       - BUILD_SERVICE_URL=http://build-server-api:8080
       - SPRING_PROFILE=local
     ports:
-      - 8081:8080
+      - 8093:8080
   auth-service:
     image: build.archipelago/auth-service:latest
     environment:
