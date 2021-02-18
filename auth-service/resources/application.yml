@@ -4,7 +4,7 @@ server:
     include-stacktrace: never
 
 aws:
-  region: ${AWS_REGION:"us-west-2"}
+  region: ${AWS_REGION:us-west-2}
 
 token:
   age:
@@ -25,8 +25,8 @@ spring:
           issuer-uri: ${OAUTH_ISSUER:https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf}
 
 oauth:
-  client-id: ${OAUTH_ID:"3ad886knkeo0vuvvpnvtp6rtlq"}
-  client-secret: ${OAUTH_SECRET:"r5qd4fhj931vvlbf2oi3dhe58kjtfk2n7i70da7kc2d08sccch5"}
+  client-id: ${OAUTH_ID:3ad886knkeo0vuvvpnvtp6rtlq}
+  client-secret: ${OAUTH_SECRET:r5qd4fhj931vvlbf2oi3dhe58kjtfk2n7i70da7kc2d08sccch5}
 
 ---
 spring:
@@ -50,8 +50,8 @@ url:
 
 aws:
   access:
-    id: ${AWS_KEY:"AKIARDAF5R4OODU52YJR"}
-    key: ${AWS_SECRET:"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"}
+    id: ${AWS_KEY:AKIARDAF5R4OODU52YJR}
+    key: ${AWS_SECRET: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}
 
 ---
 spring:
