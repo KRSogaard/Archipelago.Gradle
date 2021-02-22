@@ -16,7 +16,6 @@ public class CreatePackageModel {
 
     public void validate() {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(description), "A description is required");
         Preconditions.checkArgument(ArchipelagoPackage.validateName(name), "The package name \"" + name + "\" was not valid");
     }
 }

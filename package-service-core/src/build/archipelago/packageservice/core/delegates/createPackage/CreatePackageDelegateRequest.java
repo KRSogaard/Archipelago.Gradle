@@ -13,6 +13,5 @@ public class CreatePackageDelegateRequest {
     protected void validate() {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(description), "Description is required");
     }
 }

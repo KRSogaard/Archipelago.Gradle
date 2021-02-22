@@ -48,7 +48,6 @@ public class PackageController {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getDescription()));
 
         packageServiceClient.createPackage(accountId, build.archipelago.packageservice.client.models.CreatePackageRequest.builder()
                 .name(request.getName())

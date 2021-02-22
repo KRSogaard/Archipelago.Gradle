@@ -88,9 +88,12 @@ public class PackageExceptionHandler {
                             (String) problem.getData().get("version"),
                             (String) problem.getData().get("hash")));
                 }
-                return new PackageExistsException(new ArchipelagoPackage(
-                        (String) problem.getData().get("packageName"),
-                        (String) problem.getData().get("version")));
+                if (problem.getData().containsKey("version")) {
+                    return new PackageExistsException(new ArchipelagoPackage(
+                            (String) problem.getData().get("packageName"),
+                            (String) problem.getData().get("version")));
+                }
+                return new PackageExistsException((String) problem.getData().get("packageName"));
             default:
                 throw new RuntimeException(problem.getError() + " was not a known package error");
         }

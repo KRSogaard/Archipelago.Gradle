@@ -35,7 +35,6 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getDescription()));
 
         CreatePackageRestRequest restRequest = CreatePackageRestRequest.builder()
                 .name(request.getName())

@@ -14,7 +14,7 @@ oauth:
   client-secret: ${OAUTH_SECRET:1u7m9pa9njct19jbj51b592ci0ku151quhjo4n0pcm36h3lude91}
 
 aws:
-  region: ${AWS_REGION:us-west-2}
+  region: "us-west-2"
 
 ---
 spring:
@@ -41,12 +41,10 @@ aws:
 
 ---
 spring:
- profiles: alpha
-
+  profiles: alpha
 ---
 spring:
- profiles: beta
-
+  profiles: beta
 ---
 spring:
- profiles: prod
+  profiles: prod
