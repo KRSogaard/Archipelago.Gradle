@@ -70,19 +70,19 @@ public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleUnauthorizedException(HttpServletRequest req, Exception ex) {
-        log.warn("Got exception UserNotFoundException: " + ex.getMessage());
+        log.warn("Got exception UnauthorizedException: " + ex.getMessage());
         return this.createResponse(req, CommonExceptionHandler.from((UnauthorizedException) ex));
     }
 
     @ExceptionHandler(TokenExpiredException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleTokenExpiredException(HttpServletRequest req, Exception ex) {
-        log.warn("Got exception UserNotFoundException: " + ex.getMessage());
+        log.warn("Got exception TokenExpiredException: " + ex.getMessage());
         return this.createResponse(req, AuthExceptionHandler.from((TokenExpiredException) ex));
     }
 
     @ExceptionHandler(TokenNotFoundException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleTokenNotFoundException(HttpServletRequest req, Exception ex) {
-        log.warn("Got exception UserNotFoundException: " + ex.getMessage());
+        log.warn("Got exception TokenNotFoundException: " + ex.getMessage());
         return this.createResponse(req, AuthExceptionHandler.from((TokenNotFoundException) ex));
     }
 }

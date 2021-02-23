@@ -45,7 +45,7 @@ public class AuthController {
     }
 
     @PostMapping("/device")
-    public void device(ActivateDeviceRestRequest request) throws TokenNotFoundException, TokenExpiredException {
+    public void device(@RequestBody ActivateDeviceRestRequest request) throws TokenNotFoundException, TokenExpiredException {
         String userCode = request.getUserCode().toUpperCase();
 
         authService.getDeviceCode(userCode);

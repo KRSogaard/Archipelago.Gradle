@@ -58,7 +58,7 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/authToken")
+    @PostMapping("/device")
     public void deviceActivation(
             @RequestAttribute(AccountIdFilter.UserIdKey) String userId,
             @RequestBody ActivateDeviceRestRequest request) throws TokenExpiredException, TokenNotFoundException {

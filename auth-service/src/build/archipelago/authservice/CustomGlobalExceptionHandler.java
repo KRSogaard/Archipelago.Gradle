@@ -81,4 +81,10 @@ public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
         log.warn("Got exception IllegalArgumentException: " + ex.getMessage());
         return this.createResponse(req, CommonExceptionHandler.from((IllegalArgumentException) ex));
     }
+
+    @ExceptionHandler(TokenNotFoundException.class)
+    public ResponseEntity<ProblemDetailRestResponse> springHandleTokenNotFoundException(HttpServletRequest req, Exception ex) {
+        log.warn("Got exception TokenNotFoundException: " + ex.getMessage());
+        return this.createResponse(req, AuthExceptionHandler.from((TokenNotFoundException) ex));
+    }
 }
