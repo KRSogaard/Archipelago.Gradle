@@ -4,6 +4,7 @@ import build.archipelago.authservice.client.*;
 import build.archipelago.authservice.models.client.*;
 import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.models.rest.*;
+import build.archipelago.harbor.models.auth.ActivateDeviceRestRequest;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.harbor.filters.*;
 import build.archipelago.harbor.models.auth.LogInRestRequest;
@@ -55,5 +56,19 @@ public class AuthController {
             // We don't want to tell the caller if the user exists or not
             throw new UnauthorizedException();
         }
+    }
+
+    @PostMapping("/authToken")
+    public void deviceActivation(
+            @RequestAttribute(AccountIdFilter.UserIdKey) String userId,
+            @RequestBody ActivateDeviceRestRequest request) throws TokenExpiredException, TokenNotFoundException {
+        if (Strings.isNullOrEmpty(userId)) {
+            throw new UnauthorizedException();
+        }
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getUserCode()));
+        authClient.device(ActivateDeviceRequest.builder()
+                .userCode(request.getUserCode())
+                .userId(userId)
+        .build());
     }
 }

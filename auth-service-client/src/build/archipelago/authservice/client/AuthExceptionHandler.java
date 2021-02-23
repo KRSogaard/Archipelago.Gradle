@@ -10,6 +10,7 @@ public class AuthExceptionHandler {
     public static final String TYPE_TOKEN_UNAUTHORIZED = "token/unauthorized";
     public static final String TYPE_TOKEN_NOT_VALID = "token/notValid";
     public static final String TYPE_TOKEN_EXPIRED = "token/expired";
+    public static final String TYPE_TOKEN_NOT_FOUND = "token/notFound";
     public static final String TYPE_KEY_NOT_FOUND = "key/notFound";
     public static final String TYPE_CLIENT_NOT_FOUND = "client/notFound";
     public static final String TYPE_CLIENT_SECRET_REQUIRED = "client/secretRequired";
@@ -54,8 +55,8 @@ public class AuthExceptionHandler {
 
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(TokenNotFoundException exp) {
         return ProblemDetailRestResponse.builder()
-                .error(TYPE_TOKEN_EXPIRED)
-                .title("The token has expired")
+                .error(TYPE_TOKEN_NOT_FOUND)
+                .title("Token not found")
                 .status(404)
                 .detail(exp.getMessage())
                 .data(new HashMap<>() {{
@@ -132,6 +133,15 @@ public class AuthExceptionHandler {
         switch (problem.getError()) {
             case TYPE_USER_NOT_FOUND:
                 return new UserNotFoundException((String) problem.getData().get("email"));
+            case TYPE_TOKEN_NOT_FOUND:
+                return new TokenNotFoundException((String) problem.getData().get("token"));
+            case TYPE_TOKEN_EXPIRED:
+                String device_code;
+                if (problem.getData().containsKey("device_code")) {
+                    device_code = (String) problem.getData().get("device_code");
+                    return new TokenExpiredException(device_code);
+                }
+                return new TokenNotFoundException(null);
             default:
                 throw new RuntimeException(problem.getError() + " was not a known auth error");
         }
