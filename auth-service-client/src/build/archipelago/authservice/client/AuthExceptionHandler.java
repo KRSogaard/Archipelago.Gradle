@@ -125,7 +125,7 @@ public class AuthExceptionHandler {
         return ProblemDetailRestResponse.builder()
                 .error(TYPE_AUTHORIZATION_PENDING)
                 .title("The user has yet to approve the device code")
-                .status(406)
+                .status(403)
                 .detail(exp.getMessage());
     }
 

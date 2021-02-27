@@ -1,6 +1,6 @@
 package build.archipelago.maui.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import lombok.*;
 
 @Data
@@ -9,6 +9,8 @@ import lombok.*;
 public class OAuthTokenResponse {
     @JsonProperty("access_token")
     private String accessToken;
+    @JsonProperty("refresh_token")
+    private String refreshToken;
     @JsonProperty("expires_in")
     private int expiresIn;
     @JsonProperty("token_type")

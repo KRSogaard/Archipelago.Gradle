@@ -46,7 +46,7 @@ dynamodb:
 
 url:
   auth-server: ${APP_URL:http://localhost:8087}
-  frontend: ${FRONTEND_URL:http://localhost:8087}
+  frontend: ${FRONTEND_URL:http://localhost:3000}
 
 aws:
   access:

@@ -24,7 +24,6 @@ public class AuthCommand extends BaseAction implements Callable<Integer> {
 
     private com.fasterxml.jackson.databind.ObjectMapper objectMapper
             = new com.fasterxml.jackson.databind.ObjectMapper();
-    private static String audience = "http://harbor.archipelago.build";
     private String authEndpoint;
     private String clientId;
 
@@ -55,7 +54,7 @@ public class AuthCommand extends BaseAction implements Callable<Integer> {
         out.write("Or use this link: " + deviceCodeResponse.getVerificationUriComplete());
 
         OAuthTokenResponse tokenResponse = getToken(deviceCodeResponse);
-        if (deviceCodeResponse == null) {
+        if (tokenResponse == null) {
             out.error("Failed to authentication");
             return 1;
         }
@@ -75,12 +74,12 @@ public class AuthCommand extends BaseAction implements Callable<Integer> {
     private OAuthDeviceCodeResponse getDeviceCode() {
         HashMap<String, String> parameters = new HashMap<>();
         parameters.put("client_id", clientId);
-        parameters.put("audience", audience);
+        parameters.put("scope", "openid profile email");
 
         HttpResponse<String> httpResponse;
         try {
             HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .uri(new URI(authEndpoint + "/oauth/device/code"))
+                    .uri(new URI(authEndpoint + "/oauth2/device_authorization"))
                     .header("content-type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(mapToFormString(parameters)))
                     .build();
@@ -118,7 +117,7 @@ public class AuthCommand extends BaseAction implements Callable<Integer> {
         while ((httpResponse == null || httpResponse.statusCode() != 200) && expires.isAfter(Instant.now())) {
             try {
                 HttpRequest httpRequest = HttpRequest.newBuilder()
-                        .uri(new URI(authEndpoint + "/oauth/token"))
+                        .uri(new URI(authEndpoint + "/oauth2/token"))
                         .header("content-type", "application/x-www-form-urlencoded")
                         .POST(HttpRequest.BodyPublishers.ofString(mapToFormString(parameters)))
                         .build();

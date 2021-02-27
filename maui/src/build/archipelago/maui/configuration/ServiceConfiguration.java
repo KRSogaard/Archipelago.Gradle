@@ -34,7 +34,6 @@ public class ServiceConfiguration extends AbstractModule {
     @Singleton
     public HarborClient versionServiceClient(SystemPathProvider systemPathProvider,
                                              @Named("oauth.endpoint") String oAuthEndpoint,
-                                             @Named("oauth.audience") String audience,
                                              @Named("services.harbor.url") String harborEndpoint) throws IOException {
         Path authFile = systemPathProvider.getMauiPath().resolve(".auth");
         if (!Files.exists(authFile)) {
@@ -54,7 +53,7 @@ public class ServiceConfiguration extends AbstractModule {
             log.error("The auth file is corrupt: " + Files.readString(authFile));
             return new UnauthorizedHarborClient();
         }
-        return new RestHarborClient(harborEndpoint, oAuthEndpoint + "/oauth/token", oauth.getAccessToken(), audience);
+        return new RestHarborClient(harborEndpoint, oAuthEndpoint + "/oauth2/token", oauth.getAccessToken());
     }
 
     @Provides
