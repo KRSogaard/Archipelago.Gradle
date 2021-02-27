@@ -1,13 +1,13 @@
 buildscript {
-    repositories {
-      maven {
-        url "https://plugins.gradle.org/m2/"
-      }
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
     }
+  }
 
-    dependencies {
-      classpath("org.springframework.boot:spring-boot-gradle-plugin:2.2.6.RELEASE")
-    }
+  dependencies {
+    classpath("org.springframework.boot:spring-boot-gradle-plugin:2.2.6.RELEASE")
+  }
 }
 
 allprojects {
@@ -15,59 +15,60 @@ allprojects {
   version "1.0"
 
   repositories {
-      mavenLocal()
-      jcenter()
-      maven { url 'https://plugins.gradle.org/m2/' }
-      maven {
-          name = "Local dynamodb Repo"
-          //Local DynamoDB repository
-          url "https://s3-us-west-2.amazonaws.com/dynamodb-local/release"
-      }
-      maven {
-          name = "Wewelo Repo"
-          url "http://repo.wewelo.com/release"
-      }
+    mavenLocal()
+    jcenter()
+    maven {
+      url 'https://plugins.gradle.org/m2/'
+    }
+    maven {
+      name = "Local dynamodb Repo"
+      //Local DynamoDB repository
+      url "https://s3-us-west-2.amazonaws.com/dynamodb-local/release"
+    }
+    maven {
+      name = "Wewelo Repo"
+      url "http://repo.wewelo.com/release"
+    }
   }
 }
 
 subprojects {
-    apply plugin: 'maven'
-    apply plugin: 'java-library'
+  apply plugin: 'maven'
+  apply plugin: 'java-library'
 
-    sourceCompatibility = 11
-    targetCompatibility = 11
+  sourceCompatibility = 11
+  targetCompatibility = 11
 
-    dependencies {
-        // Test framework
-        testImplementation group: 'junit', name: 'junit', version: '4.12'
-        testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.+'
+  dependencies {
+    // Test framework
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.+'
 
-        implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation 'org.slf4j:slf4j-api:1.7.30'
 
-        // Google Guava
-        implementation 'com.google.guava:guava:28.0-jre'
-        implementation 'org.apache.commons:commons-lang3:3.0'
+    // Google Guava
+    implementation 'com.google.guava:guava:28.0-jre'
+    implementation 'org.apache.commons:commons-lang3:3.0'
 
-        testImplementation 'commons-io:commons-io:2.6'
-        testImplementation "org.assertj:assertj-core:3.18.1"
+    testImplementation 'commons-io:commons-io:2.6'
+    testImplementation "org.assertj:assertj-core:3.18.1"
 
-        // Lombok
-        compile 'org.projectlombok:lombok:1.18.12'  // utilities for POJOs
-        annotationProcessor 'org.projectlombok:lombok:1.18.12'
-        testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
-    }
+    // Lombok
+    compile 'org.projectlombok:lombok:1.18.12' // utilities for POJOs
+    annotationProcessor 'org.projectlombok:lombok:1.18.12'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+  }
 
-    sourceSets {
-        main.java.srcDirs = ['src']
-        main.resources.srcDirs = ['resources']
-        test.java.srcDirs = ['tst']
-        test.resources.srcDirs = ['tst/resources']
-    }
+  sourceSets {
+    main.java.srcDirs = ['src']
+    main.resources.srcDirs = ['resources']
+    test.java.srcDirs = ['tst']
+    test.resources.srcDirs = ['tst/resources']
+  }
 }
 
 project(':archipelago-common') {
-  dependencies {
-  }
+  dependencies {}
 }
 project(':archipelago-common-account') {
   dependencies {
@@ -89,8 +90,7 @@ project(':archipelago-common-clients') {
   }
 }
 project(':archipelago-common-concurrent') {
-  dependencies {
-  }
+  dependencies {}
 }
 project(':archipelago-common-dynamodb') {
   dependencies {
@@ -140,24 +140,24 @@ project(':auth-service') {
     testImplementation 'com.google.code.gson:gson:2.8.6'
     testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+      exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
   }
 
   task runlocal {
-      run.configure {
-          project.logger.lifecycle("======================================")
-          project.logger.lifecycle("= Running application in local stage =")
-          project.logger.lifecycle("======================================")
-          systemProperty "spring.profiles.active", 'local'
-      }
+    run.configure {
+      project.logger.lifecycle("======================================")
+      project.logger.lifecycle("= Running application in local stage =")
+      project.logger.lifecycle("======================================")
+      systemProperty "spring.profiles.active", 'local'
+    }
   }
   runlocal.finalizedBy run
 
   configurations {
-      all {
-          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-      }
+    all {
+      exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
   }
 }
 project(':auth-service-client') {
@@ -208,23 +208,23 @@ project(':build-server-api') {
     testImplementation 'com.google.code.gson:gson:2.8.6'
     testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+      exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
   }
 
   configurations {
-      all {
-          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-      }
+    all {
+      exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
   }
 
   task runlocal {
-      run.configure {
-          project.logger.lifecycle("======================================")
-          project.logger.lifecycle("= Running application in local stage =")
-          project.logger.lifecycle("======================================")
-          systemProperty "spring.profiles.active", 'local'
-      }
+    run.configure {
+      project.logger.lifecycle("======================================")
+      project.logger.lifecycle("= Running application in local stage =")
+      project.logger.lifecycle("======================================")
+      systemProperty "spring.profiles.active", 'local'
+    }
   }
   runlocal.finalizedBy run
 }
@@ -275,25 +275,25 @@ project(':build-server-builder') {
     implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
     implementation 'net.lingala.zip4j:zip4j:2.6.2'
     implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
-    
+
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+      exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
   }
 
   configurations {
-      all {
-          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-      }
+    all {
+      exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
   }
 
   task runlocal {
-      run.configure {
-          project.logger.lifecycle("======================================")
-          project.logger.lifecycle("= Running application in alpha stage =")
-          project.logger.lifecycle("======================================")
-          systemProperty "spring.profiles.active", 'local'
-      }
+    run.configure {
+      project.logger.lifecycle("======================================")
+      project.logger.lifecycle("= Running application in alpha stage =")
+      project.logger.lifecycle("======================================")
+      systemProperty "spring.profiles.active", 'local'
+    }
   }
   runlocal.finalizedBy run
 }
@@ -333,7 +333,6 @@ project(':harbor-service') {
     api project(':build-server-api-client')
     api project(':auth-service-client')
 
-
     compile 'io.jsonwebtoken:jjwt-api:0.11.2'
     runtime 'io.jsonwebtoken:jjwt-impl:0.11.2'
     runtime 'io.jsonwebtoken:jjwt-jackson:0.11.2'
@@ -350,24 +349,24 @@ project(':harbor-service') {
     implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
 
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+      exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
   }
 
   task runlocal {
-      run.configure {
-          project.logger.lifecycle("======================================")
-          project.logger.lifecycle("= Running application in local stage =")
-          project.logger.lifecycle("======================================")
-          systemProperty "spring.profiles.active", 'local'
-      }
+    run.configure {
+      project.logger.lifecycle("======================================")
+      project.logger.lifecycle("= Running application in local stage =")
+      project.logger.lifecycle("======================================")
+      systemProperty "spring.profiles.active", 'local'
+    }
   }
   runlocal.finalizedBy run
 
   configurations {
-      all {
-          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-      }
+    all {
+      exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
   }
 }
 project(':harbor-service-client') {
@@ -411,21 +410,23 @@ project(':maui') {
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.2.3'
   }
   compileJava {
-      options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
+    options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
   }
 
   task fatJar(type: Jar) {
 
-      archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
+    archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
 
-      manifest {
-          attributes 'Main-Class': 'build.archipelago.maui.Application'
+    manifest {
+      attributes 'Main-Class': 'build.archipelago.maui.Application'
+    }
+    baseName = 'Maui-cli'
+    from {
+      configurations.runtimeClasspath.collect {
+        it.isDirectory() ? it : zipTree(it)
       }
-      baseName = 'Maui-cli'
-      from {
-          configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-      }
-      with jar
+    }
+    with jar
   }
 }
 project(':maui-common') {
@@ -480,7 +481,7 @@ project(':package-service') {
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'org.springframework.boot'
   apply plugin: 'application'
-  
+
   mainClassName = 'build.archipelago.packageservice.PackageServiceApplication'
 
   dependencies {
@@ -507,23 +508,23 @@ project(':package-service') {
 
     testImplementation 'com.google.code.gson:gson:2.8.6'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+      exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
   }
 
   configurations {
-      all {
-          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-      }
+    all {
+      exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
   }
 
   task runlocal {
-      run.configure {
-          project.logger.lifecycle("======================================")
-          project.logger.lifecycle("= Running application in local stage =")
-          project.logger.lifecycle("======================================")
-          systemProperty "spring.profiles.active", 'local'
-      }
+    run.configure {
+      project.logger.lifecycle("======================================")
+      project.logger.lifecycle("= Running application in local stage =")
+      project.logger.lifecycle("======================================")
+      systemProperty "spring.profiles.active", 'local'
+    }
   }
   runlocal.finalizedBy run
 }
@@ -585,7 +586,7 @@ project(':version-set-service') {
     testImplementation 'com.google.code.gson:gson:2.8.6'
     testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+      exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
 
     // Needed for DynamoDBLocal
@@ -594,21 +595,21 @@ project(':version-set-service') {
   }
 
   configurations {
-      all {
-          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-      }
+    all {
+      exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
   }
   bootJar {
-      archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
+    archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
   }
 
   task runlocal {
-      run.configure {
-          project.logger.lifecycle("======================================")
-          project.logger.lifecycle("= Running application in alpha stage =")
-          project.logger.lifecycle("======================================")
-          systemProperty "spring.profiles.active", 'local'
-      }
+    run.configure {
+      project.logger.lifecycle("======================================")
+      project.logger.lifecycle("= Running application in alpha stage =")
+      project.logger.lifecycle("======================================")
+      systemProperty "spring.profiles.active", 'local'
+    }
   }
   runlocal.finalizedBy run
 }
