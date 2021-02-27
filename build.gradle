@@ -1,0 +1,644 @@
+buildscript {
+    repositories {
+      maven {
+        url "https://plugins.gradle.org/m2/"
+      }
+    }
+
+    dependencies {
+      classpath("org.springframework.boot:spring-boot-gradle-plugin:2.2.6.RELEASE")
+    }
+}
+
+allprojects {
+  group "build.archipelago"
+  version "1.0"
+
+  repositories {
+      mavenLocal()
+      jcenter()
+      maven { url 'https://plugins.gradle.org/m2/' }
+      maven {
+          name = "Local dynamodb Repo"
+          //Local DynamoDB repository
+          url "https://s3-us-west-2.amazonaws.com/dynamodb-local/release"
+      }
+      maven {
+          name = "Wewelo Repo"
+          url "http://repo.wewelo.com/release"
+      }
+  }
+}
+
+subprojects {
+    apply plugin: 'maven'
+    apply plugin: 'java-library'
+
+    sourceCompatibility = 11
+    targetCompatibility = 11
+
+    dependencies {
+        // Test framework
+        testImplementation group: 'junit', name: 'junit', version: '4.12'
+        testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.+'
+
+        implementation 'org.slf4j:slf4j-api:1.7.30'
+
+        // Google Guava
+        implementation 'com.google.guava:guava:28.0-jre'
+        implementation 'org.apache.commons:commons-lang3:3.0'
+
+        testImplementation 'commons-io:commons-io:2.6'
+        testImplementation "org.assertj:assertj-core:3.18.1"
+
+        // Lombok
+        compile 'org.projectlombok:lombok:1.18.12'  // utilities for POJOs
+        annotationProcessor 'org.projectlombok:lombok:1.18.12'
+        testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+    }
+
+    sourceSets {
+        main.java.srcDirs = ['src']
+        main.resources.srcDirs = ['resources']
+        test.java.srcDirs = ['tst']
+        test.resources.srcDirs = ['tst/resources']
+    }
+}
+
+project(':archipelago-common') {
+  dependencies {
+  }
+}
+project(':archipelago-common-account') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-dynamodb')
+    api project(':version-set-service-client')
+    api project(':package-service-client')
+
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+  }
+}
+project(':archipelago-common-clients') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-rest')
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.1'
+  }
+}
+project(':archipelago-common-concurrent') {
+  dependencies {
+  }
+}
+project(':archipelago-common-dynamodb') {
+  dependencies {
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+  }
+}
+project(':archipelago-common-github') {
+  dependencies {
+    api project(':archipelago-common')
+
+    implementation "net.minidev:json-smart:2.3"
+  }
+}
+project(':archipelago-common-rest') {
+  dependencies {
+    implementation project(':archipelago-common');
+
+    implementation 'org.springframework:spring-web:5.2.5.RELEASE'
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.33'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.1'
+  }
+}
+project(':auth-service') {
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'org.springframework.boot'
+  apply plugin: 'application'
+
+  mainClassName = 'build.archipelago.authservice.AuthServiceApplication'
+
+  dependencies {
+    api project(':auth-service-models')
+    api project(':auth-service-client')
+    api project(':archipelago-common-dynamodb')
+    api project(':archipelago-common-rest')
+    api project(':archipelago-common')
+
+    compile 'io.jsonwebtoken:jjwt-api:0.11.2'
+    runtime 'io.jsonwebtoken:jjwt-impl:0.11.2'
+    runtime 'io.jsonwebtoken:jjwt-jackson:0.11.2'
+
+    implementation 'org.springframework.boot:spring-boot-starter-jersey'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+    testImplementation 'com.google.code.gson:gson:2.8.6'
+    testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+  }
+
+  task runlocal {
+      run.configure {
+          project.logger.lifecycle("======================================")
+          project.logger.lifecycle("= Running application in local stage =")
+          project.logger.lifecycle("======================================")
+          systemProperty "spring.profiles.active", 'local'
+      }
+  }
+  runlocal.finalizedBy run
+
+  configurations {
+      all {
+          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+      }
+  }
+}
+project(':auth-service-client') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-clients')
+    api project(':archipelago-common-rest')
+    api project(':auth-service-models')
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+  }
+}
+project(':auth-service-models') {
+  dependencies {
+    api project(':archipelago-common')
+  }
+}
+project(':build-server-api') {
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'org.springframework.boot'
+  apply plugin: 'application'
+
+  mainClassName = 'build.archipelago.buildserver.BuildServerAPIApplication'
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-dynamodb')
+    api project(':archipelago-common-clients')
+    api project(':version-set-service-client')
+    api project(':package-service-client')
+    api project(':maui-core')
+    api project(':build-server-common')
+    api project(':build-server-models')
+    api project(':archipelago-common-rest')
+    implementation project(':build-server-api-client')
+
+    implementation 'org.springframework.boot:spring-boot-starter-jersey'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+    implementation 'org.springframework.security:spring-security-config'
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+    implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
+
+    testImplementation 'com.google.code.gson:gson:2.8.6'
+    testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+  }
+
+  configurations {
+      all {
+          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+      }
+  }
+
+  task runlocal {
+      run.configure {
+          project.logger.lifecycle("======================================")
+          project.logger.lifecycle("= Running application in local stage =")
+          project.logger.lifecycle("======================================")
+          systemProperty "spring.profiles.active", 'local'
+      }
+  }
+  runlocal.finalizedBy run
+}
+project(':build-server-api-client') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-clients')
+    api project(':archipelago-common-rest')
+    api project(':build-server-models')
+    api project(':version-set-service-models')
+    api project(':package-service-models')
+
+    api project(':version-set-service-client') // TODO: Remove this
+    api project(':package-service-client') // TODO: Remove this
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+  }
+}
+project(':build-server-builder') {
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'org.springframework.boot'
+  apply plugin: 'application'
+
+  mainClassName = 'build.archipelago.buildserver.builder.BuilderApplication'
+
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-clients')
+    api project(':archipelago-common-concurrent')
+    api project(':archipelago-common-github')
+    api project(':archipelago-common-account')
+    api project(':build-server-common')
+    api project(':build-server-models')
+    api project(':maui-core')
+    api project(':version-set-service-client')
+    api project(':package-service-client')
+    api project(':harbor-service-client')
+
+    implementation 'com.wewelo:SQSConsumer:1.1'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+
+    implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
+    implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
+    implementation 'org.jgrapht:jgrapht-core:1.5.0'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+    implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
+    implementation 'net.lingala.zip4j:zip4j:2.6.2'
+    implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
+    
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+  }
+
+  configurations {
+      all {
+          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+      }
+  }
+
+  task runlocal {
+      run.configure {
+          project.logger.lifecycle("======================================")
+          project.logger.lifecycle("= Running application in alpha stage =")
+          project.logger.lifecycle("======================================")
+          systemProperty "spring.profiles.active", 'local'
+      }
+  }
+  runlocal.finalizedBy run
+}
+project(':build-server-common') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-dynamodb')
+    api project(':version-set-service-client')
+    api project(':package-service-client')
+    api project(':maui-core')
+    api project(':build-server-models')
+
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+    implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
+  }
+}
+project(':build-server-models') {
+  dependencies {
+    api project(':archipelago-common')
+  }
+}
+project(':harbor-service') {
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'org.springframework.boot'
+  apply plugin: 'application'
+
+  mainClassName = 'build.archipelago.harbor.HarborServiceApplication'
+
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-clients')
+    api project(':archipelago-common-rest')
+    api project(':archipelago-common-github')
+    api project(':archipelago-common-account')
+    api project(':version-set-service-client')
+    api project(':package-service-client')
+    api project(':build-server-api-client')
+    api project(':auth-service-client')
+
+
+    compile 'io.jsonwebtoken:jjwt-api:0.11.2'
+    runtime 'io.jsonwebtoken:jjwt-impl:0.11.2'
+    runtime 'io.jsonwebtoken:jjwt-jackson:0.11.2'
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'net.dongliu:gson-java8-datatype:1.1.0'
+
+    implementation 'org.springframework.boot:spring-boot-starter-jersey'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+    implementation 'com.amazonaws:aws-java-sdk-cognitoidp:1.11.928'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+    implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.880'
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+  }
+
+  task runlocal {
+      run.configure {
+          project.logger.lifecycle("======================================")
+          project.logger.lifecycle("= Running application in local stage =")
+          project.logger.lifecycle("======================================")
+          systemProperty "spring.profiles.active", 'local'
+      }
+  }
+  runlocal.finalizedBy run
+
+  configurations {
+      all {
+          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+      }
+  }
+}
+project(':harbor-service-client') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-clients')
+    api project(':archipelago-common-rest')
+    api project(':version-set-service-client')
+    api project(':package-service-client')
+    api project(':version-set-service-models')
+    api project(':package-service-models')
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+  }
+}
+project(':maui') {
+  apply plugin: 'java'
+  apply plugin: 'org.springframework.boot'
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'application'
+
+  mainClassName = 'build.archipelago.maui.Application'
+
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-concurrent')
+    api project(':maui-core')
+    api project(':harbor-service-client')
+    api project(':package-service-models')
+    api project(':version-set-service-models')
+
+    implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
+    implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
+
+    implementation 'com.google.inject:guice:4.2.3'
+    implementation 'info.picocli:picocli:4.1.4'
+    annotationProcessor 'info.picocli:picocli-codegen:4.1.4'
+    implementation 'org.jgrapht:jgrapht-core:1.5.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.2.3'
+  }
+  compileJava {
+      options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
+  }
+
+  task fatJar(type: Jar) {
+
+      archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
+
+      manifest {
+          attributes 'Main-Class': 'build.archipelago.maui.Application'
+      }
+      baseName = 'Maui-cli'
+      from {
+          configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+      }
+      with jar
+  }
+}
+project(':maui-common') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-concurrent')
+    api project(':archipelago-common-github')
+    api project(':harbor-service-client')
+    api project(':package-service-models')
+
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    implementation 'net.lingala.zip4j:zip4j:2.6.2'
+    implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
+  }
+}
+project(':maui-core') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-concurrent')
+    api project(':maui-common')
+    api project(':maui-path')
+    api project(':maui-graph')
+    api project(':version-set-service-client')
+    api project(':package-service-client')
+    api project(':harbor-service-client')
+    api project(':archipelago-common-github')
+
+    implementation 'org.slf4j:slf4j-api:1.7.30'
+  }
+}
+project(':maui-graph') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':maui-common')
+    api project(':package-service-models')
+
+    implementation 'org.jgrapht:jgrapht-core:1.5.0'
+  }
+}
+project(':maui-path') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':maui-common')
+    api project(':maui-graph')
+    api project(':package-service-models')
+
+    implementation 'org.jgrapht:jgrapht-core:1.5.0'
+  }
+}
+project(':package-service') {
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'org.springframework.boot'
+  apply plugin: 'application'
+  
+  mainClassName = 'build.archipelago.packageservice.PackageServiceApplication'
+
+  dependencies {
+    implementation project(':archipelago-common')
+    implementation project(':archipelago-common-github')
+    implementation project(':archipelago-common-rest')
+    implementation project(':archipelago-common-account')
+    implementation project(':package-service-core')
+    implementation project(':package-service-models')
+    implementation project(':package-service-client')
+
+    implementation 'org.springframework.boot:spring-boot-starter-jersey'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+    implementation 'org.springframework.security:spring-security-config'
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.11.880'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+
+    testImplementation 'com.google.code.gson:gson:2.8.6'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+  }
+
+  configurations {
+      all {
+          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+      }
+  }
+
+  task runlocal {
+      run.configure {
+          project.logger.lifecycle("======================================")
+          project.logger.lifecycle("= Running application in local stage =")
+          project.logger.lifecycle("======================================")
+          systemProperty "spring.profiles.active", 'local'
+      }
+  }
+  runlocal.finalizedBy run
+}
+project(':package-service-client') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-clients')
+    api project(':package-service-models')
+    api project(':archipelago-common-rest')
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+  }
+}
+project(':package-service-core') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-github')
+    api project(':archipelago-common-dynamodb')
+    api project(':archipelago-common-account')
+    api project(':package-service-models')
+
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.11.880'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+  }
+}
+project(':package-service-models') {
+  dependencies {
+    api project(':archipelago-common')
+  }
+}
+project(':version-set-service') {
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'org.springframework.boot'
+  apply plugin: 'application'
+
+  mainClassName = 'build.archipelago.versionsetservice.VersionSetServiceApplication'
+
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-clients')
+    api project(':archipelago-common-rest')
+    api project(':version-set-service-core')
+    api project(':version-set-service-client')
+    api project(':version-set-service-models')
+    api project(':package-service-client')
+
+    implementation 'org.springframework.boot:spring-boot-starter-jersey'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+    implementation 'org.springframework.security:spring-security-config'
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+
+    // Test framework
+    testImplementation 'com.google.code.gson:gson:2.8.6'
+    testImplementation 'net.dongliu:gson-java8-datatype:1.1.0'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+
+    // Needed for DynamoDBLocal
+    testImplementation 'com.amazonaws:DynamoDBLocal:1.12.0'
+    testImplementation 'com.almworks.sqlite4java:sqlite4java:1.0.392'
+  }
+
+  configurations {
+      all {
+          exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+      }
+  }
+  bootJar {
+      archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
+  }
+
+  task runlocal {
+      run.configure {
+          project.logger.lifecycle("======================================")
+          project.logger.lifecycle("= Running application in alpha stage =")
+          project.logger.lifecycle("======================================")
+          systemProperty "spring.profiles.active", 'local'
+      }
+  }
+  runlocal.finalizedBy run
+}
+project(':version-set-service-client') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-clients')
+    api project(':version-set-service-models')
+    api project(':package-service-models')
+    implementation project(':package-service-client')
+    api project(':archipelago-common-rest')
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+  }
+}
+project(':version-set-service-core') {
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-dynamodb')
+    api project(':version-set-service-models')
+    api project(':package-service-client')
+    api project(':archipelago-common-clients')
+
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+  }
+}
+project(':version-set-service-models') {
+  dependencies {
+    api project(':archipelago-common')
+
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
+  }
+}
