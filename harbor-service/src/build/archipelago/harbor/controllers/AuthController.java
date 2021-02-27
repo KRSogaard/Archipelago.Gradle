@@ -7,10 +7,10 @@ import build.archipelago.authservice.models.rest.*;
 import build.archipelago.harbor.models.auth.ActivateDeviceRestRequest;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.harbor.filters.*;
-import build.archipelago.harbor.models.auth.LogInRestRequest;
 import com.google.common.base.*;
 import lombok.extern.slf4j.*;
 import org.springframework.web.bind.annotation.*;
+import build.archipelago.harbor.models.auth.LogInRestRequest;
 
 @RestController
 @RequestMapping("/auth")
