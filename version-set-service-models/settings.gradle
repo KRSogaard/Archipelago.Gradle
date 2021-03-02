@@ -1,5 +1,0 @@
-rootProject.name = "version-set-service-models"
-
-if (file("../archipelago-common").exists()) {
-    includeBuild "../archipelago-common"
-}

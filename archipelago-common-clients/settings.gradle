@@ -1,8 +1,0 @@
-rootProject.name = "common-clients"
-
-if (file("../archipelago-common").exists()) {
-    includeBuild "../archipelago-common"
-}
-if (file("../archipelago-common-rest").exists()) {
-    includeBuild "../archipelago-common-rest"
-}

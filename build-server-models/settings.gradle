@@ -1,5 +1,0 @@
-rootProject.name = "build-server-models"
-
-if (file("../archipelago-common").exists()) {
-    includeBuild "../archipelago-common"
-}
