@@ -85,7 +85,9 @@ project(':archipelago-common-clients') {
     api project(':archipelago-common')
     api project(':archipelago-common-rest')
 
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.1'
   }
 }
@@ -110,7 +112,9 @@ project(':archipelago-common-rest') {
 
     implementation 'org.springframework:spring-web:5.2.5.RELEASE'
     implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.33'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.1'
   }
 }
@@ -167,7 +171,9 @@ project(':auth-service-client') {
     api project(':archipelago-common-rest')
     api project(':auth-service-models')
 
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
   }
 }
 project(':auth-service-models') {
@@ -240,7 +246,9 @@ project(':build-server-api-client') {
     api project(':version-set-service-client') // TODO: Remove this
     api project(':package-service-client') // TODO: Remove this
 
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
   }
 }
 project(':build-server-builder') {
@@ -379,7 +387,9 @@ project(':harbor-service-client') {
     api project(':version-set-service-models')
     api project(':package-service-models')
 
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
   }
 }
 project(':maui') {
@@ -406,8 +416,9 @@ project(':maui') {
     implementation 'info.picocli:picocli:4.1.4'
     annotationProcessor 'info.picocli:picocli-codegen:4.1.4'
     implementation 'org.jgrapht:jgrapht-core:1.5.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.2.3'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
   }
   compileJava {
     options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
@@ -438,7 +449,9 @@ project(':maui-common') {
     api project(':package-service-models')
 
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.3.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
     implementation 'net.lingala.zip4j:zip4j:2.6.2'
     implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
   }
@@ -535,7 +548,9 @@ project(':package-service-client') {
     api project(':package-service-models')
     api project(':archipelago-common-rest')
 
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
   }
 }
 project(':package-service-core') {
@@ -622,7 +637,9 @@ project(':version-set-service-client') {
     implementation project(':package-service-client')
     api project(':archipelago-common-rest')
 
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
   }
 }
 project(':version-set-service-core') {
@@ -640,6 +657,8 @@ project(':version-set-service-models') {
   dependencies {
     api project(':archipelago-common')
 
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
   }
 }

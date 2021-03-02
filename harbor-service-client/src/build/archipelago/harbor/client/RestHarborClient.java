@@ -157,7 +157,7 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
         GetBuildArtifactRestResponse restResponse;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest request = this.getOAuthRequest("/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash() + "/artifact")
+            HttpRequest request = this.getOAuthRequest("/packages/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash() + "/artifact")
                     .GET()
                     .build();
             httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -199,7 +199,7 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
 
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = this.getOAuthRequest("/package")
+            HttpRequest httpRequest = this.getOAuthRequest("/packages")
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
                     .header("accept", "application/json")
                     .build();
@@ -230,7 +230,7 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
 
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest request = this.getOAuthRequest("/package/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash() + "/config")
+            HttpRequest request = this.getOAuthRequest("/packages/" + pkg.getName() + "/" + pkg.getVersion() + "/" + pkg.getHash() + "/config")
                     .GET()
                     .build();
             httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -261,7 +261,7 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
         GetPackageRestResponse response;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest request = this.getOAuthRequest("/package/" + name)
+            HttpRequest request = this.getOAuthRequest("/packages/" + name)
                     .GET()
                     .build();
 
