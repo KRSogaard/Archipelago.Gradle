@@ -77,9 +77,8 @@ public class MauiPath {
             DependencyTransversalType transversalType = getTransversalType(pathProperties.transversalType);
             ArchipelagoDependencyGraph graph = dependencyGraphGenerator.generateGraph(workspaceContext, targetPackage, transversalType);
 
-            Iterator<ArchipelagoPackage> iterator = new DepthFirstIterator<>(graph, targetPackage);
-            while (iterator.hasNext()) {
-                ArchipelagoPackage pkg = iterator.next();
+            ImmutableList<ArchipelagoPackage> packages = ImmutableList.copyOf(new DepthFirstIterator<>(graph, targetPackage));
+            for (ArchipelagoPackage pkg : packages) {
                 if (!transversalType.includeRoot() && targetPackage.equals(pkg)) {
                     continue;
                 }

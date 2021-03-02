@@ -54,7 +54,7 @@ public class WorkspaceRemoveAction extends BaseAction {
                 workspaceContext.removeLocalPackage(cleanPKGName);
                 workspaceContext.save();
 
-                out.write("Successfully added %s to the workspace", cleanPKGName);
+                out.write("Successfully removed %s to the workspace", cleanPKGName);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
