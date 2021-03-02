@@ -60,7 +60,6 @@ public class WorkspaceContext extends Workspace {
 
     // TODO: Change this to be aware of the cached packages
     public Path getPackageRoot(ArchipelagoPackage pkg) throws PackageNotFoundException {
-
         if (this.getLocalArchipelagoPackages().stream().anyMatch(lPKG -> lPKG.equals(pkg))) {
             log.debug("The package '{}' is local", pkg.getName());
             Path packagePath = root.resolve(pkg.getName());
@@ -70,6 +69,7 @@ public class WorkspaceContext extends Workspace {
                         pkg.getNameVersion(), root);
                 throw new PackageNotFoundException(pkg);
             }
+            log.trace("Found local package '{}' at '{}'", pkg, packagePath);
             return packagePath;
         } else {
             log.debug("The package '{}' is not local, checking the cache", pkg.getName());
@@ -79,7 +79,10 @@ public class WorkspaceContext extends Workspace {
                     log.debug("The package '{}' was not in the version set '{}'", pkg.getNameVersion(), this.getVersionSet());
                     throw new PackageNotFoundException(pkg);
                 }
-                return packageCacher.getCachePath(buildPackage.get());
+                log.debug("Mapped package '{}' to cache '{}'", pkg, buildPackage.get());
+                Path packagePath = packageCacher.getCachePath(buildPackage.get());
+                log.trace("Found package '{}' cache at '{}'", pkg, packagePath);
+                return packagePath;
             } catch (VersionSetNotSyncedException exp) {
                 log.error("The version set has not been synced");
                 throw new PackageNotFoundException(pkg);
@@ -124,7 +127,7 @@ public class WorkspaceContext extends Workspace {
     }
 
     public BuildConfig getConfig(ArchipelagoPackage pkg) throws PackageNotLocalException,
-            PackageNotFoundException, VersionSetNotSyncedException, PackageNotInVersionSetException, LocalPackageMalformedException {
+            PackageNotFoundException, LocalPackageMalformedException {
         Preconditions.checkNotNull(pkg);
 
         BuildConfig buildConfig = configCache.getIfPresent(pkg.getNameVersion());
