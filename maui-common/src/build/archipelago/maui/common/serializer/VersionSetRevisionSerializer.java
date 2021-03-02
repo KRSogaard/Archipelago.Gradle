@@ -50,27 +50,27 @@ public class VersionSetRevisionSerializer {
                 .build();
     }
 
-    public static void save(VersionSetRevision revision, Path workspaceRoot) throws IOException {
+    public static void save(VersionSetRevision revision, Path workspaceRoot) {
         Preconditions.checkNotNull(revision);
         Preconditions.checkNotNull(workspaceRoot);
 
-        Path tempDir = workspaceRoot.resolve(WorkspaceConstants.TEMP_FOLDER);
-        if (Files.notExists(tempDir)) {
-            Files.createDirectory(tempDir);
+        try {
+            Path tempDir = workspaceRoot.resolve(WorkspaceConstants.TEMP_FOLDER);
+            if (Files.notExists(tempDir)) {
+                Files.createDirectory(tempDir);
+            }
+            Path cacheFile = tempDir.resolve(WorkspaceConstants.VERSION_SET_REVISION_CACHE);
+            if (Files.exists(cacheFile)) {
+                log.warn("Version-set revision file '{}' already exists, we will override it", cacheFile.toString());
+            }
+            VersionSetRevisionSerializer vsrs = VersionSetRevisionSerializer.convert(revision);
+            mapper.writeValue(cacheFile.toFile(), vsrs);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        String td = tempDir.toString();
-
-        Path cacheFile = tempDir.resolve(WorkspaceConstants.VERSION_SET_REVISION_CACHE);
-        if (Files.exists(cacheFile)) {
-            log.warn("Version-set revision file '{}' already exists, we will override it", cacheFile.toString());
-        }
-        String cf = cacheFile.toString();
-
-        VersionSetRevisionSerializer vsrs = VersionSetRevisionSerializer.convert(revision);
-        mapper.writeValue(cacheFile.toFile(), vsrs);
     }
 
-    public static VersionSetRevision load(Path workspaceRoot) throws IOException, VersionSetNotSyncedException {
+    public static VersionSetRevision load(Path workspaceRoot) throws VersionSetNotSyncedException {
         Preconditions.checkNotNull(workspaceRoot);
 
         Path revisionCacheFile = workspaceRoot
@@ -80,16 +80,24 @@ public class VersionSetRevisionSerializer {
             throw new VersionSetNotSyncedException();
         }
 
-        VersionSetRevisionSerializer vsrs = mapper.readValue(revisionCacheFile.toFile(), VersionSetRevisionSerializer.class);
-        return VersionSetRevisionSerializer.convert(vsrs);
+        try {
+            VersionSetRevisionSerializer vsrs = mapper.readValue(revisionCacheFile.toFile(), VersionSetRevisionSerializer.class);
+            return VersionSetRevisionSerializer.convert(vsrs);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void clear(Path workspaceRoot) throws IOException {
+    public static void clear(Path workspaceRoot) {
         Preconditions.checkNotNull(workspaceRoot);
 
         Path revisionCacheFile = workspaceRoot
                 .resolve(WorkspaceConstants.TEMP_FOLDER)
                 .resolve(WorkspaceConstants.VERSION_SET_REVISION_CACHE);
-        Files.deleteIfExists(revisionCacheFile);
+        try {
+            Files.deleteIfExists(revisionCacheFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

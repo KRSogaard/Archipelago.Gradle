@@ -284,11 +284,7 @@ public class VersionSetBuilder {
                                 builtPackage.getName(), gitCommit);
                         try {
                             String configContent;
-                            try {
-                                configContent = Files.readString(wsContext.getPackageRoot(builtPackage).resolve(WorkspaceConstants.BUILD_FILE_NAME));
-                            } catch (PackageNotLocalException e) {
-                                throw new RuntimeException("Where not able to find the package dir for " + builtPackage, e);
-                            }
+                            configContent = Files.readString(wsContext.getPackageRoot(builtPackage).resolve(WorkspaceConstants.BUILD_FILE_NAME));
 
                             Path zip = this.prepareBuildZip(builtPackage);
                             buildHash = packageServiceClient.uploadBuiltArtifact(accountDetails.getId(), UploadPackageRequest.builder()
@@ -464,8 +460,6 @@ public class VersionSetBuilder {
         } catch (VersionSetNotSyncedException e) {
             log.error("The workspace has not been synced");
             throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
         return null;
     }
@@ -506,8 +500,6 @@ public class VersionSetBuilder {
         } catch (VersionSetDoseNotExistsException e) {
             log.error("The version-set did not exists, can't sync", e);
             throw new FailBuildException();
-        } catch (IOException e) {
-            log.error("Was unable to create local version-set revision", e);
         }
         boolean successful = maui.syncWorkspace(new ConsoleOutputWrapper(), executorService);
         if (!successful) {

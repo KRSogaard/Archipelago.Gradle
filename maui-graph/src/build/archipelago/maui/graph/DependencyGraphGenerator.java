@@ -71,12 +71,7 @@ public class DependencyGraphGenerator {
             if (pkg == null) {
                 break;
             }
-            BuildConfig buildConfig = null;
-            try {
-                buildConfig = workspaceContext.getConfig(context.getBuildPackage(pkg));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            BuildConfig buildConfig = workspaceContext.getConfig(context.getBuildPackage(pkg));
             addPackageToGraph(context, pkg, buildConfig, transversalType.getTransitiveDependencyTypes());
         }
 

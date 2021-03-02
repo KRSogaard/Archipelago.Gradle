@@ -1,6 +1,7 @@
 package build.archipelago.maui.common.models;
 
 import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.exceptions.PackageNotLocalException;
 import build.archipelago.maui.common.serializer.BuildConfigSerializer;
 import lombok.*;
 
@@ -21,7 +22,7 @@ public class BuildConfig {
     private List<ArchipelagoPackage> removeDependencies;
     private List<ArchipelagoPackage> resolveConflicts;
 
-    public static BuildConfig from(Path path) throws IOException {
+    public static BuildConfig from(Path path) throws PackageNotLocalException {
         return BuildConfigSerializer.load(path);
     }
 

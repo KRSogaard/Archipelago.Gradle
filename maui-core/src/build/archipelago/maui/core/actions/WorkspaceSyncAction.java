@@ -83,11 +83,7 @@ public class WorkspaceSyncAction extends BaseAction {
         if (!this.syncVersionSet(vs, versionSetRevision)) {
             return false;
         }
-        try {
-            workspaceContext.saveRevisionCache(versionSetRevision);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        workspaceContext.saveRevisionCache(versionSetRevision);
 
         return true;
     }

@@ -1,6 +1,7 @@
 package build.archipelago.maui.core.actions;
 
 import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.exceptions.PackageNotLocalException;
 import build.archipelago.maui.common.contexts.*;
 import build.archipelago.maui.common.models.BuildConfig;
 import build.archipelago.maui.core.output.OutputWrapper;
@@ -58,7 +59,7 @@ public abstract class BaseAction {
         buildConfig = null;
         try {
             buildConfig = BuildConfig.from(pkgDir);
-        } catch (IOException e) {
+        } catch (PackageNotLocalException e) {
             log.error("Failed to load build config from package", e);
             return false;
         }

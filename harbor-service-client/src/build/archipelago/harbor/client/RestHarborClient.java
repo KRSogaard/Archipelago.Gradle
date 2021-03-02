@@ -35,7 +35,7 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
         VersionSetRestResponse response;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = this.getOAuthRequest("/version-set/" + versionSetName)
+            HttpRequest httpRequest = this.getOAuthRequest("/version-sets/" + versionSetName)
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -73,7 +73,7 @@ public class RestHarborClient extends OAuthRestClient implements HarborClient {
         VersionSetRevisionRestResponse response;
         HttpResponse<String> httpResponse;
         try {
-            HttpRequest httpRequest = this.getOAuthRequest("/version-set/" + versionSetName + "/" + revisionId)
+            HttpRequest httpRequest = this.getOAuthRequest("/version-sets/" + versionSetName + "/" + revisionId)
                     .GET()
                     .build();
             httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());

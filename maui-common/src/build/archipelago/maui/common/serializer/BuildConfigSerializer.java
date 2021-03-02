@@ -1,6 +1,7 @@
 package build.archipelago.maui.common.serializer;
 
 import build.archipelago.common.ArchipelagoPackage;
+import build.archipelago.common.exceptions.PackageNotLocalException;
 import build.archipelago.maui.common.WorkspaceConstants;
 import build.archipelago.maui.common.models.BuildConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -105,14 +106,17 @@ public class BuildConfigSerializer {
         mapper.writeValue(buildFilePath.toFile(), bcs);
     }
 
-    public static BuildConfig load(Path packageRoot) throws IOException {
+    public static BuildConfig load(Path packageRoot) throws PackageNotLocalException {
         Path buildFilePath = packageRoot.resolve(WorkspaceConstants.BUILD_FILE_NAME);
         if (Files.notExists(buildFilePath)) {
-            throw new IOException(String.format("Could not find the package file \"%s\" in \"%s\"",
+            throw new PackageNotLocalException(String.format("Could not find the package file \"%s\" in \"%s\"",
                     WorkspaceConstants.BUILD_FILE_NAME, packageRoot));
         }
-
-        BuildConfigSerializer bcs = mapper.readValue(buildFilePath.toFile(), BuildConfigSerializer.class);
-        return BuildConfigSerializer.convert(bcs);
+        try {
+            BuildConfigSerializer bcs = mapper.readValue(buildFilePath.toFile(), BuildConfigSerializer.class);
+            return BuildConfigSerializer.convert(bcs);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
