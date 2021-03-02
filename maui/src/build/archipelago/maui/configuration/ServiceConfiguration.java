@@ -99,6 +99,7 @@ public class ServiceConfiguration extends AbstractModule {
     public MauiPath mauiPath(DependencyGraphGenerator dependencyGraphGenerator) {
         return new MauiPath(List.of(
                 new BinRecipe(),
+                new ClasspathRecipe(),
                 new PackageRecipe()
         ), dependencyGraphGenerator);
     }

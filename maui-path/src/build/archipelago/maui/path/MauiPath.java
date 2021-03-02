@@ -25,6 +25,10 @@ public class MauiPath {
         this.recipes = recipes;
     }
 
+//    public void LoadRecipesFromClasspath(String classPath) {
+//
+//    }
+
     public ImmutableList<String> getPaths(WorkspaceContext workspaceContext, ArchipelagoPackage targetpackage,
                                           DependencyTransversalType dependencyTransversalType, Class recipe)
             throws Exception {

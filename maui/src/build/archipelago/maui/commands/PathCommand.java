@@ -43,12 +43,12 @@ public class PathCommand extends BaseAction implements Callable<Integer> {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (String p : paths) {
-            sb.append(p);
             if(first) {
                 first = false;
             } else {
                 sb.append(";");
             }
+            sb.append(p);
         }
         out.write(sb.toString());
         return 0;

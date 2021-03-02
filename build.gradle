@@ -488,6 +488,7 @@ project(':maui-path') {
     api project(':package-service-models')
 
     implementation 'org.jgrapht:jgrapht-core:1.5.0'
+    implementation 'commons-io:commons-io:2.6'
   }
 }
 project(':package-service') {
