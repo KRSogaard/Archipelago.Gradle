@@ -1,1 +1,0 @@
-Get-ChildItem | where { $_.PsIsContainer } | foreach { echo $_.name; cd $_.name; gradle publishToMavenLocal; cd .. }

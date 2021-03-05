@@ -10,6 +10,11 @@ buildscript {
   }
 }
 
+plugins {
+  id 'com.palantir.docker' version '0.26.0'
+  id 'com.palantir.docker-compose' version '0.26.0'
+}
+
 allprojects {
   group "build.archipelago"
   version "1.0"
@@ -122,6 +127,8 @@ project(':auth-service') {
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'org.springframework.boot'
   apply plugin: 'application'
+  apply plugin: 'com.palantir.docker'
+  apply plugin: 'com.palantir.docker-compose'
 
   mainClassName = 'build.archipelago.authservice.AuthServiceApplication'
 
@@ -146,6 +153,9 @@ project(':auth-service') {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
       exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+
+    // name for docker-compose
+    docker "${group}:${project.name}:${version}"
   }
 
   task runlocal {
@@ -162,6 +172,26 @@ project(':auth-service') {
     all {
       exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
+  }
+
+  docker {
+    dockerfile file('resources/docker/Dockerfile')
+    files project.tasks.bootJar.outputs
+    copySpec.into("/opt")
+    noCache true
+    name "${project.group}/${project.name}:latest"
+    buildArgs([
+            APP_JAR_NAME: "${project.tasks.bootJar.archiveFileName.get()}" ,
+    ])
+  }
+
+  dockerCompose {
+    template "resources/docker/docker-compose.template.yml"
+    templateTokens([
+            'service.image': "${project.group}/${project.name}:latest",
+            'service.name': project.name
+    ])
+    dockerComposeFile "$buildDir/docker/docker-compose.yml"
   }
 }
 project(':auth-service-client') {
@@ -185,6 +215,8 @@ project(':build-server-api') {
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'org.springframework.boot'
   apply plugin: 'application'
+  apply plugin: 'com.palantir.docker'
+  apply plugin: 'com.palantir.docker-compose'
 
   mainClassName = 'build.archipelago.buildserver.BuildServerAPIApplication'
   dependencies {
@@ -216,6 +248,9 @@ project(':build-server-api') {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
       exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+
+    // name for docker-compose
+    docker "${group}:${project.name}:${version}"
   }
 
   configurations {
@@ -233,6 +268,26 @@ project(':build-server-api') {
     }
   }
   runlocal.finalizedBy run
+
+  docker {
+    dockerfile file('resources/docker/Dockerfile')
+    files project.tasks.bootJar.outputs
+    copySpec.into("/opt")
+    noCache true
+    name "${project.group}/${project.name}:latest"
+    buildArgs([
+            APP_JAR_NAME: "${project.tasks.bootJar.archiveFileName.get()}" ,
+    ])
+  }
+
+  dockerCompose {
+    template "resources/docker/docker-compose.template.yml"
+    templateTokens([
+            'service.image': "${project.group}/${project.name}:latest",
+            'service.name': project.name
+    ])
+    dockerComposeFile "$buildDir/docker/docker-compose.yml"
+  }
 }
 project(':build-server-api-client') {
   dependencies {
@@ -255,6 +310,8 @@ project(':build-server-builder') {
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'org.springframework.boot'
   apply plugin: 'application'
+  apply plugin: 'com.palantir.docker'
+  apply plugin: 'com.palantir.docker-compose'
 
   mainClassName = 'build.archipelago.buildserver.builder.BuilderApplication'
 
@@ -287,6 +344,9 @@ project(':build-server-builder') {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
       exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+
+    // name for docker-compose
+    docker "${group}:${project.name}:${version}"
   }
 
   configurations {
@@ -304,6 +364,26 @@ project(':build-server-builder') {
     }
   }
   runlocal.finalizedBy run
+
+  docker {
+    dockerfile file('resources/docker/Dockerfile')
+    files project.tasks.bootJar.outputs
+    copySpec.into("/opt")
+    noCache true
+    name "${project.group}/${project.name}:latest"
+    buildArgs([
+            APP_JAR_NAME: "${project.tasks.bootJar.archiveFileName.get()}" ,
+    ])
+  }
+
+  dockerCompose {
+    template "resources/docker/docker-compose.template.yml"
+    templateTokens([
+            'service.image': "${project.group}/${project.name}:latest",
+            'service.name': project.name
+    ])
+    dockerComposeFile "$buildDir/docker/docker-compose.yml"
+  }
 }
 project(':build-server-common') {
   dependencies {
@@ -327,6 +407,8 @@ project(':harbor-service') {
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'org.springframework.boot'
   apply plugin: 'application'
+  apply plugin: 'com.palantir.docker'
+  apply plugin: 'com.palantir.docker-compose'
 
   mainClassName = 'build.archipelago.harbor.HarborServiceApplication'
 
@@ -359,6 +441,9 @@ project(':harbor-service') {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
       exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+
+    // name for docker-compose
+    docker "${group}:${project.name}:${version}"
   }
 
   task runlocal {
@@ -375,6 +460,26 @@ project(':harbor-service') {
     all {
       exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
+  }
+
+  docker {
+    dockerfile file('resources/docker/Dockerfile')
+    files project.tasks.bootJar.outputs
+    copySpec.into("/opt")
+    noCache true
+    name "${project.group}/${project.name}:latest"
+    buildArgs([
+            APP_JAR_NAME: "${project.tasks.bootJar.archiveFileName.get()}" ,
+    ])
+  }
+
+  dockerCompose {
+    template "resources/docker/docker-compose.template.yml"
+    templateTokens([
+            'service.image': "${project.group}/${project.name}:latest",
+            'service.name': project.name
+    ])
+    dockerComposeFile "$buildDir/docker/docker-compose.yml"
   }
 }
 project(':harbor-service-client') {
@@ -412,7 +517,7 @@ project(':maui') {
     implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
 
-    implementation 'com.google.inject:guice:4.2.3'
+    implementation 'com.google.inject:guice:5.0.1'
     implementation 'info.picocli:picocli:4.1.4'
     annotationProcessor 'info.picocli:picocli-codegen:4.1.4'
     implementation 'org.jgrapht:jgrapht-core:1.5.0'
@@ -495,6 +600,8 @@ project(':package-service') {
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'org.springframework.boot'
   apply plugin: 'application'
+  apply plugin: 'com.palantir.docker'
+  apply plugin: 'com.palantir.docker-compose'
 
   mainClassName = 'build.archipelago.packageservice.PackageServiceApplication'
 
@@ -524,6 +631,9 @@ project(':package-service') {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
       exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+
+    // name for docker-compose
+    docker "${group}:${project.name}:${version}"
   }
 
   configurations {
@@ -541,6 +651,26 @@ project(':package-service') {
     }
   }
   runlocal.finalizedBy run
+
+  docker {
+    dockerfile file('resources/docker/Dockerfile')
+    files project.tasks.bootJar.outputs
+    copySpec.into("/opt")
+    noCache true
+    name "${project.group}/${project.name}:latest"
+    buildArgs([
+            APP_JAR_NAME: "${project.tasks.bootJar.archiveFileName.get()}" ,
+    ])
+  }
+
+  dockerCompose {
+    template "resources/docker/docker-compose.template.yml"
+    templateTokens([
+            'service.image': "${project.group}/${project.name}:latest",
+            'service.name': project.name
+    ])
+    dockerComposeFile "$buildDir/docker/docker-compose.yml"
+  }
 }
 project(':package-service-client') {
   dependencies {
@@ -575,6 +705,8 @@ project(':version-set-service') {
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'org.springframework.boot'
   apply plugin: 'application'
+  apply plugin: 'com.palantir.docker'
+  apply plugin: 'com.palantir.docker-compose'
 
   mainClassName = 'build.archipelago.versionsetservice.VersionSetServiceApplication'
 
@@ -608,6 +740,9 @@ project(':version-set-service') {
     // Needed for DynamoDBLocal
     testImplementation 'com.amazonaws:DynamoDBLocal:1.12.0'
     testImplementation 'com.almworks.sqlite4java:sqlite4java:1.0.392'
+
+    // name for docker-compose
+    docker "${group}:${project.name}:${version}"
   }
 
   configurations {
@@ -628,6 +763,26 @@ project(':version-set-service') {
     }
   }
   runlocal.finalizedBy run
+
+  docker {
+    dockerfile file('resources/docker/Dockerfile')
+    files project.tasks.bootJar.outputs
+    copySpec.into("/opt")
+    noCache true
+    name "${project.group}/${project.name}:latest"
+    buildArgs([
+            APP_JAR_NAME: "${project.tasks.bootJar.archiveFileName.get()}" ,
+    ])
+  }
+
+  dockerCompose {
+    template "resources/docker/docker-compose.template.yml"
+    templateTokens([
+            'service.image': "${project.group}/${project.name}:latest",
+            'service.name': project.name
+    ])
+    dockerComposeFile "$buildDir/docker/docker-compose.yml"
+  }
 }
 project(':version-set-service-client') {
   dependencies {
