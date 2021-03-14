@@ -36,9 +36,9 @@ server:
   port: ${APP_PORT:8087}
 
 dynamodb:
-#  accounts: "archipelago-local.accounts"
-#  account-mapping: "archipelago-local.account-mapping"
-#  accounts-git: "archipelago-local.accounts-git"
+  accounts: "archipelago-local.accounts"
+  account-mapping: "archipelago-local.account-mapping"
+  accounts-git: "archipelago-local.accounts-git"
   auth-codes: "archipelago-local.auth-codes"
   auth-users: "archipelago-local.auth-users"
   auth-clients: "archipelago-local.auth-clients"

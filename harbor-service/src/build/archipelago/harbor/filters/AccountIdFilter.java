@@ -1,6 +1,6 @@
 package build.archipelago.harbor.filters;
 
-import build.archipelago.account.common.AccountService;
+import build.archipelago.authservice.client.AuthClient;
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.harbor.controllers.*;
 import com.fasterxml.jackson.databind.*;
@@ -31,13 +31,13 @@ public class AccountIdFilter implements Filter {
     private static Instant lastUpdate;
 
     private String authEndpoint;
-    private AccountService accountService;
+    private AuthClient authClient;
 
     @Autowired
-    public AccountIdFilter(@Value("${oauth.auth-url}") String authEndpoint, AccountService accountService) {
+    public AccountIdFilter(@Value("${oauth.auth-url}") String authEndpoint, AuthClient authClient) {
         keyMap = new HashMap<>();
         this.authEndpoint = authEndpoint;
-        this.accountService = accountService;
+        this.authClient = authClient;
     }
 
     @Override
@@ -70,6 +70,7 @@ public class AccountIdFilter implements Filter {
         } catch (UnauthorizedException exp) {
             String url = httpServletRequest.getRequestURL().toString();
             if (url.endsWith("/auth/login") ||
+                url.endsWith("/auth/register") ||
                 url.endsWith(HealthController.HEALTH_PATH)) {
                 // this is not a blocked url;
                 chain.doFilter(request, response);
@@ -79,8 +80,12 @@ public class AccountIdFilter implements Filter {
         }
     }
 
-    private String getAccountId(String userId) {
-        return accountService.getAccountIdForUser(userId);
+    private String getAccountId(String userId) throws UnauthorizedException {
+        List<String> accountIds = authClient.getAccountsForUser(userId);
+        if (accountIds.size() == 0) {
+            throw new UnauthorizedException();
+        }
+        return accountIds.get(0);
     }
 
     private Jws<Claims> getClaims(PublicKey publicKey, String accessToken) {

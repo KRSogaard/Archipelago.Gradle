@@ -23,6 +23,21 @@ public class AuthController {
         this.authClient = authClient;
     }
 
+    @PostMapping("/register")
+    public void register(@RequestBody RegisterAccountRestRequest model) throws UserExistsException {
+        Preconditions.checkNotNull(model);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(model.getName()), "Name is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(model.getEmail()), "Email is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(model.getPassword()), "Password is required");
+
+        log.info("Getting request to register '{}'", model.getEmail());
+        authClient.register(RegisterRequest.builder()
+                .name(model.getName())
+                .email(model.getEmail())
+                .password(model.getPassword())
+                .build());
+    }
+
     @PostMapping("/login")
     public LogInRestResponse login(@RequestBody LogInRestRequest model) throws UnauthorizedException {
         log.info("Getting request to log in '{}'", model.getEmail());

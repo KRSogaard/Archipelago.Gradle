@@ -17,6 +17,7 @@ public class AuthExceptionHandler {
     public static final String TYPE_GRANT_INVALID = "grant/invalid";
     public static final String TYPE_DEVICE_CODE_NOT_FOUND = "device/codeNotFound";
     public static final String TYPE_USER_NOT_FOUND = "user/notFound";
+    public static final String TYPE_USER_EXISTS = "user/exists";
     public static final String TYPE_AUTHORIZATION_PENDING = "authorization_pending";
 
 
@@ -129,6 +130,17 @@ public class AuthExceptionHandler {
                 .detail(exp.getMessage());
     }
 
+    public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(UserExistsException ex) {
+        return ProblemDetailRestResponse.builder()
+                .error(TYPE_USER_EXISTS)
+                .title("The user with that email already exits")
+                .status(409)
+                .detail(ex.getMessage())
+                .data(new HashMap<>() {{
+                    put("email", ex.getEmail());
+                }});
+    }
+
     public static Object createException(ProblemDetailRestResponse problem) {
         switch (problem.getError()) {
             case TYPE_USER_NOT_FOUND:
@@ -142,6 +154,8 @@ public class AuthExceptionHandler {
                     return new TokenExpiredException(device_code);
                 }
                 return new TokenNotFoundException(null);
+            case TYPE_USER_EXISTS:
+                return new UserExistsException((String) problem.getData().get("email"));
             default:
                 throw new RuntimeException(problem.getError() + " was not a known auth error");
         }

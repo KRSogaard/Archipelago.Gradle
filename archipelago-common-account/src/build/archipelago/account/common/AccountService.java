@@ -5,6 +5,7 @@ import build.archipelago.account.common.models.*;
 import build.archipelago.common.dynamodb.AV;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,7 +17,6 @@ public class AccountService {
     private String accountTableName;
     private String accountGitTableName;
     private String accountMappingTable;
-    private Map<String, String> accountMap;
 
     public AccountService(AmazonDynamoDB dynamoDB, String accountTableName, String accountMappingTable,
                           String accountGitTableName) {
@@ -24,7 +24,6 @@ public class AccountService {
         this.accountTableName = accountTableName;
         this.accountMappingTable = accountMappingTable;
         this.accountGitTableName = accountGitTableName;
-        this.accountMap = new HashMap<>();
     }
 
     public AccountDetails getAccountDetails(String accountId) throws AccountNotFoundException {
@@ -41,30 +40,24 @@ public class AccountService {
                 .build();
     }
 
-    public String getAccountIdForUser(String userId) {
-        if (accountMap.containsKey(userId)) {
-            return accountMap.get(userId);
+    public ImmutableList<String> getAccountsForUser(String userId) {
+        QueryRequest queryRequest = new QueryRequest()
+                .withTableName(accountMappingTable)
+                .withKeyConditionExpression("#userId = :userId")
+                .withExpressionAttributeNames(ImmutableMap.of(
+                        "#userId", DynamoDBKeys.USER_ID
+                ))
+                .withExpressionAttributeValues(ImmutableMap.of(":userId", AV.of(userId)));
+        QueryResult result = dynamoDB.query(queryRequest);
+
+        ImmutableList.Builder<String> list = ImmutableList.<String>builder();
+        if (result.getItems() != null && result.getItems().size() != 0) {
+            result.getItems().stream().forEach(i -> {
+                list.add(i.get(DynamoDBKeys.ACCOUNT_ID).getS());
+            });
         }
 
-        GetItemRequest request = new GetItemRequest(accountMappingTable, ImmutableMap.<String, AttributeValue>builder()
-                .put(DynamoDBKeys.USER_ID, AV.of(userId))
-                .build());
-        GetItemResult result = dynamoDB.getItem(request);
-        String accountId = UUID.randomUUID().toString().split("-", 2)[0];
-        if (result.getItem() != null) {
-            accountId = result.getItem().get(DynamoDBKeys.ACCOUNT_ID).getS();
-        } else {
-            accountId = UUID.randomUUID().toString().split("-", 2)[0];
-            dynamoDB.putItem(new PutItemRequest(accountTableName, ImmutableMap.<String, AttributeValue>builder()
-                    .put(DynamoDBKeys.ACCOUNT_ID, AV.of(accountId))
-                    .build()));
-            dynamoDB.putItem(new PutItemRequest(accountMappingTable, ImmutableMap.<String, AttributeValue>builder()
-                    .put(DynamoDBKeys.USER_ID, AV.of(userId))
-                    .put(DynamoDBKeys.ACCOUNT_ID, AV.of(accountId))
-                    .build()));
-        }
-        accountMap.put(userId, accountId);
-        return accountId;
+        return list.build();
     }
 
     public GitDetails getGitDetails(String accountId) throws GitDetailsNotFound {
@@ -91,5 +84,45 @@ public class AccountService {
                 .put(DynamoDBKeys.GITHUB_ACCESS_TOKEN, AV.of(gitDetails.getGitHubAccessToken()))
                 .build());
         dynamoDB.putItem(putItemResult);
+    }
+
+    public void createAccount(String accountId) throws AccountExistsException {
+        try {
+            getAccount(accountId);
+            throw new AccountExistsException(accountId);
+        } catch (AccountNotFoundException exp) {
+            // This is what we want!
+        }
+        dynamoDB.putItem(new PutItemRequest(accountTableName, ImmutableMap.<String, AttributeValue>builder()
+                .put(DynamoDBKeys.ACCOUNT_ID, AV.of(accountId))
+                .build()));
+    }
+
+    public void attachUserToAccount(String accountId, String userId) {
+        if (isUserInAccount(accountId, userId)) {
+            return;
+        }
+        dynamoDB.putItem(new PutItemRequest(accountMappingTable, ImmutableMap.<String, AttributeValue>builder()
+                .put(DynamoDBKeys.USER_ID, AV.of(userId))
+                .put(DynamoDBKeys.ACCOUNT_ID, AV.of(accountId))
+                .build()));
+    }
+
+    public boolean isUserInAccount(String accountId, String userId) {
+        GetItemResult result = dynamoDB.getItem(accountMappingTable, ImmutableMap.<String, AttributeValue>builder()
+                .put(DynamoDBKeys.ACCOUNT_ID, AV.of(userId))
+                .put(DynamoDBKeys.USER_ID, AV.of(accountId))
+                .build());
+        return result.getItem() != null;
+    }
+
+    public Account getAccount(String accountId) throws AccountNotFoundException {
+        GetItemResult result = dynamoDB.getItem(accountTableName, ImmutableMap.<String, AttributeValue>builder()
+                .put(DynamoDBKeys.ACCOUNT_ID, AV.of(accountId))
+                .build());
+        if (result.getItem() == null) {
+            throw new AccountNotFoundException(accountId);
+        }
+        return Account.builder().build();
     }
 }

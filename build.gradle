@@ -135,9 +135,10 @@ project(':auth-service') {
   dependencies {
     api project(':auth-service-models')
     api project(':auth-service-client')
-    api project(':archipelago-common-dynamodb')
-    api project(':archipelago-common-rest')
     api project(':archipelago-common')
+    api project(':archipelago-common-dynamodb')
+    api project(':archipelago-common-account')
+    api project(':archipelago-common-rest')
 
     compile 'io.jsonwebtoken:jjwt-api:0.11.2'
     runtime 'io.jsonwebtoken:jjwt-impl:0.11.2'

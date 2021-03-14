@@ -5,6 +5,7 @@ import build.archipelago.buildserver.models.*;
 import build.archipelago.buildserver.models.exceptions.BuildNotFoundException;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.dynamodb.AV;
+import build.archipelago.common.utils.Rando;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.s3.AmazonS3;
@@ -46,7 +47,7 @@ public class DynamoDBBuildService implements BuildService {
 
     @Override
     public String addNewBuildRequest(String accountId, String versionSet, boolean dryRun, List<BuildPackageDetails> buildPackages) {
-        String buildId = UUID.randomUUID().toString();
+        String buildId = Rando.getRandomString();
 
         dynamoDB.putItem(new PutItemRequest(buildTable, ImmutableMap.<String, AttributeValue>builder()
                 .put(Constants.ATTRIBUTE_BUILD_ID, AV.of(buildId))
