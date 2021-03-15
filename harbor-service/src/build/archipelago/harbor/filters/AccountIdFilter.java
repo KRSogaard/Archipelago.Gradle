@@ -34,7 +34,8 @@ public class AccountIdFilter implements Filter {
     private AuthClient authClient;
 
     @Autowired
-    public AccountIdFilter(@Value("${oauth.auth-url}") String authEndpoint, AuthClient authClient) {
+    public AccountIdFilter(@Value("${frontend-oauth.auth-url}") String authEndpoint, AuthClient authClient) {
+        log.info("Using OAuth endpoint '{}' for Account Id Filter", authEndpoint);
         keyMap = new HashMap<>();
         this.authEndpoint = authEndpoint;
         this.authClient = authClient;
@@ -42,7 +43,7 @@ public class AccountIdFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        log.info("Setting account id");
+        log.debug("Setting account id");
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 
@@ -147,6 +148,7 @@ public class AccountIdFilter implements Filter {
             HttpClient client = HttpClient
                     .newBuilder()
                     .build();
+            log.info("Fetching well knows tokens from '{}'", authEndpoint + "/.well-known/jwks.json");
             HttpRequest httpRequest = HttpRequest.newBuilder(new URI(authEndpoint + "/.well-known/jwks.json"))
                     .header("content-type", "application/json")
                     .header("accept", "application/json")

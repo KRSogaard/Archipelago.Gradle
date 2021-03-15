@@ -41,7 +41,7 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
-            log.error("Got unknown error while trying to call package service to create a package");
+            log.error("Got unknown error while trying to call auth service to register the user");
             throw new RuntimeException(e);
         }
 
@@ -82,7 +82,7 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
-            log.error("Got unknown error while trying to call package service to create a package");
+            log.error("Got unknown error while trying to call auth service to check if user is in account");
             throw new RuntimeException(e);
         }
 
@@ -115,7 +115,7 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
-            log.error("Got unknown error while trying to call package service to create a package");
+            log.error("Got unknown error while trying to call auth service to get accounts for user");
             throw new RuntimeException(e);
         }
 
@@ -150,7 +150,7 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
-            log.error("Got unknown error while trying to call package service to create a package");
+            log.error("Got unknown error while trying to call auth service to login");
             throw new RuntimeException(e);
         }
 
@@ -189,7 +189,7 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
-            log.error("Got unknown error while trying to call package service to create a package");
+            log.error("Got unknown error while trying to call auth service to create an auth token");
             throw new RuntimeException(e);
         }
 
@@ -224,7 +224,7 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
         } catch (Exception e) {
-            log.error("Got unknown error while trying to call package service to create a package");
+            log.error("Got unknown error while trying to call auth service to activate device");
             throw new RuntimeException(e);
         }
 
