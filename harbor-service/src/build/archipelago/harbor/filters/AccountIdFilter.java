@@ -52,6 +52,7 @@ public class AccountIdFilter implements Filter {
             String kid = getKid(accessToken);
             PublicKey publicKey = getPublicKey(kid);
             Jws<Claims> claims = getClaims(publicKey, accessToken);
+            checkExpired(claims);
             String userId = claims.getBody().getSubject();
             if (Strings.isNullOrEmpty(userId)) {
                 String clientId = (String)claims.getBody().get("client_id");
@@ -78,6 +79,24 @@ public class AccountIdFilter implements Filter {
                 return;
             }
             httpServletResponse.setStatus(401);
+        }
+    }
+
+    private void checkExpired(Jws<Claims> claims) {
+        if (!claims.getBody().containsKey("ext")) {
+            log.warn("JWT token did not contain the ext element");
+            throw new UnauthorizedException();
+        }
+
+        try {
+            Long ext = claims.getBody().get("ext", Long.class);
+            if (ext < Instant.now().getEpochSecond()) {
+                log.debug("JWT was expired");
+                throw new UnauthorizedException();
+            }
+        } catch (RequiredTypeException exp) {
+            log.warn("JWT ext was not a number: '{}'", claims.getBody().get("ext"));
+            throw new UnauthorizedException();
         }
     }
 

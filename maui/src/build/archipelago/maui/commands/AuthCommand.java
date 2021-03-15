@@ -40,7 +40,6 @@ public class AuthCommand extends BaseAction implements Callable<Integer> {
     @Override
     public Integer call() {
         Path authFile = systemPathProvider.getMauiPath().resolve(".auth");
-        HttpClient client = HttpClient.newHttpClient();
 
         OAuthDeviceCodeResponse deviceCodeResponse = getDeviceCode();
         if (deviceCodeResponse == null) {
