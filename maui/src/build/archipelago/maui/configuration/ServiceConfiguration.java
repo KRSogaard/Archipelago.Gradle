@@ -6,12 +6,14 @@ import build.archipelago.maui.clients.UnauthorizedHarborClient;
 import build.archipelago.maui.common.*;
 import build.archipelago.maui.common.cache.*;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
+import build.archipelago.maui.core.auth.AuthService;
 import build.archipelago.maui.core.output.*;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.graph.DependencyGraphGenerator;
-import build.archipelago.maui.models.OAuthTokenResponse;
+import build.archipelago.maui.core.auth.OAuthTokenResponse;
 import build.archipelago.maui.path.MauiPath;
 import build.archipelago.maui.path.recipies.*;
+import build.archipelago.maui.utils.AuthUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.*;
 import com.google.inject.name.Named;
@@ -32,7 +34,16 @@ public class ServiceConfiguration extends AbstractModule {
 
     @Provides
     @Singleton
+    public AuthService authService(
+            @Named("oauth.endpoint") String oAuthEndpoint,
+            @Named("oauth.clientid") String clientid) {
+        return new AuthService(clientid, oAuthEndpoint);
+    }
+
+    @Provides
+    @Singleton
     public HarborClient versionServiceClient(SystemPathProvider systemPathProvider,
+                                             AuthService authService,
                                              @Named("oauth.endpoint") String oAuthEndpoint,
                                              @Named("services.harbor.url") String harborEndpoint) throws IOException {
         Path authFile = systemPathProvider.getMauiPath().resolve(".auth");
@@ -40,18 +51,27 @@ public class ServiceConfiguration extends AbstractModule {
             return new UnauthorizedHarborClient();
         }
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        OAuthTokenResponse oauth;
-        try {
-            String authFileContent = Files.readString(authFile);
-            oauth = objectMapper.readValue(authFileContent, OAuthTokenResponse.class);
-        } catch (Exception exp) {
-            log.error("The auth file is corrupt: " + Files.readString(authFile));
+        OAuthTokenResponse oauth = AuthUtil.getAuthSettings(systemPathProvider);
+        if (oauth == null) {
+            log.error("Failed to read the auth settings");
             return new UnauthorizedHarborClient();
         }
-        if (oauth == null) {
-            log.error("The auth file is corrupt: " + Files.readString(authFile));
-            return new UnauthorizedHarborClient();
+
+        if (authService.isTokenExpired(oauth.getAccessToken())) {
+            log.info("Auth token has expired");
+            if (oauth.getRefreshToken() != null && !authService.isTokenExpired(oauth.getRefreshToken())) {
+                log.info("Found valid refresh token, trying to get a new access token");
+                oauth = authService.getTokenFromRefreshToken(oauth.getRefreshToken());
+                if (oauth == null) {
+                    log.warn("Failed to get new access token with the refresh token, user needs to re-auth");
+                    return new UnauthorizedHarborClient();
+                }
+                log.info("Got new access token");
+                AuthUtil.saveAuthSettings(systemPathProvider, oauth);
+            } else {
+                log.warn("No valid refresh token, user needs to re-auth");
+                return new UnauthorizedHarborClient();
+            }
         }
         return new RestHarborClient(harborEndpoint, oAuthEndpoint + "/oauth2/token", oauth.getAccessToken());
     }

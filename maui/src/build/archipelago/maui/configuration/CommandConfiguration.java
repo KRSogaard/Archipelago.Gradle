@@ -5,6 +5,7 @@ import build.archipelago.maui.commands.packages.*;
 import build.archipelago.maui.commands.workspace.*;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.actions.*;
+import build.archipelago.maui.core.auth.AuthService;
 import build.archipelago.maui.core.output.OutputWrapper;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.graph.DependencyGraphGenerator;
@@ -102,8 +103,7 @@ public class CommandConfiguration extends AbstractModule {
     public AuthCommand authCommand(WorkspaceContextFactory workspaceContextFactory,
                                    SystemPathProvider systemPathProvider,
                                    OutputWrapper output,
-                                   @Named("oauth.endpoint") String oAuthEndpoint,
-                                   @Named("oauth.clientid") String clientid) {
-        return new AuthCommand(workspaceContextFactory, systemPathProvider, output, oAuthEndpoint, clientid);
+                                   AuthService authService) {
+        return new AuthCommand(workspaceContextFactory, systemPathProvider, output, authService);
     }
 }

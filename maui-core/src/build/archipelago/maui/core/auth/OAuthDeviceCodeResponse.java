@@ -1,4 +1,4 @@
-package build.archipelago.maui.models;
+package build.archipelago.maui.core.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
