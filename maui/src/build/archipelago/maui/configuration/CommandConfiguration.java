@@ -1,7 +1,9 @@
 package build.archipelago.maui.configuration;
 
+import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.maui.commands.*;
 import build.archipelago.maui.commands.packages.*;
+import build.archipelago.maui.commands.versionset.VersionSetBuildCommand;
 import build.archipelago.maui.commands.workspace.*;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.actions.*;
@@ -105,5 +107,16 @@ public class CommandConfiguration extends AbstractModule {
                                    OutputWrapper output,
                                    AuthService authService) {
         return new AuthCommand(workspaceContextFactory, systemPathProvider, output, authService);
+    }
+
+    @Provides
+    @Singleton
+    public VersionSetBuildCommand versionSetBuildCommand(WorkspaceContextFactory workspaceContextFactory,
+                                                         SystemPathProvider systemPathProvider,
+                                                         DependencyGraphGenerator dependencyGraphGenerator,
+                                                         OutputWrapper out,
+                                                         HarborClient harborClient) {
+        return new VersionSetBuildCommand(workspaceContextFactory,
+                systemPathProvider, dependencyGraphGenerator, out, harborClient);
     }
 }

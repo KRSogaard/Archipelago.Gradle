@@ -220,7 +220,7 @@ public class DependencyGraphGenerator {
         private final Map<String, ArchipelagoBuiltPackage> buildMap;
 
         public GraphGenerationContext(ArchipelagoPackage pkg, WorkspaceContext workspaceContext)
-                throws IOException, VersionSetNotSyncedException, PackageNotInVersionSetException,
+                throws IOException, VersionSetNotSyncedException,
                 PackageNotFoundException, PackageNotLocalException, LocalPackageMalformedException {
             this.workspaceContext = workspaceContext;
             buildMap = createBuildHashMap();

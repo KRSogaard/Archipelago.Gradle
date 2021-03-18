@@ -522,6 +522,7 @@ project(':maui') {
     implementation 'info.picocli:picocli:4.1.4'
     annotationProcessor 'info.picocli:picocli-codegen:4.1.4'
     implementation 'org.jgrapht:jgrapht-core:1.5.0'
+    implementation 'net.lingala.zip4j:zip4j:2.6.2'
     implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'

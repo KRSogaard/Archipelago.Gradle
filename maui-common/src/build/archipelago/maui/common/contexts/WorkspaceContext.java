@@ -135,7 +135,6 @@ public class WorkspaceContext extends Workspace {
             return buildConfig;
         }
 
-
         Path root = this.getPackageRoot(pkg);
         Path configFile = root.resolve(WorkspaceConstants.BUILD_FILE_NAME);
         if (!Files.exists(configFile)) {
