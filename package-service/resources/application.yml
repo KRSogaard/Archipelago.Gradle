@@ -1,5 +1,5 @@
 server:
-  port: ${APP_PORT:8080}
+  port: 8080
   error:
     include-stacktrace: never
 
@@ -11,14 +11,14 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${OAUTH_ISSUER:https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf}
+          issuer-uri: "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf"
 
 aws:
-  region: ${AWS_REGION:us-west-2}
+  region: "us-west-2"
 
 oauth:
-  client-id: ${OAUTH_ID:H4L36UXifMqdt4T3pLgajGvap0oJ63HD}
-  client-secret: ${OAUTH_SECRET:3YLhyrPbphWtZtD0quk-H_3sp9HoGMVdPej0DQNZXJ3_WTgYqeNTNzCe6bVGfPnO}
+  client-id: "H4L36UXifMqdt4T3pLgajGvap0oJ63HD"
+  client-secret: "3YLhyrPbphWtZtD0quk-H_3sp9HoGMVdPej0DQNZXJ3_WTgYqeNTNzCe6bVGfPnO"
 
 ---
 spring:
@@ -41,12 +41,29 @@ dynamodb:
 
 aws:
   access:
-    id: ${AWS_KEY:AKIARDAF5R4OIKW2KPCY}
-    key: ${AWS_SECRET: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}
+    id: "AKIARDAF5R4OIKW2KPCY"
+    key: "uGIejRuxAS/05zH6B0w8+0IdQhd9bPX2lxxuvZoG"
 
 ---
 spring:
   profiles: alpha
+
+s3:
+  packages: "archipelago-alpha-packages-artifacts"
+
+dynamodb:
+  packages: "archipelago-alpha.packages"
+  packages_versions: "archipelago-alpha.packages-versions"
+  packages_builds: "archipelago-alpha.packages-builds"
+  packages_builds_git: "archipelago-alpha.packages-builds-git"
+  accounts: "archipelago-alpha.accounts"
+  account-mapping: "archipelago-alpha.account-mapping"
+  accounts-git: "archipelago-alpha.accounts-git"
+
+aws:
+  access:
+    id: "AKIARDAF5R4OB6ZKNWBR"
+    key: "gLH+zY2FMjiWwhFc9KOY8myXKR2eNHNjjaoQXUMC"
 
 ---
 spring:

@@ -16,14 +16,17 @@ aws:
 spring:
   profiles: local
 
+server:
+  port: ${APP_PORT:8096}
+
 aws:
   access:
     id: "AKIARDAF5R4OILLLRKQO"
     key: "IlyL5Mcj/Lp8jkl+0oss8Mx9dp5BtcwqJWpzqiWx"
 
 services:
-  versionset: "http://localhost:8091"
-  packages: "http://localhost:8090"
+  packages: ${PACKAGE_SERVICE_URL:http://localhost:8090}
+  versionset: ${VERSIONSET_SERVICE_URL:http://localhost:8091}
 
 dynamodb:
   build: "archipelago-local.builds"
@@ -40,16 +43,42 @@ sqs:
   build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-local-build-queue"
 
 workspace:
-  path: "/Users/kasper.sogaard/Downloads/BuildServer"
+  path: ${WS_PATH:C:\Users\accou\Downloads\BuildServer}
 
 ---
 spring:
- profiles: alpha
+  profiles: alpha
+
+aws:
+  access:
+    id: "AKIARDAF5R4OGUAX2HEK"
+    key: "7aeDgB9cn9kqRwdv9zVQFKop591BqE7SNFDoiua7"
+
+services:
+  versionset: "https://version-set-service.alpha.archipelago.build"
+  packages: "https://package-service.alpha.archipelago.build"
+
+dynamodb:
+  build: "archipelago-local.builds"
+  build-packages: "archipelago-local.builds-packages"
+  accounts: "archipelago-local.accounts"
+  account-mapping: "archipelago-local.account-mapping"
+  accounts-git: "archipelago-local.accounts-git"
+
+s3:
+  stage-logs: "archipelago-local-stage-log"
+  packages-logs: "archipelago-local-packages-log"
+
+sqs:
+  build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-alpha-build-queue"
+
+workspace:
+  path: ${WS_PATH:/tmp/archipelago}
 
 ---
 spring:
- profiles: beta
+  profiles: beta
 
 ---
 spring:
- profiles: prod
+  profiles: prod

@@ -1,5 +1,10 @@
 FROM adoptopenjdk/openjdk11:alpine
+RUN apk update
+RUN apk upgrade
 RUN apk --no-cache add curl
+RUN apk --no-cache add bash
+# We need to remove this later
+RUN apk --no-cache add rsync
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 

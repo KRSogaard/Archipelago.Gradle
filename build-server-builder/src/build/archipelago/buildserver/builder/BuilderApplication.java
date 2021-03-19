@@ -27,11 +27,15 @@ public class BuilderApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try {
-            Message msg = new Message();
-            msg.setBody("{\"buildId\":\"2bc3b949-ad92-4947-a2ce-0655fe4335fe\",\"accountId\":\"wewelo\"}");
-            buildRequestHandler.handle(msg);
-//            sqsConsumer.start();
-//            sqsConsumer.waitForExecutors();
+//            Message msg = new Message();
+//            msg.setBody("{\"buildId\":\"2bc3b949-ad92-4947-a2ce-0655fe4335fe\",\"accountId\":\"wewelo\"}");
+//            buildRequestHandler.handle(msg);
+
+            sqsConsumer.start();
+            while(true) {
+                Thread.sleep(1000);
+            }
+            //sqsConsumer.waitForExecutors();
 //            log.warn("Executors was shutdown");
         } catch (Exception exp) {
             log.error("Error while executing", exp);

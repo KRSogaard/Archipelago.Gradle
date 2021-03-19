@@ -1,10 +1,10 @@
 server:
-  port: ${APP_PORT:8080}
+  port: 8080
   error:
     include-stacktrace: never
 
 aws:
-  region: ${AWS_REGION:us-west-2}
+  region: "us-west-2"
 
 token:
   age:
@@ -22,11 +22,11 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${OAUTH_ISSUER:https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf}
+          issuer-uri: "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf"
 
 oauth:
-  client-id: ${OAUTH_ID:3ad886knkeo0vuvvpnvtp6rtlq}
-  client-secret: ${OAUTH_SECRET:r5qd4fhj931vvlbf2oi3dhe58kjtfk2n7i70da7kc2d08sccch5}
+  client-id: "3ad886knkeo0vuvvpnvtp6rtlq"
+  client-secret: "r5qd4fhj931vvlbf2oi3dhe58kjtfk2n7i70da7kc2d08sccch5"
 
 ---
 spring:
@@ -50,22 +50,34 @@ url:
 
 aws:
   access:
-    id: ${AWS_KEY:AKIARDAF5R4OODU52YJR}
-    key: ${AWS_SECRET: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}
+    id: "AKIARDAF5R4OODU52YJR"
+    key: "HRG7W4XQESB1ixNknOhZ4dYRgnvAk/U3NgUOF7fH"
 
 ---
 spring:
  profiles: alpha
 
-auth:
-  url: ${APP_URL:http://auth-alpha.archipelago.build}
+dynamodb:
+ accounts: "archipelago-alpha.accounts"
+ account-mapping: "archipelago-alpha.account-mapping"
+ accounts-git: "archipelago-alpha.accounts-git"
+ auth-codes: "archipelago-alpha.auth-codes"
+ auth-users: "archipelago-alpha.auth-users"
+ auth-clients: "archipelago-alpha.auth-clients"
+ auth-jwks: "archipelago-alpha.auth-jwks"
+
+url:
+ auth-server: "https://auth.alpha.archipelago.build"
+ frontend: "https://alpha.archipelago.build"
+
+aws:
+ access:
+   id: "AKIARDAF5R4OD53C2DVZ"
+   key: "TiCu0Aw7f/oR/WeZ9jfk4rPJdvBivQ4UdCAYVAGu"
 
 ---
 spring:
  profiles: beta
-
-auth:
-  url: ${APP_URL:http://auth-beta.archipelago.build}
 
 ---
 spring:

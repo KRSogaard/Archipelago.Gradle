@@ -4,13 +4,6 @@ services:
       image: {{service.image}}
       environment:
         - APP_PORT=8080
-        - APP_URL=http://{{service.name}}:8080
-        - OAUTH_ID=1iv0c51b2f7a2nsl0hnphthnq6
-        - OAUTH_SECRET=n1uv2fh8o1hf0medie0luo85ksh5hju0s0na1p3i7lv6c82h0ic
-        - OAUTH_ISSUER=https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf
-        - AWS_REGION=us-west-2
-        - AWS_KEY=AKIARDAF5R4OHE3DO6XE
-        - AWS_SECRET=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
         - PACKAGE_SERVICE_URL=http://package-service:8080
         - SPRING_PROFILE=local
       ports:

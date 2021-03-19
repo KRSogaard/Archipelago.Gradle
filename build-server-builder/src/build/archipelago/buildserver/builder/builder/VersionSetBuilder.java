@@ -137,9 +137,27 @@ public class VersionSetBuilder {
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.WAITING);
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.WAITING);
 
-            this.stage_prepare();
-            this.stage_packages();
+            try {
+                this.stage_prepare();
+            } catch (FailBuildException exp) {
+                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PREPARE, BuildStatus.FAILED);
+                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
+                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
+                throw exp;
+            }
+            try {
+                this.stage_packages();
+            } catch (FailBuildException exp) {
+                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
+                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
+                throw exp;
+            }
+            try {
             this.stage_publish();
+            } catch (FailBuildException exp) {
+                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
+                throw exp;
+            }
         } catch (FailBuildException exp) {
             log.warn("The build was failed, will not retry", exp);
         } catch (RuntimeException exp) {

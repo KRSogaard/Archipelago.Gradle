@@ -1,5 +1,5 @@
 server:
-  port: ${APP_PORT:8080}
+  port: 8080
   error:
     include-stacktrace: never
 
@@ -11,14 +11,14 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${OAUTH_ISSUER:https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf}
+          issuer-uri: "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf"
 
 aws:
-  region: ${AWS_REGION:us-west-2}
+  region: "us-west-2"
 
 oauth:
-  client-id: ${OAUTH_ID:1iv0c51b2f7a2nsl0hnphthnq6}
-  client-secret: ${OAUTH_SECRET:n1uv2fh8o1hf0medie0luo85ksh5hju0s0na1p3i7lv6c82h0ic}
+  client-id: "1iv0c51b2f7a2nsl0hnphthnq6"
+  client-secret: "n1uv2fh8o1hf0medie0luo85ksh5hju0s0na1p3i7lv6c82h0ic"
 
 ---
 spring:
@@ -33,8 +33,8 @@ dynamodb:
 
 aws:
   access:
-    id: ${AWS_KEY:AKIARDAF5R4OHE3DO6XE}
-    key: ${AWS_SECRET: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}
+    id: "AKIARDAF5R4OHE3DO6XE"
+    key: "azF2nUIwaaUzbQtA3vnosfXr2agY+wMUa6UARybd"
 
 endpoints:
   package-service: ${PACKAGE_SERVICE_URL:http://localhost:8090}
@@ -42,6 +42,18 @@ endpoints:
 ---
 spring:
   profiles: alpha
+
+dynamodb:
+  version-sets: "archipelago-alpha.version-sets"
+  version-sets-revisions: "archipelago-alpha.version-set-revisions"
+
+aws:
+  access:
+    id: "AKIARDAF5R4OOAYCDA67"
+    key: "Ww5zZvR/22VGapHyVndvrjbxYScfFZuE/dWc7qJx"
+
+endpoints:
+  package-service: "https://package-service.alpha.archipelago.build"
 
 ---
 spring:
