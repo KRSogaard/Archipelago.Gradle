@@ -29,17 +29,20 @@ public class ServiceConfiguration {
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public PackageData packageData(
             @Value("${dynamodb.packages}") String packageTable,
+            @Value("${dynamodb.packages_public}") String packagePublicTable,
             @Value("${dynamodb.packages_versions}") String packageVersionsTable,
             @Value("${dynamodb.packages_builds}") String packageBuildsTable,
             @Value("${dynamodb.packages_builds_git}") String packageBuildsGitTable,
             AmazonDynamoDB dynamoDB) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageTable));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(packagePublicTable));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageVersionsTable));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageBuildsTable));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(packageBuildsGitTable));
 
         DynamoDBPackageConfig config = DynamoDBPackageConfig.builder()
                 .packagesTableName(packageTable)
+                .publicPackagesTableName(packagePublicTable)
                 .packagesVersionsTableName(packageVersionsTable)
                 .packagesBuildsTableName(packageBuildsTable)
                 .packagesBuildsGitTableName(packageBuildsGitTable)

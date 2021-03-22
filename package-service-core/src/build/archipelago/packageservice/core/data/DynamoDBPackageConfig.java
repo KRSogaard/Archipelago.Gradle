@@ -6,6 +6,7 @@ import lombok.*;
 @Builder
 public class DynamoDBPackageConfig {
     private String packagesTableName;
+    private String publicPackagesTableName;
     private String packagesVersionsTableName;
     private String packagesBuildsTableName;
     private String packagesBuildsGitTableName;
@@ -14,6 +15,7 @@ public class DynamoDBPackageConfig {
     public String toString() {
         return "DynamoDBPackageConfig{" +
                 "packagesTableName='" + packagesTableName + '\'' +
+                ", publicPackagesTableName='" + publicPackagesTableName + '\'' +
                 ", packagesVersionsTableName='" + packagesVersionsTableName + '\'' +
                 ", packagesBuildsTableName='" + packagesBuildsTableName + '\'' +
                 ", packagesBuildsGitTableName='" + packagesBuildsGitTableName + '\'' +

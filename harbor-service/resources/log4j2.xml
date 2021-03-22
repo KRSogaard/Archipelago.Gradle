@@ -40,7 +40,7 @@
         <Logger name="org.springframework.web" level="DEBUG"/>
 
         <Root level="DEBUG">
-<!--            <AppenderRef ref="File" level="DEBUG"/>-->
+            <AppenderRef ref="File" level="DEBUG"/>
             <AppenderRef ref="ConsoleAppender" level="DEBUG"/>
         </Root>
     </Loggers>

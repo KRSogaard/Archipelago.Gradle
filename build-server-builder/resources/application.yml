@@ -55,8 +55,8 @@ aws:
     key: "7aeDgB9cn9kqRwdv9zVQFKop591BqE7SNFDoiua7"
 
 services:
-  versionset: "https://version-set-service.alpha.archipelago.build"
-  packages: "https://package-service.alpha.archipelago.build"
+  versionset: "http://version-set-service.alpha.archipelago.build"
+  packages: "http://package-service.alpha.archipelago.build"
 
 dynamodb:
   build: "archipelago-local.builds"
@@ -78,7 +78,6 @@ workspace:
 ---
 spring:
   profiles: beta
-
 ---
 spring:
   profiles: prod

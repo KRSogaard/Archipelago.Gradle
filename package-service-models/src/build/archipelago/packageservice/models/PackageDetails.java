@@ -9,6 +9,8 @@ import java.time.Instant;
 @Builder
 public class PackageDetails {
     private String name;
+    private String owner;
+    private Boolean publicPackage;
     private String description;
     private String gitCloneUrl;
     private String gitUrl;

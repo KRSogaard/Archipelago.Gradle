@@ -9,14 +9,14 @@ services:
       - PACKAGE_SERVICE_URL=http://package-service:8080
       - VERSIONSET_SERVICE_URL=http://version-set-service:8080
       - BUILD_SERVICE_API_URL=http://build-server-api:8080
-      - APPLICATION_STAGE=alpha
+      - SPRING_PROFILE=local
     ports:
       - 8093:8080
   auth-service:
     image: build.archipelago/auth-service:latest
     environment:
       - APP_PORT=8080
-      - APPLICATION_STAGE=alpha
+      - SPRING_PROFILE=local
     ports:
       - 8087:8080
   build-server-api:
@@ -25,7 +25,7 @@ services:
       - APP_PORT=8080
       - PACKAGE_SERVICE_URL=http://package-service:8080
       - VERSIONSET_SERVICE_URL=http://version-set-service:8080
-      - APPLICATION_STAGE=alpha
+      - SPRING_PROFILE=local
     ports:
       - 8095:8080
   build-server-builder:
@@ -34,7 +34,7 @@ services:
       - APP_PORT=8080
       - PACKAGE_SERVICE_URL=http://package-service:8080
       - VERSIONSET_SERVICE_URL=http://version-set-service:8080
-      - APPLICATION_STAGE=alpha
+      - SPRING_PROFILE=local
       - WS_PATH=/tmp/archipelago
     ports:
       - 8096:8080
@@ -42,7 +42,7 @@ services:
     image: build.archipelago/package-service:latest
     environment:
       - APP_PORT=8080
-      - APPLICATION_STAGE=alpha
+      - SPRING_PROFILE=local
     ports:
       - 8090:8080
   version-set-service:
@@ -50,6 +50,6 @@ services:
     environment:
       - APP_PORT=8080
       - PACKAGE_SERVICE_URL=http://package-service:8080
-      - APPLICATION_STAGE=alpha
+      - SPRING_PROFILE=local
     ports:
       - 8091:8080

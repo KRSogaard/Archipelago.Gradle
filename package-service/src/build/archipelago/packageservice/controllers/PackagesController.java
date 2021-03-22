@@ -114,7 +114,7 @@ public class PackagesController {
             @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version
-    ) {
+    ) throws PackageNotFoundException {
         log.info("Request to get package builds for {}-{} for account {}", name, version, accountId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));

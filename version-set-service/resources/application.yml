@@ -53,12 +53,11 @@ aws:
     key: "Ww5zZvR/22VGapHyVndvrjbxYScfFZuE/dWc7qJx"
 
 endpoints:
-  package-service: "https://package-service.alpha.archipelago.build"
+  package-service: "http://package-service.alpha.archipelago.build"
 
 ---
 spring:
   profiles: beta
-
 ---
 spring:
   profiles: prod

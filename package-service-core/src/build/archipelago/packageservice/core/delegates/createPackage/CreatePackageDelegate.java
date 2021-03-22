@@ -51,6 +51,7 @@ public class CreatePackageDelegate {
 
         packageData.createPackage(request.getAccountId(), CreatePackageModel.builder()
                 .name(request.getName())
+                .publicPackage(false)
                 .description(request.getDescription())
                 .gitCloneUrl(repo.getCloneUrl())
                 .gitUrl(repo.getUrl())

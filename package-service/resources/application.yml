@@ -1,7 +1,6 @@
 server:
   port: 8080
-  error:
-    include-stacktrace: never
+  include-stacktrace: never
 
 spring:
   jackson:
@@ -32,11 +31,12 @@ s3:
 
 dynamodb:
   packages: "archipelago-local.packages"
+  packages_public: "archipelago-local.public-packages"
   packages_versions: "archipelago-local.packages-versions"
   packages_builds: "archipelago-local.packages-builds"
   packages_builds_git: "archipelago-local.packages-builds-git"
   accounts: "archipelago-local.accounts"
-  account-mapping: "archipelago-local.account-mapping"
+  account-mapping: "archipelago-local.accounts-mapping"
   accounts-git: "archipelago-local.accounts-git"
 
 aws:
@@ -68,7 +68,6 @@ aws:
 ---
 spring:
   profiles: beta
-
 ---
 spring:
   profiles: prod

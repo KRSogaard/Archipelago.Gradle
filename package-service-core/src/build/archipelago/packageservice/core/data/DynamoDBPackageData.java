@@ -11,6 +11,8 @@ import com.google.common.collect.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -116,14 +118,7 @@ public class DynamoDBPackageData implements PackageData {
         } else {
             log.debug("Did not find any versions for the package '{}'", name);
         }
-        return PackageDetails.builder()
-                .name(pkgItem.get(DynamoDBKeys.DISPLAY_PACKAGE_NAME).getS())
-                .created(AV.toInstant(pkgItem.get(DynamoDBKeys.CREATED)))
-                .description(pkgItem.get(DynamoDBKeys.DESCRIPTION).getS())
-                .gitCloneUrl(pkgItem.get(DynamoDBKeys.GIT_CLONE_URL).getS())
-                .gitUrl(pkgItem.get(DynamoDBKeys.GIT_URL).getS())
-                .gitRepoName(pkgItem.get(DynamoDBKeys.GIT_REPO_NAME).getS())
-                .gitRepoFullName(pkgItem.get(DynamoDBKeys.GIT_REPO_FULL_NAME).getS())
+        return createPackage(pkgItem)
                 .versions(versions.build())
                 .build();
     }
@@ -325,6 +320,7 @@ public class DynamoDBPackageData implements PackageData {
         ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
                 .put(DynamoDBKeys.ACCOUNT_ID, AV.of(searchName(accountId)))
                 .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(model.getName())))
+                .put(DynamoDBKeys.PACKAGE_PUBLIC, AV.of(model.getPublicPackage()))
                 .put(DynamoDBKeys.DISPLAY_PACKAGE_NAME, AV.of(model.getName()))
                 .put(DynamoDBKeys.GIT_CLONE_URL, AV.of(model.getGitCloneUrl()))
                 .put(DynamoDBKeys.GIT_URL, AV.of(model.getGitUrl()))
@@ -334,6 +330,14 @@ public class DynamoDBPackageData implements PackageData {
                 .put(DynamoDBKeys.DESCRIPTION, AV.of(model.getDescription()));
 
         dynamoDB.putItem(new PutItemRequest(settings.getPackagesTableName(), map.build()));
+
+        if (model.getPublicPackage()) {
+            map = ImmutableMap.<String, AttributeValue>builder()
+                    .put(DynamoDBKeys.ACCOUNT_ID, AV.of(searchName(accountId)))
+                    .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(model.getName())));
+
+            dynamoDB.putItem(new PutItemRequest(settings.getPublicPackagesTableName(), map.build()));
+        }
     }
 
     @Override
@@ -361,17 +365,73 @@ public class DynamoDBPackageData implements PackageData {
                         .build());
             }
 
-            packageDetailsList.add(PackageDetails.builder()
-                    .name(item.get(DynamoDBKeys.DISPLAY_PACKAGE_NAME).getS())
-                    .description(AV.getStringOrNull(item, DynamoDBKeys.DESCRIPTION))
-                    .created(AV.toInstant(item.get(DynamoDBKeys.CREATED)))
-                    .gitCloneUrl(item.get(DynamoDBKeys.GIT_CLONE_URL).getS())
-                    .gitUrl(item.get(DynamoDBKeys.GIT_URL).getS())
-                    .gitRepoName(item.get(DynamoDBKeys.GIT_REPO_NAME).getS())
-                    .gitRepoFullName(item.get(DynamoDBKeys.GIT_REPO_FULL_NAME).getS())
+            packageDetailsList.add(createPackage(item)
                     .versions(latestVersion.build())
                     .build());
         }
         return packageDetailsList.build();
+    }
+
+    @Override
+    public String getPublicPackage(String name) throws PackageNotFoundException {
+        log.debug("Find public package '{}'", name);
+        GetItemRequest getItemRequest = new GetItemRequest(settings.getPublicPackagesTableName(),
+                ImmutableMap.<String, AttributeValue>builder()
+                        .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(name)))
+                        .build());
+        Map<String, AttributeValue> item = dynamoDB.getItem(getItemRequest).getItem();
+        if (item == null) {
+            log.debug("Did not find the public package '{}'", name);
+            throw new PackageNotFoundException(name);
+        }
+        return item.get(DynamoDBKeys.ACCOUNT_ID).getS();
+    }
+
+    @Override
+    public List<PackageDetails> getAllPublicPackages() {
+        ScanRequest request = new ScanRequest()
+                .withTableName(settings.getPackagesTableName())
+                .withFilterExpression("#pkgPublic = :pkgPublic")
+                .withExpressionAttributeNames(ImmutableMap.of(
+                        "#pkgPublic", DynamoDBKeys.PACKAGE_PUBLIC
+                ))
+                .withExpressionAttributeValues(ImmutableMap.of(
+                        ":pkgPublic", AV.of(true)));
+        ScanResult result = dynamoDB.scan(request);
+        if (result.getItems() == null) {
+            return new ArrayList<>();
+        }
+
+        ImmutableList.Builder<PackageDetails> packageDetailsList = ImmutableList.<PackageDetails>builder();
+        for (Map<String, AttributeValue> item : result.getItems()) {
+            ImmutableList.Builder<PackageDetailsVersion> latestVersion =
+                    ImmutableList.<PackageDetailsVersion>builder();
+
+            if (item.containsKey(DynamoDBKeys.LATEST_BUILD)) {
+                latestVersion.add(PackageDetailsVersion.builder()
+                        .version(item.get(DynamoDBKeys.LATEST_VERSION).getS())
+                        .latestBuildHash(item.get(DynamoDBKeys.LATEST_BUILD).getS())
+                        .latestBuildTime(AV.toInstant(item.get(DynamoDBKeys.LATEST_BUILD_TIME)))
+                        .build());
+            }
+
+            packageDetailsList.add(createPackage(item)
+                    .versions(latestVersion.build())
+                    .build());
+        }
+        return packageDetailsList.build();
+    }
+
+    private PackageDetails.PackageDetailsBuilder createPackage(Map<String, AttributeValue> item) {
+        return PackageDetails.builder()
+                .name(item.get(DynamoDBKeys.DISPLAY_PACKAGE_NAME).getS())
+                .owner(item.get(DynamoDBKeys.ACCOUNT_ID).getS())
+                .publicPackage(AV.getOrDefault(item, DynamoDBKeys.PACKAGE_PUBLIC, AttributeValue::getBOOL, false))
+                .description(AV.getStringOrNull(item, DynamoDBKeys.DESCRIPTION))
+                .created(AV.toInstant(item.get(DynamoDBKeys.CREATED)))
+                .gitCloneUrl(item.get(DynamoDBKeys.GIT_CLONE_URL).getS())
+                .gitUrl(item.get(DynamoDBKeys.GIT_URL).getS())
+                .gitRepoName(item.get(DynamoDBKeys.GIT_REPO_NAME).getS())
+                .gitRepoFullName(item.get(DynamoDBKeys.GIT_REPO_FULL_NAME).getS());
     }
 }

@@ -8,6 +8,7 @@ import lombok.*;
 @Builder
 public class CreatePackageModel {
     private String name;
+    private Boolean publicPackage;
     private String description;
     private String gitCloneUrl;
     private String gitUrl;

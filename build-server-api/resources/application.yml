@@ -68,13 +68,12 @@ sqs:
   build-queue: "https://sqs.us-west-2.amazonaws.com/075174350620/archipelago-build-alpha-build-queue"
 
 endpoints:
-  package-service: "https://package-service.alpha.archipelago.build"
-  versionset-service: "https://version-set-service.alpha.archipelago.build"
+  package-service: "http://package-service.alpha.archipelago.build"
+  versionset-service: "http://version-set-service.alpha.archipelago.build"
 
 ---
 spring:
   profiles: beta
-
 ---
 spring:
   profiles: prod

@@ -11,20 +11,11 @@ USER spring:spring
 ARG APP_JAR_NAME=build-service-1.0.jar
 ENV APP_JAR_NAME_ENV=$APP_JAR_NAME
 
-# APP ENVS
-ENV SPRING_PROFILE=local
-ENV APP_PORT=8080
-ENV APP_URL=http://localhost:8080
-
-ENV PACKAGE_SERVICE_URL=http://localhost:8090
-ENV VERSIONSET_SERVICE_URL=http://localhost:8091
-ENV BUILD_SERVICE_URL=http://localhost:8095
-
 ADD . ./
 WORKDIR /opt
 
 ENTRYPOINT java \
-    -Dspring.profiles.active=$SPRING_PROFILE \
+    -Dspring.profiles.active=$APPLICATION_STAGE \
     -jar $APP_JAR_NAME_ENV
 
 # Enable after health-check endpoint implementation

@@ -429,6 +429,7 @@ project(':harbor-service') {
     runtime 'io.jsonwebtoken:jjwt-jackson:0.11.2'
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'net.dongliu:gson-java8-datatype:1.1.0'
+    implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
 
     implementation 'org.springframework.boot:spring-boot-starter-jersey'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -631,6 +632,7 @@ project(':package-service') {
 
     implementation 'com.amazonaws:aws-java-sdk-s3:1.11.880'
     implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+    implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
 
     testImplementation 'com.google.code.gson:gson:2.8.6'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
@@ -699,6 +701,7 @@ project(':package-service-core') {
 
     implementation 'com.amazonaws:aws-java-sdk-s3:1.11.880'
     implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
+    implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
   }
 }
 project(':package-service-models') {

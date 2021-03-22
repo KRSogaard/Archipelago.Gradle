@@ -14,9 +14,14 @@ import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.Uploa
 import build.archipelago.packageservice.core.delegates.verifyBuildsExists.VerifyBuildsExistsDelegate;
 import build.archipelago.packageservice.core.delegates.verifyPackageExists.VerifyPackageExistsDelegate;
 import build.archipelago.packageservice.core.storage.PackageStorage;
+import build.archipelago.packageservice.models.PackageDetails;
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.*;
+
+import java.util.List;
 
 @Configuration
 @Slf4j
@@ -34,8 +39,9 @@ public class DelegateConfiguration {
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public GetBuildArtifactDelegate getBuildArtifactDelegate(
             PackageData packageData,
-            PackageStorage packageStorage) {
-        return new GetBuildArtifactDelegate(packageData, packageStorage);
+            PackageStorage packageStorage,
+            @Qualifier("publicPackageAccountCache") Cache<String, String> publicPackageAccountCache) {
+        return new GetBuildArtifactDelegate(packageData, packageStorage, publicPackageAccountCache);
     }
 
     @Bean
@@ -50,49 +56,56 @@ public class DelegateConfiguration {
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public GetPackageDelegate getPackageDelegate(
-            PackageData packageData) {
-        return new GetPackageDelegate(packageData);
+            PackageData packageData,
+            @Qualifier("publicPackageAccountCache") Cache<String, String> publicPackageAccountCache) {
+        return new GetPackageDelegate(packageData, publicPackageAccountCache);
     }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public GetPackageBuildsDelegate getPackageBuildsDelegate(
-            PackageData packageData) {
-        return new GetPackageBuildsDelegate(packageData);
+            PackageData packageData,
+            @Qualifier("publicPackageAccountCache") Cache<String, String> publicPackageAccountCache) {
+        return new GetPackageBuildsDelegate(packageData, publicPackageAccountCache);
     }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public GetPackageBuildDelegate getPackageBuildDelegate(
-            PackageData packageData) {
-        return new GetPackageBuildDelegate(packageData);
+            PackageData packageData,
+            @Qualifier("publicPackageAccountCache") Cache<String, String> publicPackageAccountCache) {
+        return new GetPackageBuildDelegate(packageData, publicPackageAccountCache);
     }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public VerifyBuildsExistsDelegate verifyBuildsExistsDelegate(
-            PackageData packageData) {
-        return new VerifyBuildsExistsDelegate(packageData);
+            PackageData packageData,
+            @Qualifier("publicPackageAccountCache") Cache<String, String> publicPackageAccountCache) {
+        return new VerifyBuildsExistsDelegate(packageData, publicPackageAccountCache);
     }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public VerifyPackageExistsDelegate verifyPackageExistsDelegate(
-            PackageData packageData) {
-        return new VerifyPackageExistsDelegate(packageData);
+            PackageData packageData,
+            @Qualifier("publicPackageAccountCache") Cache<String, String> publicPackageAccountCache) {
+        return new VerifyPackageExistsDelegate(packageData, publicPackageAccountCache);
     }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public GetPackageBuildByGitDelegate getPackageBuildByGitDelegate(
-            PackageData packageData) {
-        return new GetPackageBuildByGitDelegate(packageData);
+            PackageData packageData,
+            @Qualifier("publicPackageAccountCache") Cache<String, String> publicPackageAccountCache) {
+        return new GetPackageBuildByGitDelegate(packageData, publicPackageAccountCache);
     }
 
     @Bean
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public GetPackagesDelegate getPackagesDelegate(
-            PackageData packageData) {
-        return new GetPackagesDelegate(packageData);
+            PackageData packageData,
+            Cache<String, List<PackageDetails>> packagesCache) {
+        return new GetPackagesDelegate(packageData, packagesCache);
     }
 }

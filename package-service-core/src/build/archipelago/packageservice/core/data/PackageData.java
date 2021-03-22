@@ -5,6 +5,8 @@ import build.archipelago.packageservice.exceptions.*;
 import build.archipelago.packageservice.models.*;
 import com.google.common.collect.ImmutableList;
 
+import java.util.List;
+
 public interface PackageData {
     boolean buildExists(String accountId, ArchipelagoBuiltPackage pkg);
 
@@ -27,4 +29,8 @@ public interface PackageData {
     void createPackage(String accountId, CreatePackageModel model) throws PackageExistsException;
 
     ImmutableList<PackageDetails> getAllPackages(String accountId);
+
+    String getPublicPackage(String name) throws PackageNotFoundException;
+
+    List<PackageDetails> getAllPublicPackages();
 }

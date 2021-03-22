@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: version-set-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: version-set-service
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: version-set-service
+        stage: alpha
+    spec:
+      containers:
+        - env:
+            - name: APPLICATION_STAGE
+              value: alpha
+          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/version-set-service
+          name: version-set-service
+          ports:
+            - containerPort: 8080
+          resources: {}
+      restartPolicy: Always
+status: {}

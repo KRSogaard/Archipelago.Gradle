@@ -4,6 +4,8 @@ import build.archipelago.authservice.client.AuthClient;
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.harbor.controllers.*;
 import com.fasterxml.jackson.databind.*;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.*;
 import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,7 @@ import java.security.*;
 import java.security.spec.*;
 import java.time.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
@@ -29,6 +32,8 @@ public class AccountIdFilter implements Filter {
     public static final String UserIdKey = "user-id";
     private static Map<String, PublicKey> keyMap;
     private static Instant lastUpdate;
+    private static Cache<String, CacheItem> accessTokenCache;
+    private static Cache<String, PublicKey> keyCache;
 
     private String authEndpoint;
     private AuthClient authClient;
@@ -39,37 +44,68 @@ public class AccountIdFilter implements Filter {
         keyMap = new HashMap<>();
         this.authEndpoint = authEndpoint;
         this.authClient = authClient;
+
+        accessTokenCache = Caffeine.newBuilder()
+                .expireAfterWrite(60, TimeUnit.MINUTES)
+                .maximumSize(10_000)
+                .build();
+        keyCache = Caffeine.newBuilder()
+                .expireAfterWrite(1, TimeUnit.DAYS)
+                .maximumSize(100)
+                .build();
     }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        log.debug("Setting account id");
+        log.debug("Setting account id for request");
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 
         try {
             String accessToken = getAccessToken(httpServletRequest);
+            CacheItem item = accessTokenCache.getIfPresent(accessToken);
+            if (item != null) {
+                if (Instant.now().isAfter(item.getExpires())) {
+                    log.warn("Token has expired");
+                    throw new UnauthorizedException();
+                }
+                request.setAttribute(AccountIdKey, item.getAccountId());
+                request.setAttribute(UserIdKey, item.getUserId());
+                chain.doFilter(request, response);
+                return;
+            }
+
+            log.debug("Got access token from request: '{}'", accessToken);
             String kid = getKid(accessToken);
-            PublicKey publicKey = getPublicKey(kid);
+            log.debug("Using KID: '{}'", kid);
+            PublicKey publicKey = keyCache.get(kid.toLowerCase(), k -> getPublicKey(kid));
             Jws<Claims> claims = getClaims(publicKey, accessToken);
-            checkExpired(claims);
+            Instant expires = checkExpired(claims);
             String userId = claims.getBody().getSubject();
+            log.debug("User claims to be: '{}'", userId);
             if (Strings.isNullOrEmpty(userId)) {
+                // TODO: What is going on here?
+                log.debug("No user id, searching the header");
                 String clientId = (String)claims.getBody().get("client_id");
+                log.warn("Request client id: '{}'", clientId);
                 if (Strings.isNullOrEmpty(clientId)) {
                     throw new UnauthorizedException();
                 }
                 userId = httpServletRequest.getHeader("user_id");
             }
             if (Strings.isNullOrEmpty(userId)) {
+                log.warn("Claim did not contain a user id");
                 throw new UnauthorizedException();
             }
             String accountId = getAccountId(userId);
+            log.info("Mapped user '{}' to account id '{}'", userId, accountId);
 
+            accessTokenCache.put(accessToken, new CacheItem(userId, accountId, expires));
             request.setAttribute(AccountIdKey, accountId);
             request.setAttribute(UserIdKey, userId);
             chain.doFilter(request, response);
         } catch (UnauthorizedException exp) {
+            log.warn("Authentication was not valid.", exp);
             String url = httpServletRequest.getRequestURL().toString();
             if (url.endsWith("/auth/login") ||
                 url.endsWith("/auth/register") ||
@@ -82,7 +118,7 @@ public class AccountIdFilter implements Filter {
         }
     }
 
-    private void checkExpired(Jws<Claims> claims) {
+    private Instant checkExpired(Jws<Claims> claims) {
         if (!claims.getBody().containsKey("ext")) {
             log.warn("JWT token did not contain the ext element");
             throw new UnauthorizedException();
@@ -94,6 +130,7 @@ public class AccountIdFilter implements Filter {
                 log.debug("JWT was expired");
                 throw new UnauthorizedException();
             }
+            return Instant.ofEpochSecond(ext);
         } catch (RequiredTypeException exp) {
             log.warn("JWT ext was not a number: '{}'", claims.getBody().get("ext"));
             throw new UnauthorizedException();
@@ -190,4 +227,28 @@ public class AccountIdFilter implements Filter {
         }
     }
 
+    private class CacheItem {
+        private String userId;
+        private String accountId;
+
+        private Instant expires;
+
+        public CacheItem(String userId, String accountId, Instant expires) {
+            this.userId = userId;
+            this.accountId = accountId;
+            this.expires = expires;
+        }
+
+        public String getUserId() {
+            return userId;
+        }
+
+        public String getAccountId() {
+            return accountId;
+        }
+
+        public Instant getExpires() {
+            return expires;
+        }
+    }
 }

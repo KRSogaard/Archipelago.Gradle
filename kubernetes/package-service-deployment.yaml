@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: package-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: package-service
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: package-service
+        stage: alpha
+    spec:
+      containers:
+        - env:
+            - name: APPLICATION_STAGE
+              value: alpha
+          image: public.ecr.aws/m4n0d0d8/package-service-public:latest
+          name: package-service
+          ports:
+            - containerPort: 8080
+          resources: {}
+      restartPolicy: Always
+status: {}
