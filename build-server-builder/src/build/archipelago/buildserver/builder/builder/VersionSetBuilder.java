@@ -164,7 +164,7 @@ public class VersionSetBuilder {
             log.error("Fatal error while processing build, will retry later", exp);
             throw new TemporaryMessageProcessingException();
         } finally {
-            //PathHelper.deleteFolder(buildRoot);
+            PathHelper.deleteFolder(buildRoot);
         }
     }
 
@@ -202,6 +202,7 @@ public class VersionSetBuilder {
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PREPARE, BuildStatus.FAILED);
             throw new RuntimeException(e);
         } finally {
+            log.info("Build done");
             if (stageLog.hasLogs()) {
                 stageLogsService.uploadStageLog(buildRequest.getBuildId(), BuildStage.PREPARE, stageLog.getLogs());
             }
@@ -282,6 +283,7 @@ public class VersionSetBuilder {
             }
 
             // Build are done
+            boolean buildFailed = false;
             List<ArchipelagoBuiltPackage> newBuildPackage = new ArrayList<>();
             for (ArchipelagoPackage builtPackage : directPackages) {
                 if (!gitMap.containsKey(builtPackage)) {
@@ -294,10 +296,9 @@ public class VersionSetBuilder {
                 try {
                     ArchipelagoBuiltPackage previousBuilt = this.getPreviousBuild(builtPackage.getName(), gitCommit);
                     if (previousBuilt != null) {
+                        stageLog.addInfo("The package " + buildHash + " has been build before, no need to publish");
                         buildHash = previousBuilt.getHash();
-                    }
-
-                    if (buildHash == null) {
+                    } else {
                         log.info("First time the package {}, at commit {} has been built",
                                 builtPackage.getName(), gitCommit);
                         try {
@@ -305,6 +306,7 @@ public class VersionSetBuilder {
                             configContent = Files.readString(wsContext.getPackageRoot(builtPackage).resolve(WorkspaceConstants.BUILD_FILE_NAME));
 
                             Path zip = this.prepareBuildZip(builtPackage);
+                            log.debug("Zip file has been prepared at '{}'", zip);
                             buildHash = packageServiceClient.uploadBuiltArtifact(accountDetails.getId(), UploadPackageRequest.builder()
                                             .config(configContent)
                                             .pkg(builtPackage)
@@ -316,17 +318,23 @@ public class VersionSetBuilder {
                             throw new RuntimeException(String.format("The package %s no longer exists, was it deleted while building?", builtPackage), e);
                         }
                     }
+                    newBuildPackage.add(new ArchipelagoBuiltPackage(builtPackage, buildHash));
                 } catch (Exception exp) {
                     log.error("Failed to get last build of package", exp);
-                    log.error("Failed to get last build of package", exp);
+                    buildFailed = true;
                 }
+            }
 
-                newBuildPackage.add(new ArchipelagoBuiltPackage(builtPackage, buildHash));
+            if (buildFailed) {
+                log.error("A package failed to publish, can't create a new version of the version-set");
+                stageLog.addError("A package failed to publish, can't create a new version of the version-set");
+                throw new FailBuildException();
             }
 
             VersionSet versionSet = versionSetServiceClient.getVersionSet(accountDetails.getId(), wsContext.getVersionSet());
             if (versionSet.getTarget() == null) {
                 buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
+                log.error("There are no target set for the version-set, we can not create a new version-set revision without it");
                 stageLog.addError("There are no target set for the version-set, we can not create a new version-set revision without it");
                 stageLog.addError("If the target package is new and was added to this build, it will have been published. " +
                         "You can then update this version-set to target that package.");

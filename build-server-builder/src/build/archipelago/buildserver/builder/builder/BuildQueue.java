@@ -55,7 +55,7 @@ public class BuildQueue {
     private boolean isAllDependenciesBuilt(ArchipelagoPackage pkg) {
         List<ArchipelagoPackage> dependencies = buildDependicies.get(pkg);
         for (ArchipelagoPackage d : dependencies) {
-            if (!doneBuilding.get(d)) {
+            if (!doneBuilding.containsKey(d)) {
                 return false;
             }
         }

@@ -1,12 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: package-service
+  name: alpha-package-service
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: package-service
+      stage: alpha
   strategy: {}
   template:
     metadata:
@@ -18,7 +19,7 @@ spec:
         - env:
             - name: APPLICATION_STAGE
               value: alpha
-          image: public.ecr.aws/m4n0d0d8/package-service-public:latest
+          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/package-service:20210327-2
           name: package-service
           ports:
             - containerPort: 8080

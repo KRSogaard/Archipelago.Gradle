@@ -4,7 +4,7 @@ import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.packageservice.core.delegates.getBuildArtifact.*;
 import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.*;
 import build.archipelago.packageservice.exceptions.*;
-import build.archipelago.packageservice.models.UploadPackageRestRequest;
+import build.archipelago.packageservice.models.rest.ArtifactUploadRestRequest;
 import build.archipelago.packageservice.models.rest.*;
 import com.google.common.base.*;
 import lombok.extern.slf4j.Slf4j;
@@ -36,36 +36,26 @@ public class ArtifactController {
             @PathVariable("accountId") String accountId,
             @PathVariable("name") String name,
             @PathVariable("version") String version,
-            @ModelAttribute UploadPackageRestRequest request)
+            @RequestBody ArtifactUploadRestRequest request)
             throws PackageNotFoundException, PackageExistsException {
         log.info("Request to upload new build: {}", request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "A name is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version), "A version is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getGitCommit()), "A git commit is required");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getGitBranch()), "A git commit is required");
-        Preconditions.checkNotNull(request.getBuildArtifact(),
-                "build artifact is required");
-        Preconditions.checkArgument(request.getBuildArtifact().getSize() > 0,
-                "build artifact is required");
-        try {
-            String hash = uploadBuildArtifactDelegate.uploadArtifact(
-                    UploadBuildArtifactDelegateRequest.builder()
-                            .accountId(accountId)
-                            .pkg(new ArchipelagoPackage(name, version))
-                            .config(request.getConfig())
-                            .gitCommit(request.getGitCommit())
-                            .gitBranch(request.getGitBranch())
-                            .buildArtifact(request.getBuildArtifact().getBytes())
-                            .build()
-            );
-            return ArtifactUploadRestResponse.builder()
-                    .hash(hash)
-                    .build();
-        } catch (IOException e) {
-            log.error("Failed to read build artifact: " + e.getMessage());
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
+
+        UploadBuildArtifactDelegateResponse response = uploadBuildArtifactDelegate.uploadArtifact(
+                UploadBuildArtifactDelegateRequest.builder()
+                        .accountId(accountId)
+                        .pkg(new ArchipelagoPackage(name, version))
+                        .config(request.getConfig())
+                        .gitCommit(request.getGitCommit())
+                        .build()
+        );
+        return ArtifactUploadRestResponse.builder()
+                .hash(response.getHash())
+                .uploadUrl(response.getUploadUrl())
+                .build();
     }
 
     @GetMapping(value = {"{name}/{version}/{hash}", "{name}/{version}"})

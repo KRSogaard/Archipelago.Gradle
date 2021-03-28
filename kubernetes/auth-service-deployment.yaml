@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth-service
+  name: alpha-auth-service
 spec:
   replicas: 1
   selector:
@@ -18,7 +18,7 @@ spec:
         - env:
             - name: APPLICATION_STAGE
               value: alpha
-          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/auth-service
+          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/auth-service:20210327-1
           name: auth-service
           ports:
             - containerPort: 8080

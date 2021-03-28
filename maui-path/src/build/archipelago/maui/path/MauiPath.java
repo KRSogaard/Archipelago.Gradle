@@ -1,5 +1,6 @@
 package build.archipelago.maui.path;
 
+import build.archipelago.common.ArchipelagoBuiltPackage;
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.*;
 import build.archipelago.maui.common.contexts.WorkspaceContext;
@@ -62,11 +63,30 @@ public class MauiPath {
             PathProperties pathProperties = PathProperties.parse(request);
             ArchipelagoPackage targetPackage = rootPackage;
 
-            if (pathProperties.targetPackage != null) {
-                targetPackage = ArchipelagoPackage.parse(pathProperties.targetPackage);
+            if (pathProperties.targetPackage != null
+                    && !rootPackage.getName().equalsIgnoreCase(pathProperties.targetPackage)
+                    && !rootPackage.getNameVersion().equalsIgnoreCase(pathProperties.targetPackage)) {
+                if (!pathProperties.targetPackage.contains("-")) {
+                    Optional<ArchipelagoPackage> pkg = workspaceContext.getVersionSetRevision()
+                            .getPackages().stream()
+                            .filter(f -> f.getName().equalsIgnoreCase(pathProperties.targetPackage))
+                            .map(b -> (ArchipelagoPackage)b)
+                            .findFirst();
+                    if (pkg.isEmpty()) {
+                        pkg = workspaceContext.getLocalArchipelagoPackages().stream()
+                                .filter(f -> f.getName().equalsIgnoreCase(pathProperties.targetPackage))
+                                .findFirst();
+                        if (pkg.isEmpty()) {
+                            throw new PackageNotInVersionSetException(pathProperties.targetPackage);
+                        }
+                    }
+                    targetPackage = ArchipelagoPackage.parse(pkg.get().getNameVersion());
+                } else {
+                    targetPackage = ArchipelagoPackage.parse(pathProperties.targetPackage);
+                }
             }
 
-            if (!workspaceContext.isPackageInVersionSet(targetPackage)) {
+            if (!workspaceContext.isPackageInVersionSetOrLocal(targetPackage)) {
                 throw new PackageNotInVersionSetException(targetPackage);
             }
 

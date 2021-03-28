@@ -71,7 +71,6 @@ public class PackagesController {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkNotNull(request);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()));
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getDescription()));
 
         createPackageDelegate.create(CreatePackageDelegateRequest.builder()
                 .accountId(accountId)

@@ -52,6 +52,7 @@ public class AWSConfiguration {
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     public AmazonSQSFactory amazonSQSFactory(AWSCredentialsProvider credentialsProvider,
                                              @Value("${aws.region}") String awsRegion) {
+        // TODO: Why is pulling so slow?
         return new AmazonSQSFactory(credentialsProvider, awsRegion);
     }
 }

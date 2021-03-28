@@ -40,8 +40,6 @@ public class AuthCommand extends BaseAction implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        Path authFile = systemPathProvider.getMauiPath().resolve(".auth");
-
         OAuthDeviceCodeResponse deviceCodeResponse = authService.getDeviceCode();
         if (deviceCodeResponse == null) {
             out.error("Failed to request an authentication token, please check you internet connection.");

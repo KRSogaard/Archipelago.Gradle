@@ -53,8 +53,8 @@ spring:
 
 aws:
   access:
-    id: "AKIARDAF5R4OBMADJNEC"
-    key: "ZjjTPzB+w33+G3EaL96dMTlYzDwtQ62he7oaf4uw"
+    id: "AKIARDAF5R4OA34JECAN"
+    key: "OM/QcUK+1A3eEegxP39em00TBHZbibFqk73SBlKF"
 
 dynamodb:
   build: "archipelago-alpha.builds"

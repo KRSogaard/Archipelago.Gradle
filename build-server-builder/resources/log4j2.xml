@@ -2,7 +2,7 @@
 <Configuration status="DEBUG" monitorInterval="30">
     <Properties>
         <Property name="LOG_PATTERN">
-            %d{HH:mm:ss.SSS}[%p][%X{RequestId}][%c]: %msg%n
+            %d{HH:mm:ss.SSS}[%p][%X{RequestId}][%c{1}]: %msg%n
         </Property>
         <Property name="LOG_DIR">
             build/logs/

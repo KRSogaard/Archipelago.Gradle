@@ -26,6 +26,4 @@ public class Application {
         });
         System.exit(commandLine.execute(args));
     }
-
-
 }

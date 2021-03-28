@@ -41,8 +41,8 @@ dynamodb:
 
 aws:
   access:
-    id: "AKIARDAF5R4OIKW2KPCY"
-    key: "uGIejRuxAS/05zH6B0w8+0IdQhd9bPX2lxxuvZoG"
+    id: "AKIARDAF5R4OKO3CRLOM"
+    key: "QIUG4ouvazz9mFff25DZrRHeMtDSkCOboVxEoztB"
 
 ---
 spring:
@@ -53,6 +53,7 @@ s3:
 
 dynamodb:
   packages: "archipelago-alpha.packages"
+  packages_public: "archipelago-alpha.public-packages"
   packages_versions: "archipelago-alpha.packages-versions"
   packages_builds: "archipelago-alpha.packages-builds"
   packages_builds_git: "archipelago-alpha.packages-builds-git"
@@ -62,8 +63,8 @@ dynamodb:
 
 aws:
   access:
-    id: "AKIARDAF5R4OB6ZKNWBR"
-    key: "gLH+zY2FMjiWwhFc9KOY8myXKR2eNHNjjaoQXUMC"
+    id: "AKIARDAF5R4OPDXC75XZ"
+    key: "exVTQzeBN3NM9cYKuTXMChFJgIlj6q37Ch8CntsG"
 
 ---
 spring:

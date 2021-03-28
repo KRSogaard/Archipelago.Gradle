@@ -30,6 +30,7 @@ build-server-models/build/
 harbor-service/build/
 harbor-service-client/build/
 maui/build/
+maui-builder/build/
 maui-common/build/
 maui-core/build/
 maui-graph/build/

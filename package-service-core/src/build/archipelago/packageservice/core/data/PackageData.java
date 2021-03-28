@@ -24,7 +24,7 @@ public interface PackageData {
 
     BuiltPackageDetails getLatestBuildPackage(String accountId, ArchipelagoPackage pkg) throws PackageNotFoundException;
 
-    void createBuild(String accountId, ArchipelagoBuiltPackage pkg, String config, String gitCommit, String gitBranch) throws PackageNotFoundException, PackageExistsException;
+    void createBuild(String accountId, ArchipelagoBuiltPackage pkg, String config, String gitCommit) throws PackageNotFoundException, PackageExistsException;
 
     void createPackage(String accountId, CreatePackageModel model) throws PackageExistsException;
 

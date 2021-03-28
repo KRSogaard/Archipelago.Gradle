@@ -19,7 +19,10 @@ public class GetPackagesDelegate {
 
     public ImmutableList<PackageDetails> get(String accountId) {
         ImmutableList.Builder<PackageDetails> returnList = ImmutableList.<PackageDetails>builder();
-        returnList.addAll(publicPackagesCache.get("public", k -> packageData.getAllPublicPackages()));
+        List<PackageDetails> cache = publicPackagesCache.get("public", k -> packageData.getAllPublicPackages());
+        if (cache != null) {
+            returnList.addAll(cache);
+        }
         returnList.addAll(packageData.getAllPackages(accountId));
         return returnList.build();
     }

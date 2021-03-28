@@ -1,10 +1,16 @@
 package build.archipelago.packageservice.client;
 
+import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.exceptions.UnauthorizedException;
+import build.archipelago.packageservice.client.models.CreatePackageRequest;
+import build.archipelago.packageservice.client.models.UploadPackageRequest;
+import build.archipelago.packageservice.client.rest.RestPackageServiceClient;
 import build.archipelago.packageservice.exceptions.*;
 import org.junit.*;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 
 public class RestPackageServiceClientTest {
 
@@ -13,112 +19,26 @@ public class RestPackageServiceClientTest {
 
     @Test
     public void testEmptyTest() throws PackageNotFoundException, UnauthorizedException, PackageExistsException, IOException {
-//        RestPackageServiceClient client = new RestPackageServiceClient("http://localhost:8090",
-//                "1iv0c51b2f7a2nsl0hnphthnq6",
-//                "n1uv2fh8o1hf0medie0luo85ksh5hju0s0na1p3i7lv6c82h0ic");
-//
-//        client.createPackage(accountId, build.archipelago.packageservice.client.models.CreatePackageRequest.builder()
-//                .name("CopyBuildSystemTest")
-//                .description("The copy build system")
-//                .build());
-//
-//        String hash = client.uploadBuiltArtifact(accountId, build.archipelago.packageservice.client.models.UploadPackageRequest.builder()
-//                .pkg(new ArchipelagoPackage("CopyBuildSystemTest", "1.0"))
-//                .gitBranch("master")
-//                .gitCommit("5d3fd1ed75e99f36b92a6e1c9ebd3b21b9b85058")
-//                .config("version: 1.0\n" +
-//                        "buildSystem: bash")
-//                .build(),
-//                Path.of("/Users/kasper.sogaard/Downloads/Test.zip")
-//                );
-//
-//
-//
-//        var getPackage = client.getPackage(accountId, "CopyBuildSystemTest");
-//        var builds = client.getPackageBuilds(accountId, new ArchipelagoPackage("CopyBuildSystemTest", "1.0"));
-//        var build = client.getPackageBuild(accountId, new ArchipelagoBuiltPackage("CopyBuildSystemTest", "1.0", hash));
-//        var pkgByGit = client.getPackageByGit(accountId, "CopyBuildSystemTest", "master", "5d3fd1ed75e99f36b92a6e1c9ebd3b21b9b85058");
-//        var artifact = client.getBuildArtifact(accountId, new ArchipelagoBuiltPackage("CopyBuildSystemTest", "1.0", hash), Path.of("C:\\Users\\accou\\Downloads\\Temp"));
-//        var verify = client.verifyPackagesExists(accountId, List.of(new ArchipelagoPackage("CopyBuildSystemTest", "1.0")));
-//        var verifyBuilds = client.verifyBuildsExists(accountId, List.of(new ArchipelagoBuiltPackage("CopyBuildSystemTest", "1.0", hash)));
 
+        client = new RestPackageServiceClient("http://localhost:8090",
+                "4ok75klvst0vf15lel5sdbdoc0",
+                "1u7m9pa9njct19jbj51b592ci0ku151quhjo4n0pcm36h3lude91");
+
+        String packageName = "PleaseDeleteMe";
+//
+//        client.createPackage("wewelo", CreatePackageRequest.builder()
+//                .name(packageName)
+//                .description("Delete him for god's sake")
+//                .build());
+
+        String hash = client.uploadBuiltArtifact("wewelo", UploadPackageRequest.builder()
+                .config("Blah blah")
+                .pkg(new ArchipelagoPackage(packageName, "1.Delete"))
+                .gitBranch("DeleteTheBranch")
+                .gitCommit("DeleteCommit")
+                .build(), Paths.get("C:\\Users\\accou\\Downloads\\OpenJDK11U-jdk_x64_windows_hotspot_11.0.10_9.msi"));
+
+        System.out.println("Hash");
         Assert.assertTrue(true);
     }
-//
-//    @Before
-//    public void setUp() {
-//        client = new RestPackageServiceClient("http://localhost:8080");
-//    }
-//
-//    @Test
-//    public void testCreate() throws PackageExistsException {
-//        String UUID = java.util.UUID.randomUUID().toString().split("-")[0];
-//
-//        client.createPackage(build.archipelago.packageservice.client.models.CreatePackageRequest.builder()
-//                .name("KasperTestPackage-" + UUID)
-//                .description("This is a description")
-//                .build());
-//    }
-//
-//    @Test
-//    public void testGet() throws PackageExistsException, PackageNotFoundException {
-//        String UUID = java.util.UUID.randomUUID().toString().split("-")[0];
-//        String name = "KasperTestPackage-" + UUID;
-//
-////        client.createPackage(build.archipelago.packageservice.client.models.CreatePackageRequest.builder()
-////                .name(name)
-////                .description("This is a description")
-////                .build());
-//
-//        build.archipelago.packageservice.client.models.GetPackageResponse response = client.getPackage("testpackage");
-//        Assert.assertEquals("testpackage", response.getName());
-//    }
-//
-//    @Test
-//    public void testGetBuilds() throws PackageNotFoundException {
-//        var response = client.getPackageBuilds(new ArchipelagoPackage("TestPackage", "1.0"));
-//        Assert.assertTrue(response.getBuilds().size() > 0);
-//    }
-//
-//    @Test
-//    public void testGetBuild() throws PackageNotFoundException {
-//        var res = client.getPackageBuild(new ArchipelagoBuiltPackage("TestPackage", "1.0", "9109e71e"));
-//        Assert.assertNotNull(res);
-//    }
-//
-//    @Test
-//    public void testVerifyPackages() {
-//        var res = client.verifyPackagesExists(List.of(
-//                new ArchipelagoPackage("TestPackage", "1.0"),
-//                new ArchipelagoPackage("NotExistsTestPackage", "1.0")
-//        ));
-//        Assert.assertNotNull(res);
-//    }
-//
-//    @Test
-//    public void testVerifyBuilds() {
-//        var res = client.verifyBuildsExists(List.of(
-//                new ArchipelagoBuiltPackage("TestPackage", "1.0", "9109e71e"),
-//                new ArchipelagoBuiltPackage("NotExistsTestPackage", "1.0", "blah")
-//        ));
-//        Assert.assertNotNull(res);
-//    }
-//
-//    @Test
-//    public void testUploadBuild() throws PackageNotFoundException {
-//        var res = client.uploadBuiltArtifact(build.archipelago.packageservice.client.models.UploadPackageRequest.builder()
-//                .pkg(new ArchipelagoPackage("TestPackage", "1.1"))
-//                .config("this is a nice config").build(), Path.of("C:\\Users\\aoyin\\Downloads\\testZip.zip"));
-//        Assert.assertFalse(Strings.isNullOrEmpty(res));
-//    }
-//
-//    @Test
-//    public void testDownloadBuildArtifact() throws PackageNotFoundException, IOException {
-//        Path base = Paths.get("C:\\Users\\aoyin\\Downloads\\downloadTest");
-//        var res = client.getBuildArtifact(
-//                new ArchipelagoBuiltPackage("TestPackage", "1.1", "7342ab62"),
-//                base);
-//        Assert.assertNotNull(res);
-//        Assert.assertTrue(Files.exists(res));
-//    }
 }

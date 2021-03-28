@@ -20,6 +20,9 @@ public class VerifyPackageExistsDelegate {
     private Cache<String, String> publicPackageAccountCache;
 
     public VerifyPackageExistsDelegate(PackageData packageData, Cache<String, String> publicPackageAccountCache) {
+        Preconditions.checkNotNull(packageData, "No PackageData was provided");
+        Preconditions.checkNotNull(publicPackageAccountCache, "No PublicPackageAccountCache was provided");
+
         this.packageData = packageData;
         this.publicPackageAccountCache = publicPackageAccountCache;
 
@@ -34,7 +37,7 @@ public class VerifyPackageExistsDelegate {
         var missingPackages = ImmutableList.<ArchipelagoPackage>builder();
         for (ArchipelagoPackage pkg : packages) {
             String cacheKey = accountId + "||" + pkg.getNameVersion();
-            if (!buildCache.getIfPresent(cacheKey)) {
+            if (buildCache.getIfPresent(cacheKey) == null) {
                 log.debug("Checking if {} exists", pkg);
                 if (packageData.getPackageVersionBuilds(accountId, pkg).isEmpty()) {
                     try {

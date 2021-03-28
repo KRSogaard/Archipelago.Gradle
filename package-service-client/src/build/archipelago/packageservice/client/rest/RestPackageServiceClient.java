@@ -13,6 +13,7 @@ import com.google.common.base.*;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.*;
@@ -248,29 +249,25 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
     }
 
     @Override
-    public String uploadBuiltArtifact(String accountId, UploadPackageRequest request, Path file) throws PackageNotFoundException, UnauthorizedException {
+    public String uploadBuiltArtifact(String accountId, UploadPackageRequest uploadRequest, Path file) throws PackageNotFoundException, UnauthorizedException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
-        Preconditions.checkNotNull(request);
-        Preconditions.checkNotNull(request.getPkg());
+        Preconditions.checkNotNull(uploadRequest);
+        Preconditions.checkNotNull(uploadRequest.getPkg());
         Preconditions.checkNotNull(file);
         Preconditions.checkArgument(Files.exists(file), "File did not exists");
-
-        MultiPartBodyPublisher publisher = new MultiPartBodyPublisher()
-                .addPart("buildArtifact", file)
-                .addPart("config", request.getConfig())
-                .addPart("gitCommit", request.getGitCommit())
-                .addPart("gitBranch", request.getGitBranch());
 
         ArtifactUploadRestResponse response;
         HttpResponse<String> restResponse;
         try {
-            String url = baseUrl + "/account/" + accountId + "/artifact/" + request.getPkg().getName() + "/" + request.getPkg().getVersion();
-            HttpRequest restTequest = this.addOauth(HttpRequest.newBuilder(new URI(url)))
-                    .header("content-type", "multipart/form-data; boundary=" + publisher.getBoundary())
-                    .header("accept", "application/json")
-                    .POST(publisher.build())
+            String url = "/account/" + accountId + "/artifact/" + uploadRequest.getPkg().getName() + "/" + uploadRequest.getPkg().getVersion();
+            ArtifactUploadRestRequest restRequest = ArtifactUploadRestRequest.builder()
+                    .gitCommit(uploadRequest.getGitCommit())
+                    .config(uploadRequest.getConfig())
                     .build();
-            restResponse = client.send(restTequest, HttpResponse.BodyHandlers.ofString());
+            HttpRequest request = this.getOAuthRequest(url)
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(restRequest)))
+                    .build();
+            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (UnauthorizedException exp) {
             log.error("Was unable to auth with the auth server, did not get to call the client", exp);
             throw exp;
@@ -279,6 +276,21 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
             throw new RuntimeException(e);
         }
         response = this.validateResponse(restResponse, ArtifactUploadRestResponse.class);
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(response.getUploadUrl()))
+                    .PUT(HttpRequest.BodyPublishers.ofFile(file))
+                    .build();
+            restResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if (restResponse.statusCode() != 200) {
+                throw new RuntimeException("Got response code: " + restResponse.statusCode());
+            }
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to upload artifact to S3 '{}'", accountId);
+            throw new RuntimeException(e);
+        }
+
         return response.getHash();
     }
 

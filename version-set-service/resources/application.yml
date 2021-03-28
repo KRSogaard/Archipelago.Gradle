@@ -49,8 +49,8 @@ dynamodb:
 
 aws:
   access:
-    id: "AKIARDAF5R4OOAYCDA67"
-    key: "Ww5zZvR/22VGapHyVndvrjbxYScfFZuE/dWc7qJx"
+    id: "AKIARDAF5R4OOOCV7XGB"
+    key: "Sh9zk1sSeT3BmzJFGSr+XcqPeiLYZFEV2tjishrf"
 
 endpoints:
   package-service: "http://package-service.alpha.archipelago.build"

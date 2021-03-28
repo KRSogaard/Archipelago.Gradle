@@ -1,12 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: harbor-service
+  name: alpha-harbor-service
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: harbor-service
+      stage: alpha
   strategy: {}
   template:
     metadata:
@@ -18,7 +19,7 @@ spec:
         - env:
             - name: APPLICATION_STAGE
               value: alpha
-          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/harbor-service:latest
+          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/harbor-service:20210327-1
           name: harbor-service
           ports:
             - containerPort: 8080

@@ -1,5 +1,6 @@
 package build.archipelago.maui.configuration;
 
+import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.harbor.client.*;
 import build.archipelago.maui.MauiConstants;
 import build.archipelago.maui.clients.UnauthorizedHarborClient;
@@ -7,6 +8,7 @@ import build.archipelago.maui.common.*;
 import build.archipelago.maui.common.cache.*;
 import build.archipelago.maui.common.contexts.WorkspaceContextFactory;
 import build.archipelago.maui.core.auth.AuthService;
+import build.archipelago.maui.core.auth.AuthServiceImpl;
 import build.archipelago.maui.core.output.*;
 import build.archipelago.maui.core.providers.SystemPathProvider;
 import build.archipelago.maui.graph.DependencyGraphGenerator;
@@ -14,7 +16,6 @@ import build.archipelago.maui.core.auth.OAuthTokenResponse;
 import build.archipelago.maui.path.MauiPath;
 import build.archipelago.maui.path.recipies.*;
 import build.archipelago.maui.utils.AuthUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.*;
 import com.google.inject.name.Named;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,7 @@ public class ServiceConfiguration extends AbstractModule {
     public AuthService authService(
             @Named("oauth.endpoint") String oAuthEndpoint,
             @Named("oauth.clientid") String clientid) {
-        return new AuthService(clientid, oAuthEndpoint);
+        return new AuthServiceImpl(clientid, oAuthEndpoint);
     }
 
     @Provides
@@ -57,23 +58,28 @@ public class ServiceConfiguration extends AbstractModule {
             return new UnauthorizedHarborClient();
         }
 
-        if (authService.isTokenExpired(oauth.getAccessToken())) {
-            log.info("Auth token has expired");
-            if (oauth.getRefreshToken() != null && !authService.isTokenExpired(oauth.getRefreshToken())) {
-                log.info("Found valid refresh token, trying to get a new access token");
-                oauth = authService.getTokenFromRefreshToken(oauth.getRefreshToken());
-                if (oauth == null) {
-                    log.warn("Failed to get new access token with the refresh token, user needs to re-auth");
+        try {
+            if (authService.isTokenExpired(oauth.getAccessToken())) {
+                log.info("Auth token has expired");
+                if (oauth.getRefreshToken() != null && !authService.isTokenExpired(oauth.getRefreshToken())) {
+                    log.info("Found valid refresh token, trying to get a new access token");
+                    oauth = authService.getTokenFromRefreshToken(oauth.getRefreshToken());
+                    if (oauth == null) {
+                        log.warn("Failed to get new access token with the refresh token, user needs to re-auth");
+                        return new UnauthorizedHarborClient();
+                    }
+                    log.info("Got new access token");
+                    AuthUtil.saveAuthSettings(systemPathProvider, oauth);
+                } else {
+                    log.warn("No valid refresh token, user needs to re-auth");
                     return new UnauthorizedHarborClient();
                 }
-                log.info("Got new access token");
-                AuthUtil.saveAuthSettings(systemPathProvider, oauth);
-            } else {
-                log.warn("No valid refresh token, user needs to re-auth");
-                return new UnauthorizedHarborClient();
             }
+            return new RestHarborClient(harborEndpoint, oAuthEndpoint + "/oauth2/token", oauth.getAccessToken());
+        } catch (UnauthorizedException exp) {
+            log.error("Got UnauthorizedException when trying to use refresh token", exp);
+            return new UnauthorizedHarborClient();
         }
-        return new RestHarborClient(harborEndpoint, oAuthEndpoint + "/oauth2/token", oauth.getAccessToken());
     }
 
     @Provides
@@ -120,7 +126,9 @@ public class ServiceConfiguration extends AbstractModule {
         return new MauiPath(List.of(
                 new BinRecipe(),
                 new ClasspathRecipe(),
-                new PackageRecipe()
+                new PackageRecipe(),
+                new DirRecipe(),
+                new JDKRecipe()
         ), dependencyGraphGenerator);
     }
 

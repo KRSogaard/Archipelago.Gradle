@@ -110,6 +110,16 @@ public class WorkspaceContext extends Workspace {
         VersionSetRevisionSerializer.clear(root);
     }
 
+    public boolean isPackageInVersionSetOrLocal(final ArchipelagoPackage targetPackage) throws VersionSetNotSyncedException {
+        Preconditions.checkNotNull(targetPackage);
+
+        if (isPackageInVersionSet(targetPackage)) {
+            return true;
+        }
+
+        return getLocalArchipelagoPackages().stream().anyMatch(l -> l.equals(targetPackage));
+    }
+
     public boolean isPackageInVersionSet(ArchipelagoPackage targetPackage) throws VersionSetNotSyncedException {
         Preconditions.checkNotNull(targetPackage);
 
@@ -123,6 +133,7 @@ public class WorkspaceContext extends Workspace {
                 return true;
             }
         }
+
         return false;
     }
 

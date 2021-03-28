@@ -499,6 +499,56 @@ project(':harbor-service-client') {
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
   }
 }
+project(':maui-builder') {
+  apply plugin: 'java'
+  apply plugin: 'org.springframework.boot'
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'application'
+
+  mainClassName = 'build.archipelago.maui.builder.Application'
+
+  dependencies {
+    api project(':archipelago-common')
+    api project(':archipelago-common-concurrent')
+    api project(':maui-core')
+    api project(':harbor-service-client')
+    api project(':package-service-models')
+    api project(':version-set-service-models')
+
+    implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
+    implementation 'org.apache.logging.log4j:log4j-api:2.13.3'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
+
+    implementation 'com.google.inject:guice:5.0.1'
+    implementation 'info.picocli:picocli:4.1.4'
+    annotationProcessor 'info.picocli:picocli-codegen:4.1.4'
+    implementation 'org.jgrapht:jgrapht-core:1.5.0'
+    implementation 'net.lingala.zip4j:zip4j:2.6.2'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.1'
+  }
+  compileJava {
+    options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
+  }
+
+  task fatJar(type: Jar) {
+
+    archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
+
+    manifest {
+      attributes 'Main-Class': 'build.archipelago.maui.Application'
+    }
+    baseName = 'Maui-cli'
+    from {
+      configurations.runtimeClasspath.collect {
+        it.isDirectory() ? it : zipTree(it)
+      }
+    }
+    with jar
+  }
+}
+
 project(':maui') {
   apply plugin: 'java'
   apply plugin: 'org.springframework.boot'

@@ -37,7 +37,7 @@ server:
 
 dynamodb:
   accounts: "archipelago-local.accounts"
-  account-mapping: "archipelago-local.account-mapping"
+  account-mapping: "archipelago-local.accounts-mapping"
   accounts-git: "archipelago-local.accounts-git"
   auth-codes: "archipelago-local.auth-codes"
   auth-users: "archipelago-local.auth-users"
@@ -59,7 +59,7 @@ spring:
 
 dynamodb:
   accounts: "archipelago-alpha.accounts"
-  account-mapping: "archipelago-alpha.account-mapping"
+  account-mapping: "archipelago-alpha.accounts-mapping"
   accounts-git: "archipelago-alpha.accounts-git"
   auth-codes: "archipelago-alpha.auth-codes"
   auth-users: "archipelago-alpha.auth-users"
@@ -72,8 +72,8 @@ url:
 
 aws:
   access:
-    id: "AKIARDAF5R4OD53C2DVZ"
-    key: "TiCu0Aw7f/oR/WeZ9jfk4rPJdvBivQ4UdCAYVAGu"
+    id: "AKIARDAF5R4OETTYRSYN"
+    key: "DrsZI41KOSZuSS4bWxVMyBMWD+nAVPAZI4Rl3hig"
 
 ---
 spring:

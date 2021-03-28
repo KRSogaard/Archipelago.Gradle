@@ -12,6 +12,7 @@ public class StageLog {
     }
 
     public void addError(String message, Object... args) {
+
         addMessage("ERROR", message, args);
     }
 

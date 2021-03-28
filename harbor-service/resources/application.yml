@@ -61,8 +61,8 @@ dynamodb:
 
 aws:
   access:
-    id: "AKIARDAF5R4OENWC4R7J"
-    key: "S5zzz4qehZFaMQhBMHhPWFQSueKoeOhAtXT3LsyM"
+    id: "AKIARDAF5R4ONAKPHTEL"
+    key: "oM/aUtyYnf7xxBJH5sMpjkPiMednz9e65/cFGyvn"
 
 ---
 spring:

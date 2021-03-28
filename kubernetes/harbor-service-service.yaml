@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: harbor-service-lb
+  name: alpha-harbor-service-lb
 spec:
   type: LoadBalancer
   ports:
@@ -11,3 +11,4 @@ spec:
       protocol: TCP
   selector:
     app: harbor-service
+    stage: alpha

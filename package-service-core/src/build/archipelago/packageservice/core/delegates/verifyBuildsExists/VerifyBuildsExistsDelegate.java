@@ -37,7 +37,7 @@ public class VerifyBuildsExistsDelegate {
         for (ArchipelagoBuiltPackage pkg : packages) {
             try {
                 String cacheKey = accountId + "||" + pkg.getBuiltPackageName();
-                if (!buildCache.getIfPresent(cacheKey)) {
+                if (buildCache.getIfPresent(cacheKey) == null) {
                     log.debug("Checking if {} exists", pkg);
                     packageData.getBuildPackage(accountId, pkg);
                     buildCache.put(cacheKey, true);
@@ -49,7 +49,7 @@ public class VerifyBuildsExistsDelegate {
                         publicAccountId = packageData.getPublicPackage(pkg.getName());
                     }
                     String cacheKey = publicAccountId + "||" + pkg.getBuiltPackageName();
-                    if (!buildCache.getIfPresent(cacheKey)) {
+                    if (buildCache.getIfPresent(cacheKey) == null) {
                         log.debug("Checking if public package {} exists", pkg);
                         packageData.getBuildPackage(publicAccountId, pkg);
                         buildCache.put(cacheKey, true);

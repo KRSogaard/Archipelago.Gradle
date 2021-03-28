@@ -51,8 +51,8 @@ spring:
 
 aws:
   access:
-    id: "AKIARDAF5R4OGUAX2HEK"
-    key: "7aeDgB9cn9kqRwdv9zVQFKop591BqE7SNFDoiua7"
+    id: "AKIARDAF5R4OBNCQ7KLT"
+    key: "PD45gn4xxyBcxJg4nZlQ517Y/Xaugml0SDIF7EXR"
 
 services:
   versionset: "http://version-set-service.alpha.archipelago.build"

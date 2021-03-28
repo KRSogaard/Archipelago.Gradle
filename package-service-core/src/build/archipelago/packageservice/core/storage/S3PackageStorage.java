@@ -1,6 +1,7 @@
 package build.archipelago.packageservice.core.storage;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
+import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import lombok.extern.slf4j.Slf4j;
@@ -22,25 +23,36 @@ public class S3PackageStorage implements PackageStorage {
         this.bucketName = bucketName;
     }
 
+//    @Override
+//    public void upload(String accountId, ArchipelagoBuiltPackage pkg, byte[] artifactBytes) {
+//        String keyName = this.getS3FileName(accountId, pkg);
+//        log.info("Saving build artifact to '{}'", keyName);
+//
+//        ObjectMetadata om = new ObjectMetadata();
+//        om.setContentLength(artifactBytes.length);
+//
+//        s3Client.putObject(
+//                new PutObjectRequest(bucketName, keyName, new ByteArrayInputStream(artifactBytes), om));
+//    }
+
     @Override
-    public void upload(String accountId, ArchipelagoBuiltPackage pkg, byte[] artifactBytes) {
+    public String generatePreSignedUrl(String accountId, ArchipelagoBuiltPackage pkg) {
         String keyName = this.getS3FileName(accountId, pkg);
-        log.info("Saving build artifact to '{}'", keyName);
-
-        ObjectMetadata om = new ObjectMetadata();
-        om.setContentLength(artifactBytes.length);
-
-        s3Client.putObject(
-                new PutObjectRequest(bucketName, keyName, new ByteArrayInputStream(artifactBytes), om));
+        log.debug("Generating pre-signed url for build artifact from S3 '{}' with key '{}'", bucketName, keyName);
+        // The user have 5 min to download the file
+        Instant expiresAt = Instant.now().plusSeconds(60 * 5);
+        URL url = s3Client.generatePresignedUrl(bucketName, keyName, Date.from(expiresAt), HttpMethod.PUT);
+        return url.toString();
     }
 
     @Override
     public String getDownloadUrl(String accountId, ArchipelagoBuiltPackage pkg) {
         String keyName = this.getS3FileName(accountId, pkg);
-        log.debug("Fetching build artifact from S3 '{}' with key '{}'", bucketName, keyName);
+        // TODO: Dose this even throw an exception?
+        s3Client.getObject(bucketName, keyName);
+        log.debug("Generating pre-signed url for build artifact from S3 '{}' with key '{}'", bucketName, keyName);
         // The user have 5 min to download the file
         Instant expiresAt = Instant.now().plusSeconds(60 * 5);
-        S3Object obj = s3Client.getObject(bucketName, keyName);
         URL url = s3Client.generatePresignedUrl(bucketName, keyName, Date.from(expiresAt));
         return url.toString();
     }

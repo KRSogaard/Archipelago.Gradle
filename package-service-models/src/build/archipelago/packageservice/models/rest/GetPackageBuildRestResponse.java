@@ -14,7 +14,6 @@ public class GetPackageBuildRestResponse {
     private long created;
     private String config;
     private String gitCommit;
-    private String gitBranch;
 
     public static GetPackageBuildRestResponse from(BuiltPackageDetails build) {
         return GetPackageBuildRestResponse.builder()
@@ -22,7 +21,6 @@ public class GetPackageBuildRestResponse {
                 .config(build.getConfig())
                 .created(build.getCreated().toEpochMilli())
                 .gitCommit(build.getGitCommit())
-                .gitBranch(build.getGitBranch())
                 .build();
     }
 
@@ -32,7 +30,6 @@ public class GetPackageBuildRestResponse {
                 .created(Instant.ofEpochMilli(this.getCreated()))
                 .config(this.getConfig())
                 .gitCommit(this.getGitCommit())
-                .gitBranch(this.getGitBranch())
                 .build();
     }
 }
