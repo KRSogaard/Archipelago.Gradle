@@ -31,7 +31,7 @@
 
     <Loggers>
         <!-- Override wanted log levels -->
-        <Logger name="org.springframework" level="DEBUG"/>
+        <Logger name="org.springframework" level="ERROR"/>
         <Logger name="org.hibernate" level="ERROR"/>
         <Logger name="com.amazonaws" level="ERROR"/>
         <Logger name="org.apache" level="ERROR"/>

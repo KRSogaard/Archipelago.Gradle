@@ -30,7 +30,7 @@ public class BuilderApplication implements CommandLineRunner {
 //            Message msg = new Message();
 //            msg.setBody("{\"buildId\":\"2bc3b949-ad92-4947-a2ce-0655fe4335fe\",\"accountId\":\"wewelo\"}");
 //            buildRequestHandler.handle(msg);
-
+            log.info("Starting SQS Consumer");
             sqsConsumer.start();
             while(true) {
                 Thread.sleep(1000);

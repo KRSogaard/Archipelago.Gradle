@@ -115,11 +115,13 @@ public class WorkspaceSyncAction extends BaseAction {
         List<Future> pkgFutures = new ArrayList<>();
         for (ArchipelagoBuiltPackage pkg : packagesToSync) {
             log.trace("Syncing {} to cache", pkg.toString());
+            out.write("Syncing %s", pkg.toString());
             pkgFutures.add(executor.submit(() -> {
                 try {
                     packageCacher.cache(pkg);
                 } catch (PackageNotFoundException e) {
                     log.error(e.getMessage(), e);
+                    out.error("Failed to syncing %s", pkg.toString());
                     failures.setValue(false);
                 }
             }));
@@ -136,8 +138,10 @@ public class WorkspaceSyncAction extends BaseAction {
         Long runTimeMilli = endTime.toEpochMilli() - startTime.toEpochMilli();
 
         if (failures.getValue()) {
+            out.error("Syncing version set %s finished with errors in %s ms.", vs.getName(), runTimeMilli.toString());
             log.warn("Syncing version set {} finished with errors in {} ms.", vs.getName(), runTimeMilli);
         } else {
+            out.error("Syncing version set %s finished  in %s ms.", vs.getName(), runTimeMilli.toString());
             log.warn("Syncing version set {} finished  in {} ms.", vs.getName(), runTimeMilli);
         }
         if (failures.getValue()) {

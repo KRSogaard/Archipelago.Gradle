@@ -15,7 +15,7 @@
         </Console>
         <RollingFile
                 name="File"
-                fileName="${LOG_DIR}/application.log"
+                fileName="${LOG_DIR}/buildserver.log"
                 filePattern="${LOG_DIR}/archive/buildserver.%d{yyyy-MM-dd-HH}.log.gz"
                 ignoreExceptions="false">
             <PatternLayout>

@@ -15,6 +15,7 @@ import static java.util.stream.Collectors.toList;
 @Getter
 public class GetPackageRestResponse {
     private String name;
+    private Boolean publicPackage;
     private String description;
     private String gitCloneUrl;
     private String gitUrl;
@@ -26,6 +27,7 @@ public class GetPackageRestResponse {
     public PackageDetails toInternal() {
         return PackageDetails.builder()
                 .name(this.getName())
+                .publicPackage(this.getPublicPackage())
                 .description(this.getDescription())
                 .gitCloneUrl(this.getGitCloneUrl())
                 .gitUrl(this.getGitUrl())
@@ -40,6 +42,7 @@ public class GetPackageRestResponse {
     public static GetPackageRestResponse from(PackageDetails pkg) {
         return GetPackageRestResponse.builder()
                 .name(pkg.getName())
+                .publicPackage(pkg.getPublicPackage())
                 .description(pkg.getDescription())
                 .gitCloneUrl(pkg.getGitCloneUrl())
                 .gitUrl(pkg.getGitUrl())

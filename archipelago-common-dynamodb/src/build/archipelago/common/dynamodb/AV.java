@@ -73,4 +73,18 @@ public class AV {
     public static String getStringOrDefault(Map<String, AttributeValue> map, String key, String defaultValue) {
         return getOrDefault(map, key, AttributeValue::getS, defaultValue);
     }
+
+    public static String debug(Map<String, AttributeValue> map) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (String key : map.keySet()) {
+            sb.append(key);
+            sb.append(":");
+            sb.append(" ");
+            sb.append(map.get(key).toString());
+            sb.append(", ");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
 }

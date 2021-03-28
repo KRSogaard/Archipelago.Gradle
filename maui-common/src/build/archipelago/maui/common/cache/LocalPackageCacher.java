@@ -104,6 +104,7 @@ public class LocalPackageCacher implements PackageCacher {
     public Path getCachePath(ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
         Path pkgRoot = cachePath.resolve(pkg.getBuiltPackageName());
         if (!Files.exists(pkgRoot)) {
+            log.warn("Was not able to the find the package root '{}'", pkgRoot.toString());
             throw new PackageNotFoundException(pkg);
         }
         return pkgRoot;

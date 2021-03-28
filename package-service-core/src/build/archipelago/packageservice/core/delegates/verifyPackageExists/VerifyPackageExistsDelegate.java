@@ -46,9 +46,9 @@ public class VerifyPackageExistsDelegate {
                             publicAccountId = packageData.getPublicPackage(pkg.getName());
                         }
                         cacheKey = publicAccountId + "||" + pkg.getNameVersion();
-                        if (!buildCache.getIfPresent(cacheKey)) {
+                        if (buildCache.getIfPresent(cacheKey) == null) {
                             log.debug("Checking if {} exists", pkg);
-                            if (packageData.getPackageVersionBuilds(accountId, pkg).isEmpty()) {
+                            if (packageData.getPackageVersionBuilds(publicAccountId, pkg).isEmpty()) {
                                 log.debug("There where no builds for {} so it must not exist", pkg);
                                 missingPackages.add(pkg);
                             } else {

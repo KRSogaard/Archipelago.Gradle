@@ -6,9 +6,12 @@ import build.archipelago.packageservice.exceptions.*;
 import build.archipelago.packageservice.models.*;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -70,7 +73,7 @@ public class DynamoDBPackageData implements PackageData {
         log.debug("Finding if package '{}' exists", name);
         GetItemRequest request = new GetItemRequest(settings.getPackagesTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
-                        .put(DynamoDBKeys.ACCOUNT_ID, AV.of(accountId))
+                        .put(DynamoDBKeys.ACCOUNT_ID, AV.of(searchName(accountId)))
                         .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(name)))
                         .build());
         Map<String, AttributeValue> item = dynamoDB.getItem(request).getItem();
@@ -83,7 +86,7 @@ public class DynamoDBPackageData implements PackageData {
         log.debug("Getting package details for '{}'", name);
         GetItemRequest request = new GetItemRequest(settings.getPackagesTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
-                        .put(DynamoDBKeys.ACCOUNT_ID, AV.of(accountId))
+                        .put(DynamoDBKeys.ACCOUNT_ID, AV.of(searchName(accountId)))
                         .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(name)))
                         .build());
         Map<String, AttributeValue> pkgItem = dynamoDB.getItem(request).getItem();
@@ -324,8 +327,11 @@ public class DynamoDBPackageData implements PackageData {
                 .put(DynamoDBKeys.GIT_URL, AV.of(model.getGitUrl()))
                 .put(DynamoDBKeys.GIT_REPO_NAME, AV.of(model.getGitRepoName()))
                 .put(DynamoDBKeys.GIT_REPO_FULL_NAME, AV.of(model.getGitFullName()))
-                .put(DynamoDBKeys.CREATED, AV.of(Instant.now()))
-                .put(DynamoDBKeys.DESCRIPTION, AV.of(model.getDescription()));
+                .put(DynamoDBKeys.CREATED, AV.of(Instant.now()));
+        if (!Strings.isNullOrEmpty(model.getDescription())) {
+            map.put(DynamoDBKeys.DESCRIPTION, AV.of(model.getDescription()));
+        }
+        log.debug("Saving package with attributes: {}", AV.debug(map.build()));
 
         dynamoDB.putItem(new PutItemRequest(settings.getPackagesTableName(), map.build()));
 
@@ -347,7 +353,7 @@ public class DynamoDBPackageData implements PackageData {
                         "#accountId", DynamoDBKeys.ACCOUNT_ID
                 ))
                 .withExpressionAttributeValues(ImmutableMap.of(
-                        ":accountId", AV.of(accountId)));
+                        ":accountId", AV.of(searchName(accountId))));
 
         QueryResult result = dynamoDB.query(queryRequest);
         ImmutableList.Builder<PackageDetails> packageDetailsList = ImmutableList.<PackageDetails>builder();
@@ -372,7 +378,7 @@ public class DynamoDBPackageData implements PackageData {
 
     @Override
     public String getPublicPackage(String name) throws PackageNotFoundException {
-        log.debug("Find public package '{}'", name);
+        log.debug("Trying to find public package '{}'", name);
         GetItemRequest getItemRequest = new GetItemRequest(settings.getPublicPackagesTableName(),
                 ImmutableMap.<String, AttributeValue>builder()
                         .put(DynamoDBKeys.PACKAGE_NAME, AV.of(searchName(name)))

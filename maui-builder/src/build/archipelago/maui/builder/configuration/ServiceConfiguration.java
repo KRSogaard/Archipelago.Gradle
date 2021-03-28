@@ -29,6 +29,9 @@ import java.util.List;
 @Slf4j
 public class ServiceConfiguration extends AbstractModule {
 
+    private static final String CACHE_DIR = "cache";
+    private static final String TEMP_DIR = "temp";
+
     @Provides
     @Singleton
     public SystemPathProvider systemPathProvider() {
@@ -57,20 +60,16 @@ public class ServiceConfiguration extends AbstractModule {
     @Singleton
     public PackageCacher packageCacher(HarborClient harborClient,
                                        SystemPathProvider systemPathProvider) throws IOException {
-        Path workspaceDir = systemPathProvider.getWorkspaceDir();
-        if (workspaceDir == null) {
+        Path basePath = systemPathProvider.getWorkspaceDir().getParent();
+        if (basePath == null || !Files.exists(basePath)) {
             throw new RuntimeException("Was unable to find the workspace dir");
         }
-        Path basePath = workspaceDir.resolve(".archipelago");
 
-        if (!Files.exists(basePath)) {
-            Files.createDirectory(basePath);
-        }
-        Path cachePath = basePath.resolve("cache");
+        Path cachePath = basePath.resolve(CACHE_DIR);
         if (!Files.exists(cachePath)) {
             Files.createDirectory(cachePath);
         }
-        Path tempPath = basePath.resolve("temp");
+        Path tempPath = basePath.resolve(TEMP_DIR);
         if (!Files.exists(tempPath)) {
             Files.createDirectory(tempPath);
         }

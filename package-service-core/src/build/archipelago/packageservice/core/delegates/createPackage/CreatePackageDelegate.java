@@ -39,6 +39,7 @@ public class CreatePackageDelegate {
                 log.info("The repo {} dose not exists", request.getName());
                 repo = git.createRepo(request.getName(), request.getDescription(), true);
             } else {
+                log.info("The repo {} already exists", request.getName());
                 repo = git.getRepo(request.getName());
             }
         } catch (RepoNotFoundException ex) {

@@ -29,9 +29,9 @@ public class ClasspathRecipe implements Recipe {
         if (!Files.exists(buildDir) || !Files.isDirectory(buildDir)) {
             throw new PackageNotBuiltException(pkg);
         }
-        buildDir = buildDir.resolve("lib");
+        buildDir = buildDir.resolve("libs");
         if (!Files.exists(buildDir) || !Files.isDirectory(buildDir)) {
-            log.debug("Package '{}' dose not have a lib folder", pkg.getNameVersion());
+            log.debug("Package '{}' dose not have a libs folder", pkg.getNameVersion());
             return new ArrayList<>();
         }
 

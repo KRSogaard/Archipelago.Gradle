@@ -164,7 +164,7 @@ public class VersionSetBuilder {
             log.error("Fatal error while processing build, will retry later", exp);
             throw new TemporaryMessageProcessingException();
         } finally {
-            PathHelper.deleteFolder(buildRoot);
+            //PathHelper.deleteFolder(buildRoot);
         }
     }
 
@@ -296,11 +296,11 @@ public class VersionSetBuilder {
                 try {
                     ArchipelagoBuiltPackage previousBuilt = this.getPreviousBuild(builtPackage.getName(), gitCommit);
                     if (previousBuilt != null) {
-                        stageLog.addInfo("The package " + buildHash + " has been build before, no need to publish");
+                        stageLog.addInfo("The package " + builtPackage.getNameVersion() + " has been build before, no need to publish");
                         buildHash = previousBuilt.getHash();
                     } else {
                         log.info("First time the package {}, at commit {} has been built",
-                                builtPackage.getName(), gitCommit);
+                                builtPackage.getNameVersion(), gitCommit);
                         try {
                             String configContent;
                             configContent = Files.readString(wsContext.getPackageRoot(builtPackage).resolve(WorkspaceConstants.BUILD_FILE_NAME));
@@ -332,14 +332,14 @@ public class VersionSetBuilder {
             }
 
             VersionSet versionSet = versionSetServiceClient.getVersionSet(accountDetails.getId(), wsContext.getVersionSet());
-            if (versionSet.getTarget() == null) {
-                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
-                log.error("There are no target set for the version-set, we can not create a new version-set revision without it");
-                stageLog.addError("There are no target set for the version-set, we can not create a new version-set revision without it");
-                stageLog.addError("If the target package is new and was added to this build, it will have been published. " +
-                        "You can then update this version-set to target that package.");
-                throw new FailBuildException();
-            }
+//            if (versionSet.getTarget() == null) {
+//                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
+//                log.error("There are no target set for the version-set, we can not create a new version-set revision without it");
+//                stageLog.addError("There are no target set for the version-set, we can not create a new version-set revision without it");
+//                stageLog.addError("If the target package is new and was added to this build, it will have been published. " +
+//                        "You can then update this version-set to target that package.");
+//                throw new FailBuildException();
+//            }
 
             List<ArchipelagoBuiltPackage> newRevision = new ArrayList<>(newBuildPackage);
             if (versionSet.getLatestRevision() != null) {

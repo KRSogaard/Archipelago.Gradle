@@ -2,6 +2,7 @@ package build.archipelago.maui.builder.utils;
 
 import build.archipelago.maui.core.auth.OAuthTokenResponse;
 import build.archipelago.maui.core.providers.SystemPathProvider;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,6 +13,9 @@ import java.nio.file.Path;
 @Slf4j
 public class AuthUtil {
     private static ObjectMapper objectMapper = new ObjectMapper();
+    static {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     public static OAuthTokenResponse getAuthSettings(SystemPathProvider systemPathProvider) {
         Path authFile = systemPathProvider.getMauiPath().resolve(".auth");

@@ -37,8 +37,11 @@ public class GetBuildArtifactDelegate {
         Preconditions.checkNotNull(nameVersion, "Name required");
         Preconditions.checkNotNull(hash, "A hash is required");
 
+
         Pair<ArchipelagoBuiltPackage, String> pair;
         try {
+            // This will throw PackageNotFoundException if the package dose not exists
+            packageData.getPackageDetails(accountId, nameVersion.getName());
             pair = getPackageBuild(accountId, nameVersion, hash);
         } catch (PackageNotFoundException exp) {
             try {

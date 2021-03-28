@@ -1,6 +1,7 @@
 package build.archipelago.packageservice.core.storage;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
@@ -46,10 +47,14 @@ public class S3PackageStorage implements PackageStorage {
     }
 
     @Override
-    public String getDownloadUrl(String accountId, ArchipelagoBuiltPackage pkg) {
+    public String getDownloadUrl(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
         String keyName = this.getS3FileName(accountId, pkg);
         // TODO: Dose this even throw an exception?
-        s3Client.getObject(bucketName, keyName);
+        try {
+            s3Client.getObject(bucketName, keyName);
+        } catch (AmazonS3Exception exp) {
+            throw new PackageNotFoundException(pkg);
+        }
         log.debug("Generating pre-signed url for build artifact from S3 '{}' with key '{}'", bucketName, keyName);
         // The user have 5 min to download the file
         Instant expiresAt = Instant.now().plusSeconds(60 * 5);
