@@ -5,7 +5,7 @@
             %d{HH:mm:ss.SSS}[%p][%X{RequestId}][%c{1}]: %msg%n
         </Property>
         <Property name="LOG_DIR">
-            build/logs/
+            /tmp/archipelago/logs
         </Property>
     </Properties>
 

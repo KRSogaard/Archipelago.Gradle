@@ -47,9 +47,8 @@ public class AuthCommand extends BaseAction implements Callable<Integer> {
         }
 
         out.write("\n");
-        out.write("Please login at " + deviceCodeResponse.getVerificationUri());
+        out.write("Please login at http://alpha.archipelago.build/device");
         out.write("Your code is: " + deviceCodeResponse.getUserCode());
-        out.write("Or use this link: " + deviceCodeResponse.getVerificationUriComplete());
 
         OAuthTokenResponse tokenResponse = authService.getToken(deviceCodeResponse);
         if (tokenResponse == null) {

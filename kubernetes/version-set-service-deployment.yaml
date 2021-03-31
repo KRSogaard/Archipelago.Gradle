@@ -19,7 +19,7 @@ spec:
         - env:
             - name: APPLICATION_STAGE
               value: alpha
-          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/version-set-service:20210327-1
+          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/version-set-service:20210328-1
           name: version-set-service
           ports:
             - containerPort: 8080
