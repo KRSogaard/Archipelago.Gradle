@@ -6,6 +6,7 @@ import build.archipelago.common.github.exceptions.*;
 import build.archipelago.common.github.models.GitBranch;
 import build.archipelago.common.github.models.GitRepo;
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 import com.google.gson.reflect.TypeToken;
 
+@Slf4j
 public class UserGitService implements GitService {
 
     private static final JSONParser parser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
@@ -175,7 +177,7 @@ public class UserGitService implements GitService {
                                 .GET().build();
                         response = client.send(httpRequest, HttpResponse.BodyHandlers.ofFile(filePath));
                         if (response.statusCode() != 200) {
-                            throw new RuntimeException("Was unable to get the redirected file from github: " + location.get());
+                            throw new RuntimeException("Was unable to get the redirected file from github got status code " + response.statusCode() + ". url: " + location.get());
                         }
                     } catch (Exception e) {
                         throw new RuntimeException(e);
@@ -251,8 +253,10 @@ public class UserGitService implements GitService {
     private HttpRequest.Builder getGithubRequest(String url, boolean prepend) throws URISyntaxException {
         String auth = username + ":" + accessToken;
         String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+        String finalUrl = prepend ? baseUrl + url : url;
+        log.debug("Creating github request to: " + finalUrl);
 
-        return HttpRequest.newBuilder(new URI(prepend ? baseUrl + url : url))
+        return HttpRequest.newBuilder(new URI(finalUrl))
                 .header("Authorization", "Basic " + encodedAuth)
                 .header("accept", "application/vnd.github.v3+json");
     }

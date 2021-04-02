@@ -327,6 +327,7 @@ public class VersionSetBuilder {
                         stageLog.addInfo("The package " + builtPackage.getNameVersion() + " has been build before, no need to publish");
                         buildHash = previousBuilt.getHash();
                     } else {
+                        stageLog.addInfo("Uploading new build artifact for package " + builtPackage.getNameVersion());
                         log.info("First time the package {}, at commit {} has been built",
                                 builtPackage.getNameVersion(), gitCommit);
                         try {
@@ -375,6 +376,7 @@ public class VersionSetBuilder {
                     throw new FailBuildException();
                 }
             }
+            stageLog.addInfo("Create new revision with " + newRevision.size() + " packages");
 
             try {
                 String revision = versionSetServiceClient.createVersionRevision(accountDetails.getId(), wsContext.getVersionSet(), newRevision, buildTarget);
@@ -387,7 +389,7 @@ public class VersionSetBuilder {
         } catch (FailBuildException exp) {
             throw exp;
         } catch (Exception e) {
-            log.error("Had an error while publishing builds to version-set", e);
+            log.error("Had an error while publishing builds to version-set: " + e.getMessage(), e);
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
             throw new RuntimeException(e);
         } finally {
