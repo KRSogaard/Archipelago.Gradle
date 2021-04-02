@@ -182,7 +182,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
 
         CreateVersionSetRevisionRestRequest restRequest = CreateVersionSetRevisionRestRequest.builder()
                 .packages(packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList()))
-                .target(target.getNameVersion())
+                .target(target == null ? null : target.getNameVersion())
                 .build();
 
         HttpResponse<String> httpResponse;

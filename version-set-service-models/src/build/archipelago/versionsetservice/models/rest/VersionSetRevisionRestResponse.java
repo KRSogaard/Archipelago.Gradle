@@ -1,7 +1,9 @@
 package build.archipelago.versionsetservice.models.rest;
 
 import build.archipelago.common.ArchipelagoBuiltPackage;
+import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.versionset.VersionSetRevision;
+import com.google.common.base.Strings;
 import lombok.*;
 
 import java.time.Instant;
@@ -20,6 +22,7 @@ public class VersionSetRevisionRestResponse {
     public VersionSetRevision toInternal() {
         return VersionSetRevision.builder()
                 .created(Instant.ofEpochMilli(this.getCreated()))
+                .target(Strings.isNullOrEmpty(this.getTarget()) ? null : ArchipelagoPackage.parse(this.getTarget()))
                 .packages(this.getPackages().stream().map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList()))
                 .build();
     }

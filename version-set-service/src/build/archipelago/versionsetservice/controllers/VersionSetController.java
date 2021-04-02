@@ -156,7 +156,7 @@ public class VersionSetController {
 
         VersionSetRevisionRestResponse response = VersionSetRevisionRestResponse.builder()
                 .created(revision.getCreated().toEpochMilli())
-                .target(revision.getTarget().getNameVersion())
+                .target(revision.getTarget() == null ? null : revision.getTarget().getNameVersion())
                 .packages(revision.getPackages().stream()
                         .map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList()))
                 .build();
