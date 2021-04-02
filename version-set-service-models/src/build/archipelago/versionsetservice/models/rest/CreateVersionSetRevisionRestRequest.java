@@ -11,6 +11,7 @@ import java.util.List;
 @Getter
 public class CreateVersionSetRevisionRestRequest {
     private List<String> packages;
+    private String target;
 
     public void validate() {
         Preconditions.checkNotNull(packages, "Packages are required");

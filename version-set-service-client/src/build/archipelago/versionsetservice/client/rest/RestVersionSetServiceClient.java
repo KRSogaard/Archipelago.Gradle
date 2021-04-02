@@ -174,7 +174,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
     }
 
     @Override
-    public String createVersionRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages)
+    public String createVersionRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages, ArchipelagoPackage target)
             throws VersionSetDoseNotExistsException, MissingTargetPackageException, PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
@@ -182,6 +182,7 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
 
         CreateVersionSetRevisionRestRequest restRequest = CreateVersionSetRevisionRestRequest.builder()
                 .packages(packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList()))
+                .target(target.getNameVersion())
                 .build();
 
         HttpResponse<String> httpResponse;

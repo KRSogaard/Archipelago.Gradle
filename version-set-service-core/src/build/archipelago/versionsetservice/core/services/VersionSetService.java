@@ -12,7 +12,7 @@ public interface VersionSetService {
 
     void create(String accountId, String versionSetName, Optional<ArchipelagoPackage> target, final Optional<String> parent) throws VersionSetExistsException;
 
-    String createRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages) throws VersionSetDoseNotExistsException;
+    String createRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages, ArchipelagoPackage target) throws VersionSetDoseNotExistsException;
 
     VersionSetRevision getRevision(String accountId, String versionSetName, String revision) throws VersionSetDoseNotExistsException;
 

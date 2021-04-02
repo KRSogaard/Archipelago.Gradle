@@ -39,12 +39,17 @@ import net.lingala.zip4j.ZipFile;
 import java.io.*;
 import java.nio.file.*;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.*;
 
 @Slf4j
 public class VersionSetBuilder {
+    private final static DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.from(ZoneOffset.UTC));
+
     // Only used once
     private Path buildLocation;
 
@@ -74,6 +79,8 @@ public class VersionSetBuilder {
     private Maui maui;
     private MauiPath mauiPath;
     private GitService gitService;
+    private ArchipelagoPackage buildTarget;
+    private String latestRevision;
 
     public VersionSetBuilder(InternalHarborClientFactory internalHarborClientFactory,
                              VersionSetServiceClient versionSetServiceClient,
@@ -173,6 +180,23 @@ public class VersionSetBuilder {
         try {
             stageLog.addInfo("Build preparations started");
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PREPARE, BuildStatus.IN_PROGRESS);
+
+            VersionSet versionSet = versionSetServiceClient.getVersionSet(request.getAccountId(), request.getVersionSet());
+            this.latestRevision = versionSet.getLatestRevision();
+            if (latestRevision != null) {
+                stageLog.addInfo("Build against version set revision {}#{} created at {}",
+                        versionSet.getName(), versionSet.getLatestRevision(),
+                        formatter.format(versionSet.getLatestRevisionCreated()));
+            } else {
+                stageLog.addInfo("No previous version set revision was found, building as a new version set");
+            }
+            if (versionSet.getTarget() == null) {
+                stageLog.addInfo("This version set dose not have a target, the build will continue");
+            } else {
+                stageLog.addInfo("Using \"{}\" as the target of this build", versionSet.getTarget().getNameVersion());
+                this.buildTarget = versionSet.getTarget();
+            }
+
             this.createWorkspace(request.getVersionSet());
             wsContext = maui.getWorkspaceContext();
             this.syncWorkspace();
@@ -191,6 +215,10 @@ public class VersionSetBuilder {
         } catch (PackageNotFoundException exp) {
             stageLog.addError("The package %s was not found.", exp.getPackageName());
             log.error("Was unable to find the package {}, can not continue.", exp.getPackageName());
+            throw new FailBuildException();
+        } catch (VersionSetDoseNotExistsException exp) {
+            stageLog.addError("Could not find the version set %s can not continue", request.getVersionSet());
+            log.error("Could not find the version set {} can not continue", request.getVersionSet());
             throw new FailBuildException();
         } catch (RepoNotFoundException e) {
             stageLog.addError("The repo " + e.getRepo() + " was not found");
@@ -331,20 +359,11 @@ public class VersionSetBuilder {
                 throw new FailBuildException();
             }
 
-            VersionSet versionSet = versionSetServiceClient.getVersionSet(accountDetails.getId(), wsContext.getVersionSet());
-//            if (versionSet.getTarget() == null) {
-//                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
-//                log.error("There are no target set for the version-set, we can not create a new version-set revision without it");
-//                stageLog.addError("There are no target set for the version-set, we can not create a new version-set revision without it");
-//                stageLog.addError("If the target package is new and was added to this build, it will have been published. " +
-//                        "You can then update this version-set to target that package.");
-//                throw new FailBuildException();
-//            }
+            //VersionSet versionSet = versionSetServiceClient.getVersionSet(accountDetails.getId(), wsContext.getVersionSet());
 
             List<ArchipelagoBuiltPackage> newRevision = new ArrayList<>(newBuildPackage);
-            if (versionSet.getLatestRevision() != null) {
-                VersionSetRevision revision = versionSetServiceClient.getVersionSetPackages(accountDetails.getId(), wsContext.getVersionSet(),
-                        versionSet.getLatestRevision());
+            if (latestRevision != null) {
+                VersionSetRevision revision = versionSetServiceClient.getVersionSetPackages(accountDetails.getId(), wsContext.getVersionSet(), latestRevision);
 
                 newRevision.addAll(revision.getPackages()
                         .stream().filter(revisionPackage -> newBuildPackage.stream().noneMatch(revisionPackage::equals))
@@ -358,7 +377,7 @@ public class VersionSetBuilder {
             }
 
             try {
-                String revision = versionSetServiceClient.createVersionRevision(accountDetails.getId(), wsContext.getVersionSet(), newRevision);
+                String revision = versionSetServiceClient.createVersionRevision(accountDetails.getId(), wsContext.getVersionSet(), newRevision, buildTarget);
                 stageLog.addInfo("Revision %s was created for version set %s", revision, wsContext.getVersionSet());
             } catch (Exception e) {
                 throw new RuntimeException("Was unable to create the new version-set revision", e);

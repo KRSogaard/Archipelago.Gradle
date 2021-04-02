@@ -178,6 +178,7 @@ public class DynamoDbVersionSetService implements VersionSetService {
 
         return VersionSetRevision.builder()
                 .created(AV.toInstant(result.getItem().get(Keys.CREATED)))
+                .target(AV.getOrDefault(result.getItem(), Keys.TARGET, av -> ArchipelagoPackage.parse(av.getS()), null))
                 .packages(packages)
                 .build();
     }
@@ -209,7 +210,7 @@ public class DynamoDbVersionSetService implements VersionSetService {
     }
 
     @Override
-    public String createRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages)
+    public String createRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages, ArchipelagoPackage target)
             throws VersionSetDoseNotExistsException {
         Preconditions.checkNotNull(versionSetName);
         Preconditions.checkNotNull(packages);
@@ -241,15 +242,16 @@ public class DynamoDbVersionSetService implements VersionSetService {
             throw new VersionSetDoseNotExistsException(versionSetName, exp);
         }
 
-
-        dynamoDB.putItem(new PutItemRequest(config.getVersionSetRevisionTable(), ImmutableMap.<String, AttributeValue>builder()
+        ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
                 .put(Keys.NAME_KEY, AV.of(this.getKey(accountId, versionSetName)))
                 .put(Keys.REVISION, AV.of(revisionId))
                 .put(Keys.CREATED, AV.of(now))
                 .put(Keys.PACKAGES, AV.of(
-                        packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList())))
-                .build()));
-
+                        packages.stream().map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList())));
+        if (target != null) {
+            map.put(Keys.TARGET, AV.of(target.getNameVersion()));
+        }
+        dynamoDB.putItem(new PutItemRequest(config.getVersionSetRevisionTable(), map.build()));
 
         return revisionId;
     }

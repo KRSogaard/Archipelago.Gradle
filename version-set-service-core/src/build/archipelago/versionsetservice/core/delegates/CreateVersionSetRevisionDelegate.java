@@ -24,7 +24,7 @@ public class CreateVersionSetRevisionDelegate {
         this.packageServiceClient = packageServiceClient;
     }
 
-    public String createRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages)
+    public String createRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages, ArchipelagoPackage target)
             throws MissingTargetPackageException, VersionSetDoseNotExistsException, PackageNotFoundException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "An account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "A Version Set name is required");
@@ -34,7 +34,7 @@ public class CreateVersionSetRevisionDelegate {
         this.validateVersionSetTarget(accountId, versionSetName, packages);
         this.validatePackages(accountId, packages);
 
-        return versionSetService.createRevision(accountId, versionSetName, packages);
+        return versionSetService.createRevision(accountId, versionSetName, packages, target);
     }
 
     private void validateVersionSetTarget(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages)

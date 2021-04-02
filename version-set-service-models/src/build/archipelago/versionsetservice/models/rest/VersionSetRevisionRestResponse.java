@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 @Getter
 public class VersionSetRevisionRestResponse {
     private Long created;
+    private String target;
     private List<String> packages;
 
     public VersionSetRevision toInternal() {

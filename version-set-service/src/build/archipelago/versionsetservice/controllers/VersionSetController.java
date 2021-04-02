@@ -88,11 +88,16 @@ public class VersionSetController {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName));
         request.validate();
 
+        ArchipelagoPackage target = null;
+        if (!Strings.isNullOrEmpty(request.getTarget())) {
+            target = ArchipelagoPackage.parse(request.getTarget());
+        }
+
         List<ArchipelagoBuiltPackage> packages = request.getPackages().stream()
                 .map(ArchipelagoBuiltPackage::parse).collect(Collectors.toList());
 
         String revisionId = createVersionSetRevisionDelegate.createRevision(
-                accountId, versionSetName, packages);
+                accountId, versionSetName, packages, target);
 
         log.debug("New revision '{}' was created for version set '{}'", revisionId, versionSetName);
         return CreateVersionSetRevisionRestResponse.builder()
@@ -151,6 +156,7 @@ public class VersionSetController {
 
         VersionSetRevisionRestResponse response = VersionSetRevisionRestResponse.builder()
                 .created(revision.getCreated().toEpochMilli())
+                .target(revision.getTarget().getNameVersion())
                 .packages(revision.getPackages().stream()
                         .map(ArchipelagoBuiltPackage::toString).collect(Collectors.toList()))
                 .build();

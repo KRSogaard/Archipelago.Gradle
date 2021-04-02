@@ -54,11 +54,11 @@ public class CreateVersionSetRevisionDelegateTest {
         VersionSet vs = this.createVS(vsName, pA);
 
         when(versionSetService.get(eq(testAccountId), eq(vsName))).thenReturn(vs);
-        when(versionSetService.createRevision(eq(testAccountId), eq(vsName), any())).thenReturn(revisionId);
+        when(versionSetService.createRevision(eq(testAccountId), eq(vsName), any(), pbA)).thenReturn(revisionId);
         when(packageServiceClient.verifyBuildsExists(eq(testAccountId), any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoBuiltPackage>builder().missingPackages(ImmutableList.of()).build());
 
-        String result = delegate.createRevision(testAccountId, vsName, List.of(pbA, pbB, pbC));
+        String result = delegate.createRevision(testAccountId, vsName, List.of(pbA, pbB, pbC), pbA);
         Assert.assertNotNull(result);
         Assert.assertEquals(revisionId, result);
     }
@@ -66,25 +66,25 @@ public class CreateVersionSetRevisionDelegateTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCreateRevisionWithEmptyVSName() throws MissingTargetPackageException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
-        delegate.createRevision(testAccountId, "", List.of(pbA, pbB));
+        delegate.createRevision(testAccountId, "", List.of(pbA, pbB), pbA);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateRevisionWithNullVSName() throws MissingTargetPackageException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
-        delegate.createRevision(testAccountId, null, List.of(pbA, pbB));
+        delegate.createRevision(testAccountId, null, List.of(pbA, pbB), pbA);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateRevisionWithoutPackages() throws MissingTargetPackageException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
-        delegate.createRevision(testAccountId, testVSName, new ArrayList<>());
+        delegate.createRevision(testAccountId, testVSName, new ArrayList<>(), pbA);
     }
 
     @Test(expected = MissingTargetPackageException.class)
     public void testCreateRevisionWithMissingTarget() throws MissingTargetPackageException,
             VersionSetDoseNotExistsException, PackageNotFoundException {
-        delegate.createRevision(testAccountId, testVSName, List.of(pbC));
+        delegate.createRevision(testAccountId, testVSName, List.of(pbC), pbC);
     }
 
     @Test(expected = PackageNotFoundException.class)
@@ -92,7 +92,7 @@ public class CreateVersionSetRevisionDelegateTest {
             VersionSetDoseNotExistsException, PackageNotFoundException {
         when(packageServiceClient.verifyBuildsExists(eq(testAccountId), any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoBuiltPackage>builder().missingPackages(ImmutableList.of(pbC)).build());
-        delegate.createRevision(testAccountId, testVSName, List.of(pbA, pbB, pbC));
+        delegate.createRevision(testAccountId, testVSName, List.of(pbA, pbB, pbC), pbA);
 
     }
 
