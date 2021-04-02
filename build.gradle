@@ -109,6 +109,7 @@ project(':archipelago-common-github') {
     api project(':archipelago-common')
 
     implementation "net.minidev:json-smart:2.3"
+    implementation 'com.google.code.gson:gson:2.8.6'
   }
 }
 project(':archipelago-common-rest') {
@@ -752,6 +753,7 @@ project(':package-service-core') {
     implementation 'com.amazonaws:aws-java-sdk-s3:1.11.880'
     implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.11.880'
     implementation 'com.github.ben-manes.caffeine:caffeine:2.8.6'
+    implementation 'com.google.code.gson:gson:2.8.6'
   }
 }
 project(':package-service-models') {

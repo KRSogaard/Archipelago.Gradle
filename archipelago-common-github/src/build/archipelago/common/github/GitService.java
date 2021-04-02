@@ -5,6 +5,7 @@ import build.archipelago.common.github.exceptions.*;
 import build.archipelago.common.github.models.GitRepo;
 
 import java.nio.file.Path;
+import java.util.List;
 
 public interface GitService {
     boolean verifyAccess();
@@ -17,4 +18,6 @@ public interface GitService {
     GitRepo createRepo(String name, String description, boolean privateRepo) throws UnauthorizedException, GitRepoExistsException;
 
     void downloadRepoZip(Path filePath, String gitRepoFullName, String commit) throws RepoNotFoundException;
+
+    List<String> getBranches(String name) throws RepoNotFoundException;
 }

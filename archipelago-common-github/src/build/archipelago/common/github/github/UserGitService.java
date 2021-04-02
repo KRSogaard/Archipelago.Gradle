@@ -3,7 +3,10 @@ package build.archipelago.common.github.github;
 import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.github.GitService;
 import build.archipelago.common.github.exceptions.*;
+import build.archipelago.common.github.models.GitBranch;
 import build.archipelago.common.github.models.GitRepo;
+import com.google.gson.Gson;
+import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
@@ -17,7 +20,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import com.google.gson.reflect.TypeToken;
 
 public class UserGitService implements GitService {
 
@@ -59,22 +66,6 @@ public class UserGitService implements GitService {
                 return false;
         }
     }
-
-//    //@Override
-//    public String getRepos() throws RepoNotFoundException, UnauthorizedException {
-//        HttpResponse<String> httpResponse;
-//        try {
-//            HttpRequest httpRequest = getGithubRequest("/orgs/" + username + "/repos")
-//                    .GET()
-//                    .build();
-//
-//            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        return validateReponse(httpResponse, body -> body);
-//    }
 
     @Override
     public boolean hasRep(String name) throws UnauthorizedException {
@@ -202,6 +193,39 @@ public class UserGitService implements GitService {
         if (!Files.exists(filePath)) {
             throw new RuntimeException("Failed to download the zip file for package: " + gitRepoFullName);
         }
+    }
+
+    @Override
+    public List<String> getBranches(String gitRepoFullName) throws RepoNotFoundException {
+        HttpResponse<String> httpResponse;
+        try {
+            String url = String.format("https://github.com/%s/branches", gitRepoFullName);
+
+            HttpRequest httpRequest = this.getGithubRequest(url, false)
+                    .GET().build();
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        switch (httpResponse.statusCode()) {
+            case 200:
+            case 201:
+                return this.parseBranches(httpResponse.body());
+            case 401:
+            case 403:
+                throw new UnauthorizedException();
+            case 404:
+                throw new RepoNotFoundException(gitRepoFullName);
+            default:
+                throw new RuntimeException("Got unknown git response: " + httpResponse.statusCode());
+        }
+    }
+
+    private List<String> parseBranches(String body) {
+        Gson gson = new Gson();
+        List<GitBranch> list = gson.fromJson(body, new TypeToken<List<GitBranch>>() {}.getType());
+        return list.stream().map(GitBranch::getName).collect(Collectors.toList());
     }
 
     private GitRepo parseToGitRepo(String body) {

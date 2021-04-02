@@ -1,5 +1,9 @@
 package build.archipelago.packageservice.core.utils;
 
+import build.archipelago.packageservice.core.data.PackageData;
+import build.archipelago.packageservice.exceptions.PackageNotFoundException;
+import build.archipelago.packageservice.models.PackageDetails;
+
 import java.util.regex.*;
 
 public class PackageUtil {

@@ -6,6 +6,7 @@ import build.archipelago.packageservice.core.data.PackageData;
 import build.archipelago.packageservice.core.delegates.createPackage.CreatePackageDelegate;
 import build.archipelago.packageservice.core.delegates.getBuildArtifact.GetBuildArtifactDelegate;
 import build.archipelago.packageservice.core.delegates.getPackage.GetPackageDelegate;
+import build.archipelago.packageservice.core.delegates.getPackageBranches.GetPackageBranchesDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuild.GetPackageBuildDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuildByGit.GetPackageBuildByGitDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuilds.GetPackageBuildsDelegate;
@@ -107,5 +108,15 @@ public class DelegateConfiguration {
             PackageData packageData,
             Cache<String, List<PackageDetails>> packagesCache) {
         return new GetPackagesDelegate(packageData, packagesCache);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public GetPackageBranchesDelegate getPackageBranchesDelegate(
+            PackageData packageData,
+            @Qualifier("publicPackageAccountCache") Cache<String, String> publicPackageAccountCache,
+            AccountService accountService,
+            GitServiceFactory gitServiceFactory) {
+        return new GetPackageBranchesDelegate(packageData, publicPackageAccountCache, gitServiceFactory, accountService);
     }
 }

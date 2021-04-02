@@ -79,7 +79,6 @@ public class PackagesController {
                 .build());
     }
 
-
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public GetPackagesRestResponse getAllPackages(
