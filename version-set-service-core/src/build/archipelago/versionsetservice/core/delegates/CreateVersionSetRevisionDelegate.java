@@ -41,8 +41,10 @@ public class CreateVersionSetRevisionDelegate {
             throws MissingTargetPackageException, VersionSetDoseNotExistsException {
 
         VersionSet vs = versionSetService.get(accountId, versionSetName);
-        if (packages.stream().noneMatch(p -> p.equals(vs.getTarget()))) {
-            throw new MissingTargetPackageException(vs.getTarget());
+        if (vs.getTarget() != null) {
+            if (packages.stream().noneMatch(p -> p.equals(vs.getTarget()))) {
+                throw new MissingTargetPackageException(vs.getTarget());
+            }
         }
     }
 

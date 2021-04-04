@@ -8,6 +8,7 @@ import build.archipelago.buildserver.builder.builder.helpers.*;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.builder.git.GitServiceSourceProvider;
 import build.archipelago.buildserver.builder.maui.Maui;
+import build.archipelago.buildserver.builder.notifications.NotificationProvider;
 import build.archipelago.buildserver.builder.output.*;
 import build.archipelago.buildserver.common.services.build.DynamoDBBuildService;
 import build.archipelago.buildserver.common.services.build.logs.StageLogsService;
@@ -81,6 +82,7 @@ public class VersionSetBuilder {
     private GitService gitService;
     private ArchipelagoPackage buildTarget;
     private String latestRevision;
+    private NotificationProvider notificationProvider;
 
     public VersionSetBuilder(InternalHarborClientFactory internalHarborClientFactory,
                              VersionSetServiceClient versionSetServiceClient,
@@ -92,7 +94,8 @@ public class VersionSetBuilder {
                              DynamoDBBuildService buildService,
                              AccountService accountService,
                              MauiPath mauiPath,
-                             BuildQueueMessage buildRequest) {
+                             BuildQueueMessage buildRequest,
+                             NotificationProvider notificationProvider) {
         this.internalHarborClientFactory = internalHarborClientFactory;
         this.versionSetServiceClient = versionSetServiceClient;
         this.packageServiceClient = packageServiceClient;
@@ -104,6 +107,7 @@ public class VersionSetBuilder {
         this.gitServiceFactory = gitServiceFactory;
         this.s3OutputWrapperFactory = s3OutputWrapperFactory;
         this.stageLogsService = stageLogsService;
+        this.notificationProvider = notificationProvider;
 
         executorService = new BlockingExecutorServiceFactory().create();
     }
@@ -115,6 +119,8 @@ public class VersionSetBuilder {
             } catch (BuildNotFoundException e) {
                 throw new PermanentMessageProcessingException("The build request was not found", e);
             }
+
+            notificationProvider.buildStarted(request.getBuildId(), request.getAccountId(), request.getVersionSet(), request.getBuildPackages(), request.isDryRun());
 
             try {
                 accountDetails = accountService.getAccountDetails(request.getAccountId());
@@ -133,7 +139,7 @@ public class VersionSetBuilder {
                     buildRequest.getAccountId() + "-" + Instant.now().toEpochMilli() + "-" + buildRequest.getBuildId());
             if (!gitDetails.getCodeSource().toLowerCase().startsWith("github")) {
                 log.error("Unknown code source {}", gitDetails.getCodeSource());
-                throw new PermanentMessageProcessingException("Only github is supported at this time");
+                throw new FailBuildException();
             }
             gitService = gitServiceFactory.getGitService(gitDetails.getCodeSource(), gitDetails.getGithubAccount(), gitDetails.getGitHubAccessToken());
             packageSourceProvider = new GitServiceSourceProvider(gitService);
@@ -147,6 +153,7 @@ public class VersionSetBuilder {
             try {
                 this.stage_prepare();
             } catch (FailBuildException exp) {
+                notificationProvider.stageFailed(request.getBuildId(), request.getAccountId(), "prepare");
                 buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PREPARE, BuildStatus.FAILED);
                 buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
                 buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
@@ -155,23 +162,29 @@ public class VersionSetBuilder {
             try {
                 this.stage_packages();
             } catch (FailBuildException exp) {
+                notificationProvider.stageFailed(request.getBuildId(), request.getAccountId(), "packages");
                 buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
                 buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
                 throw exp;
             }
             try {
-            this.stage_publish();
+                this.stage_publish();
             } catch (FailBuildException exp) {
+                notificationProvider.stageFailed(request.getBuildId(), request.getAccountId(), "publish");
                 buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FAILED);
                 throw exp;
             }
+            notificationProvider.buildSuccessful(request.getBuildId(), request.getAccountId());
         } catch (FailBuildException exp) {
-            log.warn("The build was failed, will not retry", exp);
+            notificationProvider.buildFailed(request.getBuildId(), request.getAccountId());
+            log.warn("The build " + buildRequest.getBuildId() + " was failed, will not retry", exp);
         } catch (RuntimeException exp) {
-            log.error("Fatal error while processing build, will retry later", exp);
+            notificationProvider.buildError(request.getBuildId(), request.getAccountId(), exp);
+            log.error("Fatal error while processing build " + buildRequest.getBuildId() + ", will retry later", exp);
             throw new TemporaryMessageProcessingException();
         } finally {
-            //PathHelper.deleteFolder(buildRoot);
+            notificationProvider.buildDone(request.getBuildId(), request.getAccountId());
+            PathHelper.deleteFolder(buildRoot);
         }
     }
 
@@ -184,7 +197,7 @@ public class VersionSetBuilder {
             VersionSet versionSet = versionSetServiceClient.getVersionSet(request.getAccountId(), request.getVersionSet());
             this.latestRevision = versionSet.getLatestRevision();
             if (latestRevision != null) {
-                stageLog.addInfo("Build against version set revision {}#{} created at {}",
+                stageLog.addInfo("Build against version set revision %s#%s created at %s",
                         versionSet.getName(), versionSet.getLatestRevision(),
                         formatter.format(versionSet.getLatestRevisionCreated()));
             } else {
@@ -193,7 +206,7 @@ public class VersionSetBuilder {
             if (versionSet.getTarget() == null) {
                 stageLog.addInfo("This version set dose not have a target, the build will continue");
             } else {
-                stageLog.addInfo("Using \"{}\" as the target of this build", versionSet.getTarget().getNameVersion());
+                stageLog.addInfo("Using \"%s\" as the target of this build", versionSet.getTarget().getNameVersion());
                 this.buildTarget = versionSet.getTarget();
             }
 
@@ -230,7 +243,7 @@ public class VersionSetBuilder {
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PREPARE, BuildStatus.FAILED);
             throw new RuntimeException(e);
         } finally {
-            log.info("Build done");
+            log.info("Build {} prepare stage is done", buildRequest.getBuildId());
             if (stageLog.hasLogs()) {
                 stageLogsService.uploadStageLog(buildRequest.getBuildId(), BuildStage.PREPARE, stageLog.getLogs());
             }
@@ -277,7 +290,11 @@ public class VersionSetBuilder {
                 log.debug("One of the packages failed it's build, failing the whole build");
                 throw new FailBuildException();
             }
+        } catch (FailBuildException exp) {
+            buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
+            throw exp;
         } finally {
+            log.info("Build {} package stage is done", buildRequest.getBuildId());
             if (failedBuild) {
                 stageLog.addInfo("Package build failed");
                 buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
@@ -463,10 +480,22 @@ public class VersionSetBuilder {
             if (!maui.build(outputWrapper, pkg)) {
                 failedBuild = true;
                 buildService.setPackageStatus(buildRequest.getBuildId(), pkg, BuildStatus.FAILED);
-                buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PACKAGES, BuildStatus.FAILED);
                 throw new FailBuildException();
             } else {
                 buildService.setPackageStatus(buildRequest.getBuildId(), pkg, BuildStatus.FINISHED);
+            }
+        } catch (RuntimeException exp) {
+            buildService.setPackageStatus(buildRequest.getBuildId(), pkg, BuildStatus.FAILED);
+            if (exp.getCause() != null && exp.getCause() instanceof PackageNotInVersionSetException) {
+                log.error("The package {} was not found in the version set, " +
+                        "cannot continue", ((PackageNotInVersionSetException)exp.getCause()).getPkgName());
+                outputWrapper.error("The package " + ((PackageNotInVersionSetException)exp.getCause()).getPkgName() + " was not found in the version set, " +
+                        "cannot continue");
+                throw new FailBuildException();
+            } else {
+                log.error("Got an unknown error while building " + pkg.getNameVersion(), exp);
+                outputWrapper.error("Got an unknown error while building " + pkg.getNameVersion());
+                throw new FailBuildException();
             }
         } finally {
             outputWrapper.upload();

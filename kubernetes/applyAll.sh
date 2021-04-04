@@ -1,10 +1,9 @@
 #!/bin/bash
 
 echo "Applying all files"
-for entry in ./*deployment.yaml
-do
-  kubectl apply -f $entry
-done
+declare -a services=("auth-service-deployment.yaml" "build-server-api-deployment.yaml" "build-server-builder-deployment.yaml" "harbor-service-deployment.yaml" "package-service-deployment.yaml" "version-set-service-deployment.yaml")
 
-unset AWS_ACCESS_KEY_ID
-unset AWS_SECRET_ACCESS_KEY
+for service in ${services[@]}; do
+     echo "Applying $service"
+     kubectl apply -f $service
+done

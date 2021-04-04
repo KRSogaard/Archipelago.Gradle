@@ -85,7 +85,7 @@ public class DynamoDBKeyService implements KeyService {
 
     @Override
     public KeyDetails getSigningKey() {
-        if (replaceAt.isBefore(Instant.now())) {
+        if (current == null || replaceAt.isBefore(Instant.now())) {
             loadKeyFromStorage();
         }
 

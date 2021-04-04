@@ -2,6 +2,7 @@ package build.archipelago.buildserver.builder.builder;
 
 import build.archipelago.account.common.AccountService;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
+import build.archipelago.buildserver.builder.notifications.NotificationProvider;
 import build.archipelago.buildserver.builder.output.S3OutputWrapperFactory;
 import build.archipelago.buildserver.common.services.build.DynamoDBBuildService;
 import build.archipelago.buildserver.common.services.build.logs.StageLogsService;
@@ -25,6 +26,7 @@ public class BuilderFactory {
     private GitServiceFactory gitServiceFactory;
     private S3OutputWrapperFactory s3OutputWrapperFactory;
     private StageLogsService stageLogsService;
+    private NotificationProvider notificationProvider;
 
     public BuilderFactory(InternalHarborClientFactory internalHarborClientFactory,
                           VersionSetServiceClient versionSetServiceClient,
@@ -35,7 +37,8 @@ public class BuilderFactory {
                           StageLogsService stageLogsService,
                           DynamoDBBuildService buildService,
                           AccountService accountService,
-                          MauiPath mauiPath) {
+                          MauiPath mauiPath,
+                          NotificationProvider notificationProvider) {
         this.internalHarborClientFactory = internalHarborClientFactory;
         this.versionSetServiceClient = versionSetServiceClient;
         this.packageServiceClient = packageServiceClient;
@@ -46,11 +49,12 @@ public class BuilderFactory {
         this.gitServiceFactory = gitServiceFactory;
         this.s3OutputWrapperFactory = s3OutputWrapperFactory;
         this.stageLogsService = stageLogsService;
+        this.notificationProvider = notificationProvider;
     }
 
     public VersionSetBuilder create(BuildQueueMessage buildRequest) {
         return new VersionSetBuilder(internalHarborClientFactory, versionSetServiceClient,
                 packageServiceClient, buildLocation, gitServiceFactory, s3OutputWrapperFactory, stageLogsService, buildService, accountService,
-                mauiPath, buildRequest);
+                mauiPath, buildRequest, notificationProvider);
     }
 }

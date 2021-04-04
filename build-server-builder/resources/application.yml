@@ -12,12 +12,19 @@ oauth:
 aws:
   region: "us-west-2"
 
+discord:
+  token: "ODI3OTczMTMxOTcyOTAyOTMy.YGi0EQ.6ElImP2skqmR4d0-ie90iKbqs6c"
+
 ---
 spring:
   profiles: local
 
 server:
   port: ${APP_PORT:8096}
+
+discord:
+  channel: "827977094918307881"
+  webhook: "https://discordapp.com/api/webhooks/827991379753435156/7Hf85wnYuL8CObeT16CVWmM87JbxTU6gvTyMidu94qwWYCh5ui-_JcZwDrQLTxxZo6Oh"
 
 aws:
   access:
@@ -48,6 +55,10 @@ workspace:
 ---
 spring:
   profiles: alpha
+
+discord:
+  channel: "827972887125295114"
+  webhook: "https://discordapp.com/api/webhooks/827993375507480597/1EO70YGv5lEi8EB5lhwP1wMOc7m5ielOtMIXGX7Tm71qYsME4Oijl3srnRY-nWrBs5PF"
 
 aws:
   access:

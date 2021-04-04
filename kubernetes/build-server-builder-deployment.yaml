@@ -19,7 +19,7 @@ spec:
         - env:
             - name: APPLICATION_STAGE
               value: alpha
-          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/build-server-builder:20210402-1
+          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/build-server-builder:20210403-162728
           name: build-server-builder
           ports:
             - containerPort: 8080

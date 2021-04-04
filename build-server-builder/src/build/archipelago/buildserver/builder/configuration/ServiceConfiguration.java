@@ -4,6 +4,7 @@ import build.archipelago.account.common.AccountService;
 import build.archipelago.buildserver.builder.builder.BuilderFactory;
 import build.archipelago.buildserver.builder.clients.InternalHarborClientFactory;
 import build.archipelago.buildserver.builder.handlers.*;
+import build.archipelago.buildserver.builder.notifications.NotificationProvider;
 import build.archipelago.buildserver.builder.output.S3OutputWrapperFactory;
 import build.archipelago.buildserver.common.services.build.DynamoDBBuildService;
 import build.archipelago.buildserver.common.services.build.logs.*;
@@ -104,6 +105,7 @@ public class ServiceConfiguration {
                                          MauiPath mauiPath,
                                          S3OutputWrapperFactory s3OutputWrapperFactory,
                                          StageLogsService stageLogsService,
+                                         NotificationProvider notificationProvider,
                                          @Value("${workspace.path}") String workspacePath) throws IOException {
         Preconditions.checkNotNull(internalHarborClientFactory);
         Preconditions.checkNotNull(versionSetServiceClient);
@@ -113,6 +115,7 @@ public class ServiceConfiguration {
         Preconditions.checkNotNull(mauiPath);
         Preconditions.checkNotNull(gitServiceFactory);
         Preconditions.checkNotNull(stageLogsService);
+        Preconditions.checkNotNull(notificationProvider);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(workspacePath));
         Path wsPath = Path.of(workspacePath);
         if (!Files.exists(wsPath) || !Files.isDirectory(wsPath)) {
@@ -121,7 +124,7 @@ public class ServiceConfiguration {
         return new BuilderFactory(internalHarborClientFactory, versionSetServiceClient,
                 packageServiceClient, wsPath,
                 gitServiceFactory, s3OutputWrapperFactory, stageLogsService, buildService, accountService,
-                mauiPath);
+                mauiPath, notificationProvider);
     }
 
     @Bean
