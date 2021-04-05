@@ -9,6 +9,7 @@ import build.archipelago.packageservice.core.delegates.getPackageCommits.GetPack
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.packageservice.models.GitBranchesResponse;
 import build.archipelago.packageservice.models.GitCommitsResponse;
+import build.archipelago.packageservice.models.rest.GitBranchRestResponse;
 import build.archipelago.packageservice.models.rest.GitBranchesRestResponse;
 import build.archipelago.packageservice.models.rest.GitCommitRestResponse;
 import build.archipelago.packageservice.models.rest.GitCommitsRestResponse;
@@ -47,7 +48,7 @@ public class GitController {
 
         GitBranchesResponse branches = packageBranchesDelegate.get(accountId, name);
         return GitBranchesRestResponse.builder()
-                .branches(branches.getBranches())
+                .branches(branches.getBranches().stream().map(GitBranchRestResponse::from).collect(Collectors.toList()))
                 .build();
     }
 
