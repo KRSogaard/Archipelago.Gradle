@@ -1,4 +1,4 @@
-package build.archipelago.common.github.exceptions;
+package build.archipelago.common.git.models.exceptions;
 
 import lombok.*;
 

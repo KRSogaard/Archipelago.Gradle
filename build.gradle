@@ -107,9 +107,15 @@ project(':archipelago-common-dynamodb') {
 project(':archipelago-common-github') {
   dependencies {
     api project(':archipelago-common')
+    api project(':archipelago-common-git-models')
 
     implementation "net.minidev:json-smart:2.3"
     implementation 'com.google.code.gson:gson:2.8.6'
+  }
+}
+project(':archipelago-common-git-models') {
+  dependencies {
+    api project(':archipelago-common')
   }
 }
 project(':archipelago-common-rest') {
@@ -736,6 +742,7 @@ project(':package-service-client') {
     api project(':archipelago-common-clients')
     api project(':package-service-models')
     api project(':archipelago-common-rest')
+    api project(':archipelago-common-git-models')
 
     implementation 'com.fasterxml.jackson.core:jackson-core:2.12.1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
@@ -759,6 +766,7 @@ project(':package-service-core') {
 project(':package-service-models') {
   dependencies {
     api project(':archipelago-common')
+    api project(':archipelago-common-git-models')
   }
 }
 project(':version-set-service') {

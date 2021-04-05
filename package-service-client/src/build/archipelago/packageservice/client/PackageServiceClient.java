@@ -2,6 +2,11 @@ package build.archipelago.packageservice.client;
 
 import build.archipelago.common.*;
 import build.archipelago.common.exceptions.UnauthorizedException;
+import build.archipelago.common.git.models.GitBranch;
+import build.archipelago.common.git.models.GitCommit;
+import build.archipelago.common.git.models.exceptions.BranchNotFoundException;
+import build.archipelago.common.git.models.exceptions.GitDetailsNotFound;
+import build.archipelago.common.git.models.exceptions.RepoNotFoundException;
 import build.archipelago.packageservice.client.models.*;
 import build.archipelago.packageservice.exceptions.*;
 import build.archipelago.packageservice.models.*;
@@ -32,4 +37,7 @@ public interface PackageServiceClient {
     GetBuildArtifactResponse getBuildArtifact(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException, UnauthorizedException;
 
     ImmutableList<PackageDetails> getAllPackages(String accountId) throws UnauthorizedException;
+
+    ImmutableList<GitBranch> getGitBranches(String accountId, String pkgName) throws PackageNotFoundException, RepoNotFoundException, GitDetailsNotFound;
+    ImmutableList<GitCommit> getGitCommits(String accountId, String pkgName, String branch) throws RepoNotFoundException, BranchNotFoundException, GitDetailsNotFound, PackageNotFoundException;
 }

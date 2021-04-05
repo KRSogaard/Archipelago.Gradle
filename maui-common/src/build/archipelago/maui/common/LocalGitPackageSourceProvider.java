@@ -1,6 +1,6 @@
 package build.archipelago.maui.common;
 
-import build.archipelago.common.github.exceptions.RepoNotFoundException;
+import build.archipelago.common.git.models.exceptions.RepoNotFoundException;
 import build.archipelago.packageservice.models.PackageDetails;
 import lombok.extern.slf4j.Slf4j;
 

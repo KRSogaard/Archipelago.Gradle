@@ -1,7 +1,7 @@
 package build.archipelago.maui.core.actions;
 
 import build.archipelago.common.ArchipelagoPackage;
-import build.archipelago.common.github.exceptions.RepoNotFoundException;
+import build.archipelago.common.git.models.exceptions.RepoNotFoundException;
 import build.archipelago.common.versionset.VersionSet;
 import build.archipelago.harbor.client.HarborClient;
 import build.archipelago.maui.common.PackageSourceProvider;

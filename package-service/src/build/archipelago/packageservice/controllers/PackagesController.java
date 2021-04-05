@@ -1,6 +1,6 @@
 package build.archipelago.packageservice.controllers;
 
-import build.archipelago.account.common.exceptions.GitDetailsNotFound;
+import build.archipelago.common.git.models.exceptions.GitDetailsNotFound;
 import build.archipelago.common.*;
 import build.archipelago.packageservice.core.delegates.createPackage.*;
 import build.archipelago.packageservice.core.delegates.getPackage.GetPackageDelegate;

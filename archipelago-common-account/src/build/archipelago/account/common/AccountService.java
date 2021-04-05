@@ -3,6 +3,7 @@ package build.archipelago.account.common;
 import build.archipelago.account.common.exceptions.*;
 import build.archipelago.account.common.models.*;
 import build.archipelago.common.dynamodb.AV;
+import build.archipelago.common.git.models.exceptions.GitDetailsNotFound;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.google.common.collect.ImmutableList;

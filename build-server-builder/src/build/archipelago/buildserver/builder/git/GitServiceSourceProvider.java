@@ -1,7 +1,7 @@
 package build.archipelago.buildserver.builder.git;
 
 import build.archipelago.common.github.GitService;
-import build.archipelago.common.github.exceptions.RepoNotFoundException;
+import build.archipelago.common.git.models.exceptions.RepoNotFoundException;
 import build.archipelago.maui.common.PackageSourceProvider;
 import build.archipelago.packageservice.models.PackageDetails;
 import net.lingala.zip4j.ZipFile;

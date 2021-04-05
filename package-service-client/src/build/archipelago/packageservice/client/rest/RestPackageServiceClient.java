@@ -3,6 +3,11 @@ package build.archipelago.packageservice.client.rest;
 import build.archipelago.common.*;
 import build.archipelago.common.clients.rest.*;
 import build.archipelago.common.exceptions.UnauthorizedException;
+import build.archipelago.common.git.models.GitBranch;
+import build.archipelago.common.git.models.GitCommit;
+import build.archipelago.common.git.models.exceptions.BranchNotFoundException;
+import build.archipelago.common.git.models.exceptions.GitDetailsNotFound;
+import build.archipelago.common.git.models.exceptions.RepoNotFoundException;
 import build.archipelago.common.rest.models.errors.ProblemDetailRestResponse;
 import build.archipelago.packageservice.client.*;
 import build.archipelago.packageservice.client.models.*;
@@ -406,6 +411,98 @@ public class RestPackageServiceClient extends OAuthRestClient implements Package
                 throw new UnauthorizedException();
             default:
                 throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
+        }
+    }
+
+    @Override
+    public ImmutableList<GitBranch> getGitBranches(String accountId, String pkgName) throws PackageNotFoundException, RepoNotFoundException, GitDetailsNotFound {
+        GitBranchesRestResponse restResponse;
+        HttpResponse<String> httpResponse;
+        try {
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/git/" + pkgName + "/branches")
+                    .GET()
+                    .build();
+            httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to get git branches for package '{}' account '{}'",
+                    pkgName, accountId);
+            throw new RuntimeException(e);
+        }
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                restResponse = this.parseOrThrow(httpResponse.body(), GitBranchesRestResponse.class);
+                return restResponse.getBranches().stream()
+                        .map(GitBranchRestResponse::toInternal)
+                        .collect(ImmutableList.toImmutableList());
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Package service");
+                throw new UnauthorizedException();
+            case 400:
+                Exception exp = PackageExceptionHandler.createException(
+                        ProblemDetailRestResponse.from(httpResponse.body()));
+                if (exp instanceof RepoNotFoundException) {
+                    throw (RepoNotFoundException) exp;
+                } else if (exp instanceof GitDetailsNotFound) {
+                    throw (GitDetailsNotFound) exp;
+                } else {
+                    throw new RuntimeException("Unknown issue");
+                }
+            case 404: // Not found
+                log.warn("Got Not Found (404) response from Package service with body: " + httpResponse.body());
+                throw (PackageNotFoundException) PackageExceptionHandler.createException(
+                        ProblemDetailRestResponse.from(httpResponse.body()));
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
+        }
+    }
+
+    @Override
+    public ImmutableList<GitCommit> getGitCommits(String accountId, String pkgName, String branch) throws RepoNotFoundException, BranchNotFoundException, GitDetailsNotFound, PackageNotFoundException {
+        GitCommitsRestResponse restResponse;
+        HttpResponse<String> httpResponse;
+        try {
+            HttpRequest request = this.getOAuthRequest("/account/" + accountId + "/git/" + pkgName + "/" + branch)
+                    .GET()
+                    .build();
+            httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call package service to get git branches for package '{}' account '{}'",
+                    pkgName, accountId);
+            throw new RuntimeException(e);
+        }
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                restResponse = this.parseOrThrow(httpResponse.body(), GitCommitsRestResponse.class);
+                return ImmutableList.copyOf(restResponse.getCommits().stream().map(GitCommitRestResponse::toInternal).collect(Collectors.toList()));
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Package service");
+                throw new UnauthorizedException();
+            case 400:
+                Exception exp = PackageExceptionHandler.createException(
+                        ProblemDetailRestResponse.from(httpResponse.body()));
+                if (exp instanceof RepoNotFoundException) {
+                    throw (RepoNotFoundException) exp;
+                } else if (exp instanceof BranchNotFoundException) {
+                    throw (BranchNotFoundException) exp;
+                } else if (exp instanceof GitDetailsNotFound) {
+                    throw (GitDetailsNotFound) exp;
+                } else {
+                    throw new RuntimeException("Unknown issue");
+                }
+            case 404: // Not found
+                log.warn("Got Not Found (404) response from Package service with body: " + httpResponse.body());
+                throw (PackageNotFoundException) PackageExceptionHandler.createException(
+                        ProblemDetailRestResponse.from(httpResponse.body()));
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
         }
     }
 

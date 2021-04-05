@@ -1,5 +1,6 @@
 package build.archipelago.packageservice.models.rest;
 
+import build.archipelago.common.git.models.GitBranch;
 import lombok.*;
 
 import java.util.List;
@@ -8,6 +9,6 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-public class GitRepoBranchesRestResponse {
-    private List<String> branches;
+public class GitBranchesRestResponse {
+    private List<GitBranchRestResponse> branches;
 }

@@ -1,11 +1,11 @@
 package build.archipelago.packageservice.core.delegates.createPackage;
 
 import build.archipelago.account.common.AccountService;
-import build.archipelago.account.common.exceptions.GitDetailsNotFound;
+import build.archipelago.common.git.models.exceptions.GitDetailsNotFound;
 import build.archipelago.account.common.models.GitDetails;
+import build.archipelago.common.git.models.GitRepo;
 import build.archipelago.common.github.*;
-import build.archipelago.common.github.exceptions.*;
-import build.archipelago.common.github.models.GitRepo;
+import build.archipelago.common.git.models.exceptions.*;
 import build.archipelago.packageservice.core.data.PackageData;
 import build.archipelago.packageservice.exceptions.PackageExistsException;
 import build.archipelago.packageservice.models.CreatePackageModel;

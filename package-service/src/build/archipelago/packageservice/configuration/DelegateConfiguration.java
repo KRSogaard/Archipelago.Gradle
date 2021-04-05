@@ -10,6 +10,7 @@ import build.archipelago.packageservice.core.delegates.getPackageBranches.GetPac
 import build.archipelago.packageservice.core.delegates.getPackageBuild.GetPackageBuildDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuildByGit.GetPackageBuildByGitDelegate;
 import build.archipelago.packageservice.core.delegates.getPackageBuilds.GetPackageBuildsDelegate;
+import build.archipelago.packageservice.core.delegates.getPackageCommits.GetPackageCommitsDelegate;
 import build.archipelago.packageservice.core.delegates.getPackages.GetPackagesDelegate;
 import build.archipelago.packageservice.core.delegates.uploadBuildArtifact.UploadBuildArtifactDelegate;
 import build.archipelago.packageservice.core.delegates.verifyBuildsExists.VerifyBuildsExistsDelegate;
@@ -118,5 +119,15 @@ public class DelegateConfiguration {
             AccountService accountService,
             GitServiceFactory gitServiceFactory) {
         return new GetPackageBranchesDelegate(packageData, publicPackageAccountCache, gitServiceFactory, accountService);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public GetPackageCommitsDelegate getPackageCommitsDelegate(
+            PackageData packageData,
+            @Qualifier("publicPackageAccountCache") Cache<String, String> publicPackageAccountCache,
+            AccountService accountService,
+            GitServiceFactory gitServiceFactory) {
+        return new GetPackageCommitsDelegate(packageData, publicPackageAccountCache, gitServiceFactory, accountService);
     }
 }

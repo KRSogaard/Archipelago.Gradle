@@ -1,7 +1,8 @@
 package build.archipelago.packageservice;
 
-import build.archipelago.account.common.exceptions.GitDetailsNotFound;
-import build.archipelago.common.github.exceptions.RepoNotFoundException;
+import build.archipelago.common.git.models.exceptions.GitDetailsNotFound;
+import build.archipelago.common.git.models.exceptions.BranchNotFoundException;
+import build.archipelago.common.git.models.exceptions.RepoNotFoundException;
 import build.archipelago.common.rest.models.errors.*;
 import build.archipelago.packageservice.client.PackageExceptionHandler;
 import build.archipelago.packageservice.exceptions.*;
@@ -28,22 +29,18 @@ public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
 
     @ExceptionHandler(GitDetailsNotFound.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleGitDetailsNotFound(HttpServletRequest req, Exception ex) {
-        return this.createResponse(req, ProblemDetailRestResponse.builder()
-                .error("git/detailsNotFound")
-                .title("No git details was found for the account")
-                .status(HttpStatus.BAD_REQUEST.value())
-                .detail(ex.getMessage()));
+        return this.createResponse(req, PackageExceptionHandler.from((GitDetailsNotFound) ex));
     }
 
     @ExceptionHandler(RepoNotFoundException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleRepoNotFoundException(HttpServletRequest req, Exception ex) {
-        return this.createResponse(req, ProblemDetailRestResponse.builder()
-                .error("git/repoNotFound")
-                .title("The git repository was not found, it might have been deleted")
-                .status(HttpStatus.BAD_REQUEST.value())
-                .detail(ex.getMessage()));
+        return this.createResponse(req, PackageExceptionHandler.from((RepoNotFoundException) ex));
     }
 
+    @ExceptionHandler(BranchNotFoundException.class)
+    public ResponseEntity<ProblemDetailRestResponse> springHandleBranchNotFoundException(HttpServletRequest req, Exception ex) {
+        return this.createResponse(req, PackageExceptionHandler.from((BranchNotFoundException) ex));
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ProblemDetailRestResponse> springHandleIllegalArgumentException(HttpServletRequest req, Exception ex) {

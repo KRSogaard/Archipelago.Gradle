@@ -1,6 +1,9 @@
 package build.archipelago.packageservice.client;
 
 import build.archipelago.common.*;
+import build.archipelago.common.git.models.exceptions.BranchNotFoundException;
+import build.archipelago.common.git.models.exceptions.GitDetailsNotFound;
+import build.archipelago.common.git.models.exceptions.RepoNotFoundException;
 import build.archipelago.common.rest.models.errors.ProblemDetailRestResponse;
 import build.archipelago.packageservice.exceptions.*;
 import com.google.common.base.Strings;
@@ -11,6 +14,10 @@ public class PackageExceptionHandler {
     public static final String TYPE_PACKAGE_NOT_FOUND = "package/notFound";
     public static final String TYPE_MULTIPLE_PACKAGE_NOT_FOUND = "package/multipleNotFound";
     public static final String TYPE_PACKAGE_EXISTS = "package/exists";
+    public static final String TYPE_GIT_REPOT_NOT_FOUND = "git/repoNotFound";
+    public static final String TYPE_GIT_BRANCH_NOT_FOUND = "git/branchNotFound";
+    public static final String TYPE_GIT_DETAILS_NOT_FOUND = "git/detailsNotFound";
+
 
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(PackageNotFoundException exp) {
         ProblemDetailRestResponse.ProblemDetailRestResponseBuilder builder = ProblemDetailRestResponse.builder();
@@ -63,6 +70,40 @@ public class PackageExceptionHandler {
                 }});
     }
 
+    public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(RepoNotFoundException ex) {
+        return ProblemDetailRestResponse.builder()
+                .error(TYPE_GIT_REPOT_NOT_FOUND)
+                .title("The git repository was not found, it might have been deleted")
+                .status(400)
+                .detail(ex.getMessage())
+                .data(new HashMap<>() {{
+                    if (ex.getRepo() != null) {
+                        this.put("repo", ex.getRepo());
+                    }
+                }});
+    }
+
+    public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(BranchNotFoundException ex) {
+        return ProblemDetailRestResponse.builder()
+                .error(TYPE_GIT_BRANCH_NOT_FOUND)
+                .title("The git branch was not found, it might have been deleted")
+                .status(400)
+                .detail(ex.getMessage())
+                .data(new HashMap<>() {{
+                    if (ex.getBranch() != null) {
+                        this.put("branch", ex.getBranch());
+                    }
+                }});
+    }
+
+    public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(GitDetailsNotFound ex) {
+        return ProblemDetailRestResponse.builder()
+                .error(TYPE_GIT_DETAILS_NOT_FOUND)
+                .title("No git details was found for the account")
+                .status(400)
+                .detail(ex.getMessage());
+    }
+
     public static Exception createException(ProblemDetailRestResponse problem) {
         switch (problem.getError()) {
             case TYPE_PACKAGE_NOT_FOUND:
@@ -94,6 +135,12 @@ public class PackageExceptionHandler {
                             (String) problem.getData().get("version")));
                 }
                 return new PackageExistsException((String) problem.getData().get("packageName"));
+            case TYPE_GIT_REPOT_NOT_FOUND:
+                return new RepoNotFoundException((String) problem.getData().get("repo"));
+            case TYPE_GIT_BRANCH_NOT_FOUND:
+                return new BranchNotFoundException((String) problem.getData().get("branch"));
+            case TYPE_GIT_DETAILS_NOT_FOUND:
+                return new GitDetailsNotFound();
             default:
                 throw new RuntimeException(problem.getError() + " was not a known package error");
         }
