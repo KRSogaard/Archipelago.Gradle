@@ -53,7 +53,7 @@ aws:
     key: "Sh9zk1sSeT3BmzJFGSr+XcqPeiLYZFEV2tjishrf"
 
 endpoints:
-  package-service: "http://package-service.alpha.archipelago.build"
+  package-service: "https://package-service.alpha.archipelago.build"
 
 ---
 spring:

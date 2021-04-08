@@ -14,6 +14,8 @@ foreach ($service in $services)
    ./gradlew :${service}:docker
    docker tag build.archipelago/${service}:latest 075174350620.dkr.ecr.us-west-2.amazonaws.com/${service}:${buildId}
    docker push 075174350620.dkr.ecr.us-west-2.amazonaws.com/${service}:${buildId}
+   docker tag build.archipelago/${service}:latest 075174350620.dkr.ecr.us-west-2.amazonaws.com/${service}:latest
+   docker push 075174350620.dkr.ecr.us-west-2.amazonaws.com/${service}:latest
 }
 
 

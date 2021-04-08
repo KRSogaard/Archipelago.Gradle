@@ -19,7 +19,7 @@ spec:
         - env:
             - name: APPLICATION_STAGE
               value: alpha
-          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/harbor-service:20210403-162728
+          image: 075174350620.dkr.ecr.us-west-2.amazonaws.com/harbor-service:20210404-212405
           name: harbor-service
           ports:
             - containerPort: 8080

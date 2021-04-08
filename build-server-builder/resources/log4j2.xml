@@ -31,16 +31,17 @@
 
     <Loggers>
         <!-- Override wanted log levels -->
-        <Logger name="org.springframework" level="ERROR" />
-        <Logger name="org.hibernate" level="ERROR" />
-        <Logger name="com.amazonaws" level="ERROR" />
-        <Logger name="org.apache" level="ERROR" />
-        <Logger name="springfox.documentation" level="ERROR" />
-        <Logger name="build.archipelago" level="DEBUG" />
+        <Logger name="org.springframework" level="ERROR"/>
+        <Logger name="org.hibernate" level="ERROR"/>
+        <Logger name="com.amazonaws" level="ERROR"/>
+        <Logger name="org.apache" level="ERROR"/>
+        <Logger name="springfox.documentation" level="ERROR"/>
+        <Logger name="build.archipelago" level="DEBUG"/>
+        <Logger name="org.springframework.web" level="ERROR"/>
 
         <Root level="DEBUG">
-            <AppenderRef ref="File" level="DEBUG" />
-            <AppenderRef ref="ConsoleAppender" level="DEBUG" />
+            <AppenderRef ref="File" level="DEBUG"/>
+            <AppenderRef ref="ConsoleAppender" level="DEBUG"/>
         </Root>
     </Loggers>
 </Configuration>

@@ -43,6 +43,7 @@ version-set-service/build/
 version-set-service-client/build/
 version-set-service-core/build/
 version-set-service-models/build/
+archipelago-common-git-models/build/
 /build/
 
 # Ignore Gradle GUI config

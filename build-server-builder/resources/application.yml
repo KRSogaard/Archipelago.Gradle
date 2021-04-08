@@ -4,6 +4,11 @@ spring:
   jackson:
     mapper:
       accept_case_insensitive_properties: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_DWQyxBTOf"
 
 oauth:
   client-id: "49o8iok838r23u7ivmq5g106ci"
@@ -66,8 +71,8 @@ aws:
     key: "PD45gn4xxyBcxJg4nZlQ517Y/Xaugml0SDIF7EXR"
 
 services:
-  versionset: "http://version-set-service.alpha.archipelago.build"
-  packages: "http://package-service.alpha.archipelago.build"
+  versionset: "https://version-set-service.alpha.archipelago.build"
+  packages: "https://package-service.alpha.archipelago.build"
 
 dynamodb:
   build: "archipelago-alpha.builds"

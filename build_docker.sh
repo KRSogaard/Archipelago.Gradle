@@ -13,7 +13,7 @@ for service in ${services[@]}; do
      echo Building $service
      ./gradlew :$service:build
      ./gradlew :$service:docker
-#     docker tag build.archipelago/$service:latest 075174350620.dkr.ecr.us-west-2.amazonaws.com/$service:20210402-1
-#     docker push 075174350620.dkr.ecr.us-west-2.amazonaws.com/$service:20210402-1
+     docker tag build.archipelago/$service:latest 075174350620.dkr.ecr.us-west-2.amazonaws.com/$service:20210402-1
+     docker push 075174350620.dkr.ecr.us-west-2.amazonaws.com/$service:20210402-1
 done
 

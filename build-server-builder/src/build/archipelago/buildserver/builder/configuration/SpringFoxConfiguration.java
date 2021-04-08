@@ -1,7 +1,9 @@
-package build.archipelago.buildserver.configuration;
+package build.archipelago.buildserver.builder.configuration;
 
-import org.springframework.context.annotation.*;
-import springfox.documentation.builders.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import springfox.documentation.builders.PathSelectors;
+import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;

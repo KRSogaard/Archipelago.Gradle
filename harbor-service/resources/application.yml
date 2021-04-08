@@ -49,10 +49,10 @@ frontend-oauth:
   auth-url: ${FRONTEND_OAUTH_ISSUER:http://auth.alpha.archipelago.build/oauth2}
 
 endpoints:
-  package-service: "http://package-service.alpha.archipelago.build"
-  versionset-service: "http://version-set-service.alpha.archipelago.build"
-  build-server-api: "http://build-service-api.alpha.archipelago.build"
-  auth-service: "http://auth.alpha.archipelago.build"
+  package-service: "https://package-service.alpha.archipelago.build"
+  versionset-service: "https://version-set-service.alpha.archipelago.build"
+  build-server-api: "https://build-service-api.alpha.archipelago.build"
+  auth-service: "https://auth.alpha.archipelago.build"
 
 dynamodb:
   accounts: "archipelago-alpha.accounts"

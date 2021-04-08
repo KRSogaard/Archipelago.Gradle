@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk11:alpine
+FROM 075174350620.dkr.ecr.us-west-2.amazonaws.com/archipelago-base-image:latest
 RUN apk --no-cache add curl
 RUN addgroup -S spring && adduser -S spring -G spring
 
