@@ -57,25 +57,25 @@ public class AccountIdFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        log.debug("Setting account id for request");
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+        log.debug("Setting account id for request {}", httpServletRequest.getRequestURL());
 
         try {
             String accessToken = getAccessToken(httpServletRequest);
             CacheItem item = accessTokenCache.getIfPresent(accessToken);
             if (item != null) {
                 if (Instant.now().isAfter(item.getExpires())) {
-                    log.warn("Token has expired");
+                    log.warn("Token has expired, it expired at {}, time is now {}", item.getExpires(), Instant.now());
                     throw new UnauthorizedException();
                 }
+                log.debug("User is identified as {}, account {}", item.getUserId(), item.getAccountId());
                 request.setAttribute(AccountIdKey, item.getAccountId());
                 request.setAttribute(UserIdKey, item.getUserId());
                 chain.doFilter(request, response);
                 return;
             }
 
-            log.debug("Got access token from request: '{}'", accessToken);
             String kid = getKid(accessToken);
             log.debug("Using KID: '{}'", kid);
             PublicKey publicKey = keyCache.get(kid.toLowerCase(), k -> getPublicKey(kid));
@@ -160,15 +160,17 @@ public class AccountIdFilter implements Filter {
         List<String> headers = Collections.list(request.getHeaders("Authorization"));
         String authorization;
         if (headers.size() != 1) {
-            log.warn("Authorization was invalid");
+            log.warn("Authorization header was was not provided");
             throw new UnauthorizedException();
         }
         String header = headers.get(0);
         if (!header.startsWith("Bearer ")) {
+            log.warn("Authorization header was was not a bearer token");
             throw new UnauthorizedException();
         }
         String[] split = header.split(" ", 2);
         if (split.length != 2 || Strings.isNullOrEmpty(split[1])) {
+            log.warn("Authorization header was was not a valid bearer token");
             throw new UnauthorizedException();
         }
         return split[1];
