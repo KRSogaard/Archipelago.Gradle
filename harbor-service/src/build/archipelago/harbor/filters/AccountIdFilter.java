@@ -10,6 +10,7 @@ import com.google.common.base.*;
 import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -105,16 +106,18 @@ public class AccountIdFilter implements Filter {
             request.setAttribute(UserIdKey, userId);
             chain.doFilter(request, response);
         } catch (UnauthorizedException exp) {
-            log.warn("Authentication was not valid.", exp);
             String url = httpServletRequest.getRequestURL().toString();
             if (url.endsWith("/auth/login") ||
                 url.endsWith("/auth/register") ||
                 url.endsWith(HealthController.HEALTH_PATH)) {
+                log.debug("Authentication was not valid. But the request was to an unprotected path");
                 // this is not a blocked url;
                 chain.doFilter(request, response);
                 return;
             }
-            httpServletResponse.setStatus(401);
+            log.warn("Authentication was not valid. Returning 401");
+            httpServletResponse.sendError(401, "Invalid or expired token");
+            return;
         }
     }
 
