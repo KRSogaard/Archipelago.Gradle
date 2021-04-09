@@ -164,7 +164,7 @@ public class BaseGithubService implements GitService {
         HttpResponse<Path> response;
         try {
             String url = String.format("https://github.com/%s/archive/%s.zip", gitRepoFullName, commit);
-
+            log.debug("Fetching git zip file from '{}'", url);
             HttpRequest httpRequest = this.getGithubRequest(url, false)
                     .GET().build();
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofFile(filePath));
@@ -179,6 +179,7 @@ public class BaseGithubService implements GitService {
                 Optional<String> location = response.headers().firstValue("location");
                 if (location.isPresent()) {
                     try {
+                        log.debug("Git zip got redirected to '{}'", location.get());
                         HttpRequest httpRequest = this.getGithubRequest(location.get(), false)
                                 .GET().build();
                         response = client.send(httpRequest, HttpResponse.BodyHandlers.ofFile(filePath));

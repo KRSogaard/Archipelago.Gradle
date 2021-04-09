@@ -4,6 +4,7 @@ import build.archipelago.common.github.GitService;
 import build.archipelago.common.git.models.exceptions.RepoNotFoundException;
 import build.archipelago.maui.common.PackageSourceProvider;
 import build.archipelago.packageservice.models.PackageDetails;
+import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 
@@ -12,6 +13,7 @@ import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class GitServiceSourceProvider implements PackageSourceProvider {
 
     private GitService gitService;
@@ -27,6 +29,7 @@ public class GitServiceSourceProvider implements PackageSourceProvider {
 
     @Override
     public boolean checkOutSource(Path workspaceRoot, PackageDetails packageDetails, String commit) throws RepoNotFoundException {
+        log.info("Fetching git source code for package '{}' commit '{}", packageDetails.getGitRepoFullName(), commit);
         Path filePath = workspaceRoot.resolve(packageDetails.getName() + "-" + commit + ".zip");
         gitService.downloadRepoZip(filePath, packageDetails.getGitRepoFullName(), commit);
         if (!Files.exists(filePath)) {
@@ -37,11 +40,14 @@ public class GitServiceSourceProvider implements PackageSourceProvider {
         try {
             Path packagePath = workspaceRoot.resolve(packageDetails.getName());
             ZipFile zip = new ZipFile(filePath.toFile());
+            log.debug("Unzipping '{}' to '{}'", filePath, packagePath);
             zip.extractAll(packagePath.toAbsolutePath().toString());
             // We need to move all files up one dir
             try {
                 List<Path> files = Files.list(packagePath).collect(Collectors.toList());
+                log.debug("Found {} files in '{}'", files.size(), packagePath);
                 if (files.size() != 1) {
+                    log.warn("The github zip was not correctly formatted, the file count was {}", files.size());
                     throw new RuntimeException("Github zip was not correctly formatted");
                 }
 
@@ -54,9 +60,11 @@ public class GitServiceSourceProvider implements PackageSourceProvider {
                     throw new RuntimeException("Github zip was not correctly formatted");
                 }
             } catch (IOException e) {
+                log.error("IOException while unzipping source code", e);
                 e.printStackTrace();
             }
         } catch (ZipException e) {
+            log.error("Exception while unzipping source code", e);
             throw new RuntimeException(e);
         } finally {
             if (Files.exists(filePath)) {
