@@ -507,10 +507,12 @@ public class VersionSetBuilder {
     private void checkoutAffectedPackages(List<ArchipelagoPackage> buildPackages)
             throws PackageNotFoundException, RepoNotFoundException {
         List<ArchipelagoPackage> affectedPackages = AffectedPackagesHelper.findAffectedPackages(wsContext, buildPackages);
+        log.debug("Affected packages identified as [{}]", affectedPackages.stream().map(ArchipelagoPackage::getNameVersion).collect(Collectors.joining(",")));
 
         for (ArchipelagoPackage pkg : affectedPackages.stream()
                 .filter(p -> buildPackages.stream().noneMatch(bp -> bp.equals(p)))
                 .collect(Collectors.toList())) {
+            log.info("Checking out {} as local package", pkg.getNameVersion());
             ArchipelagoBuiltPackage builtPackage = this.getBuiltPackageFromRevision(pkg);
             if (builtPackage == null) {
                 throw new RuntimeException("Affected package " + pkg + " was not in the version set revision");

@@ -38,16 +38,18 @@ public class AffectedPackagesHelper {
         try {
             for (ArchipelagoBuiltPackage vsPackage : wsContext.getVersionSetRevision().getPackages()) {
                 BuildConfig config = wsContext.getConfig(vsPackage);
-                vsPackages.put(vsPackage, config.getAllDependencies());
+                vsPackages.put(vsPackage.asBase(), config.getAllDependencies());
             }
+            // Find new packages that was not in the version set before
             for (ArchipelagoPackage buildPackage : buildPackages) {
-                if (!vsPackages.containsKey(buildPackage)) {
+                ArchipelagoPackage clean = buildPackage.asBase();
+                if (!vsPackages.containsKey(clean)) {
                     BuildConfig config = wsContext.getConfig(buildPackage);
-                    vsPackages.put(buildPackage, config.getAllDependencies());
+                    vsPackages.put(clean, config.getAllDependencies());
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to map packages in teh version-set", e);
+            log.error("Failed to map packages in the version-set", e);
             throw new RuntimeException(e);
         }
         return vsPackages;

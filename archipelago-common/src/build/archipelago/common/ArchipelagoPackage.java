@@ -66,6 +66,10 @@ public class ArchipelagoPackage {
         return VERSION_PATTERN.matcher(version).find();
     }
 
+    public ArchipelagoPackage asBase() {
+        return ArchipelagoPackage.parse(this.getNameVersion());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
