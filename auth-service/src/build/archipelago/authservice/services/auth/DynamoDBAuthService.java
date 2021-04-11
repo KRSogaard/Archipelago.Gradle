@@ -22,6 +22,7 @@ public class DynamoDBAuthService implements AuthService {
     private static final String CODE_TYPE_COOKIE = "cookie";
     private static final String CODE_TYPE_USER_CODE = "user-code";
     private static final String CODE_TYPE_DEVICE_CODE = "device-code";
+    private static final String CODE_TYPE_ACCESS_KEY = "access-key";
 
     private final int authTokenExpiresSec;
     private final int deviceCodeExpiresSec;
@@ -212,6 +213,38 @@ public class DynamoDBAuthService implements AuthService {
             return;
         }
 
+    }
+
+    @Override
+    public AccessKey createAccessKey(String accountId, String scope) {
+        String username = accountId + "." + RandomStringUtils.random(6, true, false);
+        String newKey = RandomStringUtils.random(32, true, true);
+
+        dynamoDB.putItem(new PutItemRequest(authCodesTableName, ImmutableMap.<String, AttributeValue>builder()
+                .put(DBK.AUTH_CODE, AV.of(username))
+                .put(DBK.TOKEN, AV.of(newKey))
+                .put(DBK.CODE_TYPE, AV.of(CODE_TYPE_ACCESS_KEY))
+                .put(DBK.SCOPES, AV.of(scope))
+                .put(DBK.CREATED, AV.of(Instant.now()))
+                .build()));
+
+        return AccessKey.builder()
+                .username(username)
+                .key(newKey)
+                .created(Instant.now())
+                .lastUsed(null)
+                .scope(scope)
+                .build();
+    }
+
+    @Override
+    public List<AccessKey> getAccessKeys(String accountId) {
+        return null;
+    }
+
+    @Override
+    public AccessKey getAccessKey(String key) throws AccessKeyNotFound {
+        return null;
     }
 
     @Override

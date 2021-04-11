@@ -15,7 +15,6 @@ public class DBK {
     public static final String KID = "kid";
     public static final String PRIVATE_KEY = "private-key";
     public static final String PUBLIC_KEY = "public-key";
-    public static final String ALGO = "algorithm";
     public static final String EMAIL = "email";
     public static final String PASSWORD_SALT = "password-salt";
     public static final String PASSWORD = "password";
@@ -23,4 +22,6 @@ public class DBK {
     public static final String DEVICE_CODE = "device-code";
     public static final String USER_CODE = "user-code";
     public static final String NAME = "name";
+    public static final String ACCOUND_ID = "account-id";
+    public static final String TOKEN = "token";
 }
