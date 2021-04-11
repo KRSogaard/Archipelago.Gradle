@@ -1,14 +1,14 @@
 package build.archipelago.authservice.controllers;
 
+import build.archipelago.authservice.models.AccessKey;
 import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.models.rest.*;
 import build.archipelago.authservice.services.auth.*;
 import build.archipelago.authservice.services.users.*;
-import build.archipelago.authservice.services.users.models.UserModel;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import lombok.extern.slf4j.*;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/auth")
@@ -53,6 +53,36 @@ public class AuthController {
 
         authService.getDeviceCode(userCode);
         authService.updateDeviceCode(userCode, request.getUserId());
+    }
+
+    @PostMapping("/accessKey/{accountId}")
+    public AccessKeyRestResponse createAccessKey(
+            @PathVariable("accountId") String accountId) {
+        AccessKey key = authService.createAccessKey(accountId, "");
+        return AccessKeyRestResponse.from(key);
+    }
+
+    @GetMapping("/accessKey/{accountId}")
+    public AccessKeysRestResponse getAccessKeys(
+            @PathVariable("accountId") String accountId) {
+        List<AccessKey> keys = authService.getAccessKeys(accountId);
+        return AccessKeysRestResponse.from(keys);
+    }
+
+    @PostMapping("/accessKey/{username}/{token}")
+    public String verifyAccessKey(
+            @PathVariable("username") String username,
+            @PathVariable("token") String token) throws AccessKeyNotFound {
+        AccessKey accessKey = authService.getAccessKey(username);
+        if (!accessKey.getKey().equals(token)) {
+            throw new AccessKeyNotFound();
+        }
+        return accessKey.getAccountId();
+    }
+
+    @DeleteMapping("/accessKey/{username}")
+    public void deleteAccessKey(@PathVariable("username") String username) {
+        authService.deleteAccessKey(username);
     }
 
 }

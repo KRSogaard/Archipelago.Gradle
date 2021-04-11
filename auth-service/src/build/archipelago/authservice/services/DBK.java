@@ -23,5 +23,7 @@ public class DBK {
     public static final String USER_CODE = "user-code";
     public static final String NAME = "name";
     public static final String ACCOUND_ID = "account-id";
+    public static final String KEY ="key";
     public static final String TOKEN = "token";
+    public static final String LAST_USED = "last-used";
 }

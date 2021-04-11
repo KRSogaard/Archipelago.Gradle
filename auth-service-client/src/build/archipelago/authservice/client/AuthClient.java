@@ -3,6 +3,7 @@ package build.archipelago.authservice.client;
 import build.archipelago.authservice.models.*;
 import build.archipelago.authservice.models.client.*;
 import build.archipelago.authservice.models.exceptions.*;
+import build.archipelago.authservice.models.rest.*;
 
 import java.util.List;
 
@@ -14,4 +15,9 @@ public interface AuthClient {
     LogInResponse login(LogInRequest logInRequest) throws UserNotFoundException;
     void device(ActivateDeviceRequest request) throws TokenNotFoundException, TokenExpiredException;
     LogInResponse createAuthToken(String userId, AuthorizeRequest request);
+
+    AccessKey createAccessKey(String accountId);
+    List<AccessKey> getAccessKeys(String accountId);
+    String verifyAccessKey(String username, String token) throws AccessKeyNotFound;
+    void deleteAccessKey(String username);
 }

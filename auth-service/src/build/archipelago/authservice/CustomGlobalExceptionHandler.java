@@ -94,5 +94,9 @@ public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
         return this.createResponse(req, AuthExceptionHandler.from((UserExistsException) ex));
     }
 
-
+    @ExceptionHandler(AccessKeyNotFound.class)
+    public ResponseEntity<ProblemDetailRestResponse> springHandleAccessKeyNotFound(HttpServletRequest req, Exception ex) {
+        log.warn("Got exception AccessKeyNotFound: " + ex.getMessage());
+        return this.createResponse(req, AuthExceptionHandler.from((AccessKeyNotFound) ex));
+    }
 }

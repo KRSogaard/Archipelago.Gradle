@@ -18,9 +18,10 @@ public interface AuthService {
     DeviceCode getDeviceCodeByDeviceId(String deviceCode) throws TokenNotFoundException, TokenExpiredException;
     void removeDeviceCode(String userCode);
 
-    String createAccessKey(String accountId);
+    AccessKey createAccessKey(String accountId, String scope);
     List<AccessKey> getAccessKeys(String accountId);
     AccessKey getAccessKey(String key) throws AccessKeyNotFound;
+    void deleteAccessKey(String key);
 
 
     void clearExpiredCodes();
