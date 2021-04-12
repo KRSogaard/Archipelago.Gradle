@@ -18,6 +18,7 @@ public class AuthExceptionHandler {
     public static final String TYPE_DEVICE_CODE_NOT_FOUND = "device/codeNotFound";
     public static final String TYPE_USER_NOT_FOUND = "user/notFound";
     public static final String TYPE_USER_EXISTS = "user/exists";
+    public static final String TYPE_ACCESS_KEY_NOT_FOUND = "accessKey/notFound";
     public static final String TYPE_AUTHORIZATION_PENDING = "authorization_pending";
 
 
@@ -141,6 +142,14 @@ public class AuthExceptionHandler {
                 }});
     }
 
+    public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(AccessKeyNotFound ex) {
+        return ProblemDetailRestResponse.builder()
+                .error(TYPE_ACCESS_KEY_NOT_FOUND)
+                .title("The access key was not found")
+                .status(403)
+                .detail(ex.getMessage());
+    }
+
     public static Object createException(ProblemDetailRestResponse problem) {
         switch (problem.getError()) {
             case TYPE_USER_NOT_FOUND:
@@ -156,6 +165,8 @@ public class AuthExceptionHandler {
                 return new TokenNotFoundException(null);
             case TYPE_USER_EXISTS:
                 return new UserExistsException((String) problem.getData().get("email"));
+            case TYPE_ACCESS_KEY_NOT_FOUND:
+                return new AccessKeyNotFound();
             default:
                 throw new RuntimeException(problem.getError() + " was not a known auth error");
         }

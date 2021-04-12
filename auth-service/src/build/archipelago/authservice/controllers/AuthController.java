@@ -4,9 +4,6 @@ import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.models.rest.*;
 import build.archipelago.authservice.services.auth.*;
 import build.archipelago.authservice.services.users.*;
-import build.archipelago.authservice.services.users.models.UserModel;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import lombok.extern.slf4j.*;
 import org.springframework.web.bind.annotation.*;
 

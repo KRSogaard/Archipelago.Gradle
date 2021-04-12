@@ -35,11 +35,11 @@ public class AV {
         return Instant.ofEpochMilli(Long.parseLong(av.getN()));
     }
 
-    public static Instant toInstantOrNull(AttributeValue av) {
-        if (av == null) {
+    public static Instant toInstantOrNull(Map<String, AttributeValue> map, String key) {
+        if (!map.containsKey(key) || map.get(key) == null) {
             return null;
         }
-        return toInstant(av);
+        return toInstant(map.get(key));
     }
 
     public static <T> T getOrNull(Map<String, AttributeValue> map, String key, Function<AttributeValue, T> parse) {

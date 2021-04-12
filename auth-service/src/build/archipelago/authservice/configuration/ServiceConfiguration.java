@@ -1,6 +1,7 @@
 package build.archipelago.authservice.configuration;
 
 import build.archipelago.account.common.AccountService;
+import build.archipelago.authservice.services.accessKeys.AccessKeyService;
 import build.archipelago.authservice.services.auth.*;
 import build.archipelago.authservice.services.clients.*;
 import build.archipelago.authservice.services.keys.*;
@@ -51,5 +52,12 @@ public class ServiceConfiguration {
                                          @Value("${dynamodb.account-mapping}") String accountsMappingTableName,
                                          @Value("${dynamodb.accounts-git}") String accountsGitTableName) {
         return new AccountService(amazonDynamoDB, accountsTableName, accountsMappingTableName, accountsGitTableName);
+    }
+
+    @Bean
+    @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public AccessKeyService accessKeyService(AmazonDynamoDB amazonDynamoDB,
+                                             @Value("${dynamodb.access-keys}") String accessKeysTablesName) {
+        return new AccessKeyService(amazonDynamoDB, accessKeysTablesName);
     }
 }

@@ -4,6 +4,8 @@ import build.archipelago.authservice.models.*;
 import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.services.auth.models.*;
 
+import java.util.List;
+
 
 public interface AuthService {
     String createAuthToken(String userId, AuthorizeRequest request);
@@ -15,6 +17,7 @@ public interface AuthService {
     void updateDeviceCode(String userCode, String userId);
     DeviceCode getDeviceCodeByDeviceId(String deviceCode) throws TokenNotFoundException, TokenExpiredException;
     void removeDeviceCode(String userCode);
+
 
     void clearExpiredCodes();
 }

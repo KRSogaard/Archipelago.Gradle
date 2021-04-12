@@ -207,6 +207,135 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
     }
 
     @Override
+    public AccessKey createAccessKey(String accountId) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
+
+        HttpResponse<String> restResponse;
+        try {
+            HttpRequest httpRequest = this.getOAuthRequest("/accessKeys/" + accountId)
+                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .header("accept", "application/json")
+                    .build();
+            restResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call auth service to create an access key");
+            throw new RuntimeException(e);
+        }
+
+        switch (restResponse.statusCode()) {
+            case 200: // Ok
+                AccessKeyRestResponse response = this.parseOrThrow(restResponse.body(), AccessKeyRestResponse.class);
+                return response.toInternal();
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from auth service");
+                throw new UnauthorizedException();
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
+        }
+    }
+
+    @Override
+    public List<AccessKey> getAccessKeys(String accountId) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+
+        HttpResponse<String> restResponse;
+        try {
+            HttpRequest httpRequest = this.getOAuthRequest("/accessKeys/" + accountId)
+                    .GET()
+                    .header("accept", "application/json")
+                    .build();
+            restResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call auth service to get accounts for user");
+            throw new RuntimeException(e);
+        }
+
+        switch (restResponse.statusCode()) {
+            case 200:
+                AccessKeysRestResponse response = this.parseOrThrow(restResponse.body(), AccessKeysRestResponse.class);
+                return response.toInternal();
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from auth service");
+                throw new UnauthorizedException();
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
+        }
+    }
+
+    @Override
+    public AccessKey verifyAccessKey(String username, String token) throws AccessKeyNotFound {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(username));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(token));
+
+        HttpResponse<String> restResponse;
+        try {
+            HttpRequest httpRequest = this.getOAuthRequest("/accessKeys/" + username + "/" + token)
+                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .header("accept", "application/json")
+                    .build();
+            restResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call auth service to create an access key");
+            throw new RuntimeException(e);
+        }
+
+        switch (restResponse.statusCode()) {
+            case 200: // Ok
+                AccessKeyRestResponse response = this.parseOrThrow(restResponse.body(), AccessKeyRestResponse.class);
+                return response.toInternal();
+            case 401:
+                log.error("Got unauthorized response from auth service");
+                throw new UnauthorizedException();
+            case 403:
+                throw new AccessKeyNotFound();
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
+        }
+    }
+
+    @Override
+    public void deleteAccessKey(String accountId, String username) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(username));
+
+        HttpResponse<String> restResponse;
+        try {
+            HttpRequest httpRequest = this.getOAuthRequest("/accessKeys/" + accountId + "/" + username)
+                    .DELETE()
+                    .build();
+            restResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call auth service to create an access key");
+            throw new RuntimeException(e);
+        }
+
+        switch (restResponse.statusCode()) {
+            case 200: // Ok
+                return;
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from auth service");
+                throw new UnauthorizedException();
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
+        }
+    }
+
+    @Override
     public void device(ActivateDeviceRequest request) throws TokenNotFoundException, TokenExpiredException {
         Preconditions.checkNotNull(request);
         request.validate();

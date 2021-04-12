@@ -6,15 +6,11 @@ import build.archipelago.authservice.models.exceptions.UserExistsException;
 import build.archipelago.authservice.models.rest.RegisterAccountRestRequest;
 import build.archipelago.authservice.services.users.UserService;
 import build.archipelago.authservice.services.users.models.UserModel;
-import build.archipelago.authservice.utils.RandomUtil;
 import build.archipelago.common.utils.Rando;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
-import build.archipelago.account.common.AccountService;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/user")

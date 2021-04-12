@@ -14,6 +14,7 @@ import org.apache.commons.lang3.*;
 
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class DynamoDBAuthService implements AuthService {
@@ -181,7 +182,7 @@ public class DynamoDBAuthService implements AuthService {
                 .clientId(item.get(DBK.CLIENT_ID).getS())
                 .expires(AV.toInstant(item.get(DBK.EXPIRES)))
                 .scopes(AV.getStringOrNull(item, DBK.SCOPES))
-                .updatedAt(AV.toInstantOrNull(item.get(DBK.UPDATED)))
+                .updatedAt(AV.toInstantOrNull(item, DBK.UPDATED))
                 .userId(AV.getStringOrNull(item, DBK.USER_ID))
                 .build();
     }
@@ -211,7 +212,6 @@ public class DynamoDBAuthService implements AuthService {
         } catch (TokenNotFoundException | TokenExpiredException e) {
             return;
         }
-
     }
 
     @Override
