@@ -1,13 +1,20 @@
 package build.archipelago.authservice.controllers;
 
 import build.archipelago.account.common.AccountService;
+import build.archipelago.authservice.models.AccessKey;
+import build.archipelago.authservice.models.exceptions.AccessKeyNotFound;
 import build.archipelago.authservice.models.exceptions.UserNotFoundException;
+import build.archipelago.authservice.models.rest.AccessKeyRestResponse;
+import build.archipelago.authservice.models.rest.AccessKeysRestResponse;
 import build.archipelago.authservice.models.rest.UserAccountsRestResult;
 import build.archipelago.authservice.models.rest.VerifyAccountMembershipRestRequest;
+import build.archipelago.authservice.services.accessKeys.AccessKeyService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/account")

@@ -3,7 +3,6 @@ package build.archipelago.authservice.client;
 import build.archipelago.authservice.models.*;
 import build.archipelago.authservice.models.client.*;
 import build.archipelago.authservice.models.exceptions.*;
-import build.archipelago.authservice.models.rest.*;
 
 import java.util.List;
 
@@ -18,6 +17,6 @@ public interface AuthClient {
 
     AccessKey createAccessKey(String accountId);
     List<AccessKey> getAccessKeys(String accountId);
-    String verifyAccessKey(String username, String token) throws AccessKeyNotFound;
-    void deleteAccessKey(String username);
+    AccessKey verifyAccessKey(String username, String token) throws AccessKeyNotFound;
+    void deleteAccessKey(String accountId, String username);
 }

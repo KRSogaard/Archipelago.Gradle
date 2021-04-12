@@ -212,7 +212,7 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
 
         HttpResponse<String> restResponse;
         try {
-            HttpRequest httpRequest = this.getOAuthRequest("/auth/accessKey/" + accountId)
+            HttpRequest httpRequest = this.getOAuthRequest("/accessKeys/" + accountId)
                     .POST(HttpRequest.BodyPublishers.noBody())
                     .header("accept", "application/json")
                     .build();
@@ -244,7 +244,7 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
 
         HttpResponse<String> restResponse;
         try {
-            HttpRequest httpRequest = this.getOAuthRequest("/account/accessKey/" + accountId)
+            HttpRequest httpRequest = this.getOAuthRequest("/accessKeys/" + accountId)
                     .GET()
                     .header("accept", "application/json")
                     .build();
@@ -271,13 +271,13 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
     }
 
     @Override
-    public String verifyAccessKey(String username, String token) throws AccessKeyNotFound {
+    public AccessKey verifyAccessKey(String username, String token) throws AccessKeyNotFound {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(username));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(token));
 
         HttpResponse<String> restResponse;
         try {
-            HttpRequest httpRequest = this.getOAuthRequest("/auth/accessKey/" + username + "/" + token)
+            HttpRequest httpRequest = this.getOAuthRequest("/accessKeys/" + username + "/" + token)
                     .POST(HttpRequest.BodyPublishers.noBody())
                     .header("accept", "application/json")
                     .build();
@@ -293,7 +293,7 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
         switch (restResponse.statusCode()) {
             case 200: // Ok
                 AccessKeyRestResponse response = this.parseOrThrow(restResponse.body(), AccessKeyRestResponse.class);
-                return response.getAccountId();
+                return response.toInternal();
             case 401:
                 log.error("Got unauthorized response from auth service");
                 throw new UnauthorizedException();
@@ -305,12 +305,13 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
     }
 
     @Override
-    public void deleteAccessKey(String username) {
+    public void deleteAccessKey(String accountId, String username) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(username));
 
         HttpResponse<String> restResponse;
         try {
-            HttpRequest httpRequest = this.getOAuthRequest("/auth/accessKey/" + username)
+            HttpRequest httpRequest = this.getOAuthRequest("/accessKeys/" + accountId + "/" + username)
                     .DELETE()
                     .build();
             restResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());

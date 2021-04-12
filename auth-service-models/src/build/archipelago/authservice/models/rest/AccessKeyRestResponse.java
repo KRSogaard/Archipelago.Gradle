@@ -1,7 +1,6 @@
 package build.archipelago.authservice.models.rest;
 
 import build.archipelago.authservice.models.AccessKey;
-import build.archipelago.authservice.models.client.LogInResponse;
 import lombok.*;
 
 import java.time.Instant;
@@ -12,7 +11,7 @@ import java.time.Instant;
 @Builder
 public class AccessKeyRestResponse {
     private String username;
-    private String key;
+    private String token;
     private String accountId;
     private Long created;
     private String scope;
@@ -21,7 +20,7 @@ public class AccessKeyRestResponse {
     public static AccessKeyRestResponse from(AccessKey key) {
         return AccessKeyRestResponse.builder()
                 .username(key.getUsername())
-                .key(key.getKey())
+                .token(key.getToken())
                 .accountId(key.getAccountId())
                 .created(key.getCreated().toEpochMilli())
                 .lastUsed(key.getLastUsed() == null ? null : key.getLastUsed().toEpochMilli())
@@ -32,7 +31,7 @@ public class AccessKeyRestResponse {
     public AccessKey toInternal() {
         return AccessKey.builder()
                 .username(getUsername())
-                .key(getKey())
+                .token(getToken())
                 .accountId(getAccountId())
                 .created(Instant.ofEpochMilli(getCreated()))
                 .lastUsed(lastUsed == null ? null : Instant.ofEpochMilli(getLastUsed()))

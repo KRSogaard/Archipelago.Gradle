@@ -37,7 +37,7 @@
         <Logger name="org.apache" level="ERROR"/>
         <Logger name="springfox.documentation" level="ERROR"/>
         <Logger name="build.archipelago" level="DEBUG"/>
-        <Logger name="org.springframework.web" level="ERROR"/>
+        <Logger name="org.springframework.web" level="DEBUG"/>
 
         <Root level="DEBUG">
             <AppenderRef ref="File" level="DEBUG"/>

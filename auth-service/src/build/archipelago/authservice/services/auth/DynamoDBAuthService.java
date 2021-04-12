@@ -23,7 +23,6 @@ public class DynamoDBAuthService implements AuthService {
     private static final String CODE_TYPE_COOKIE = "cookie";
     private static final String CODE_TYPE_USER_CODE = "user-code";
     private static final String CODE_TYPE_DEVICE_CODE = "device-code";
-    private static final String CODE_TYPE_ACCESS_KEY = "access-key";
 
     private final int authTokenExpiresSec;
     private final int deviceCodeExpiresSec;
@@ -32,17 +31,14 @@ public class DynamoDBAuthService implements AuthService {
 
     private AmazonDynamoDB dynamoDB;
     private String authCodesTableName;
-    private String accessKeysTableName;
 
     public DynamoDBAuthService(AmazonDynamoDB dynamoDB,
                                String authCodesTableName,
-                               String accessKeysTableName,
                                int authTokenExpiresSec,
                                int deviceCodeExpiresSec,
                                int authCookieExpiresSec) {
         this.dynamoDB = dynamoDB;
         this.authCodesTableName = authCodesTableName;
-        this.accessKeysTableName = accessKeysTableName;
 
         this.authTokenExpiresSec = authTokenExpiresSec;
         this.deviceCodeExpiresSec = deviceCodeExpiresSec;
@@ -216,90 +212,6 @@ public class DynamoDBAuthService implements AuthService {
         } catch (TokenNotFoundException | TokenExpiredException e) {
             return;
         }
-    }
-
-    @Override
-    public AccessKey createAccessKey(String accountId, String scope) {
-        String key = RandomStringUtils.random(6, true, false);
-        String token = RandomStringUtils.random(32, true, true);
-
-        dynamoDB.putItem(new PutItemRequest(accessKeysTableName, ImmutableMap.<String, AttributeValue>builder()
-                .put(DBK.ACCOUND_ID, AV.of(accountId))
-                .put(DBK.KEY, AV.of(key))
-                .put(DBK.TOKEN, AV.of(token))
-                .put(DBK.CODE_TYPE, AV.of(CODE_TYPE_ACCESS_KEY))
-                .put(DBK.SCOPES, AV.of(scope))
-                .put(DBK.CREATED, AV.of(Instant.now()))
-                .build()));
-
-        return AccessKey.builder()
-                .username(accountId + "." + key)
-                .key(token)
-                .created(Instant.now())
-                .lastUsed(null)
-                .scope(scope)
-                .build();
-    }
-
-    @Override
-    public List<AccessKey> getAccessKeys(String accountId) {
-        QueryRequest queryRequest = new QueryRequest()
-                .withTableName(accessKeysTableName)
-                .withKeyConditionExpression("#account = :account")
-                .withExpressionAttributeNames(ImmutableMap.of(
-                        "#account", DBK.ACCOUND_ID
-                ))
-                .withExpressionAttributeValues(ImmutableMap.of(":account", AV.of(accountId)));
-        QueryResult result = dynamoDB.query(queryRequest);
-        if (result.getItems() == null || result.getItems().size() == 0) {
-            return new ArrayList<>();
-        }
-
-        return result.getItems().stream().map(i -> AccessKey.builder()
-                .username(AV.getStringOrNull(i, DBK.ACCOUND_ID) + "." + AV.getStringOrNull(i, DBK.KEY))
-                .key(AV.getStringOrNull(i, DBK.TOKEN))
-                .accountId(AV.getStringOrNull(i, DBK.ACCOUND_ID))
-                .created(AV.toInstantOrNull(i, DBK.CREATED))
-                .lastUsed(AV.toInstantOrNull(i, DBK.LAST_USED))
-                .scope(AV.getStringOrNull(i, DBK.SCOPES))
-                .build()).collect(Collectors.toList());
-    }
-
-    @Override
-    public AccessKey getAccessKey(String username) throws AccessKeyNotFound {
-        String[] split = username.split("\\.", 2);
-        if (split.length != 2) {
-            throw new AccessKeyNotFound();
-        }
-        GetItemResult result = dynamoDB.getItem(new GetItemRequest(accessKeysTableName, ImmutableMap.<String, AttributeValue>builder()
-                .put(DBK.ACCOUND_ID, AV.of(split[0]))
-                .put(DBK.KEY, AV.of(split[1]))
-                .build()));
-        Map<String, AttributeValue> item = result.getItem();
-        if (item == null) {
-            throw new AccessKeyNotFound();
-        }
-
-        return AccessKey.builder()
-                .username(username)
-                .key(AV.getStringOrNull(item, DBK.TOKEN))
-                .accountId(AV.getStringOrNull(item, DBK.ACCOUND_ID))
-                .created(AV.toInstantOrNull(item, DBK.CREATED))
-                .lastUsed(AV.toInstantOrNull(item, DBK.LAST_USED))
-                .scope(AV.getStringOrNull(item, DBK.SCOPES))
-                .build();
-    }
-
-    @Override
-    public void deleteAccessKey(String username) {
-        String[] split = username.split("\\.", 2);
-        if (split.length != 2) {
-            return;
-        }
-        dynamoDB.deleteItem(new DeleteItemRequest(accessKeysTableName, ImmutableMap.<String, AttributeValue>builder()
-                .put(DBK.ACCOUND_ID, AV.of(split[0]))
-                .put(DBK.KEY, AV.of(split[1]))
-                .build()));
     }
 
     @Override

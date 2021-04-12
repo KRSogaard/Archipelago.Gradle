@@ -9,7 +9,7 @@ import java.time.Instant;
 @Builder
 public class AccessKey {
     private String username;
-    private String key;
+    private String token;
     private String accountId;
     private Instant created;
     private String scope;
