@@ -5,7 +5,11 @@ import build.archipelago.authservice.models.AccessKey;
 import build.archipelago.authservice.models.exceptions.AccessKeyNotFound;
 import build.archipelago.authservice.models.rest.AccessKeyRestResponse;
 import build.archipelago.authservice.models.rest.AccessKeysRestResponse;
+import build.archipelago.authservice.models.rest.CreateAccessKeyRestRequest;
+import build.archipelago.authservice.models.rest.VerifyAccountMembershipRestRequest;
 import build.archipelago.authservice.services.accessKeys.AccessKeyService;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,8 +28,10 @@ public class AccessKeysController {
 
     @PostMapping("/{accountId}")
     public AccessKeyRestResponse createAccessKey(
-            @PathVariable("accountId") String accountId) {
-        AccessKey key = accessKeyService.createAccessKey(accountId, "");
+            @PathVariable("accountId") String accountId,
+            @RequestBody CreateAccessKeyRestRequest model) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(model.getUserId()));
+        AccessKey key = accessKeyService.createAccessKey(accountId, model.getUserId(), model.getScope());
         return AccessKeyRestResponse.from(key);
     }
 
@@ -34,23 +40,6 @@ public class AccessKeysController {
             @PathVariable("accountId") String accountId) {
         List<AccessKey> keys = accessKeyService.getAccessKeys(accountId);
         return AccessKeysRestResponse.from(keys);
-    }
-
-    @PostMapping("/{username}/{token}")
-    public AccessKeyRestResponse verifyAccessKey(
-            @PathVariable("username") String username,
-            @PathVariable("token") String token) throws AccessKeyNotFound {
-        AccessKey accessKey = accessKeyService.getAccessKey(username);
-        if (!accessKey.getToken().equals(token)) {
-            throw new AccessKeyNotFound();
-        }
-        return AccessKeyRestResponse.from(AccessKey.builder()
-                .accountId(accessKey.getAccountId())
-                .username(accessKey.getUsername())
-                .created(accessKey.getCreated())
-                .lastUsed(accessKey.getLastUsed())
-                .scope(accessKey.getScope())
-                .build());
     }
 
     @DeleteMapping("/{accountId}/{username}")

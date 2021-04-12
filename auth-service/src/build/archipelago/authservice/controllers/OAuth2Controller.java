@@ -3,6 +3,7 @@ package build.archipelago.authservice.controllers;
 import build.archipelago.authservice.models.*;
 import build.archipelago.authservice.models.exceptions.*;
 import build.archipelago.authservice.models.rest.*;
+import build.archipelago.authservice.services.accessKeys.AccessKeyService;
 import build.archipelago.authservice.services.auth.*;
 import build.archipelago.authservice.services.auth.models.*;
 import build.archipelago.authservice.services.clients.*;
@@ -47,10 +48,12 @@ public class OAuth2Controller {
     private AuthService authService;
     private ClientService clientService;
     private KeyService keyService;
+    private AccessKeyService accessKeyService;
 
     public OAuth2Controller(AuthService authService,
                             ClientService clientService,
                             KeyService keyService,
+                            AccessKeyService accessKeyService,
                             @Value("${url.auth-server}") String authUrl,
                             @Value("${url.frontend}") String frontendUrl,
                             @Value("${token.age.refresh}") long refreshTokenMaxAge,
@@ -58,6 +61,7 @@ public class OAuth2Controller {
         this.authService = authService;
         this.clientService = clientService;
         this.keyService = keyService;
+        this.accessKeyService = accessKeyService;
 
         this.authUrl = authUrl;
         this.frontendUrl = frontendUrl;
@@ -260,7 +264,7 @@ public class OAuth2Controller {
 
         TokenRestResponse response = new TokenRestResponse();
         response.setTokenType("Bearer");
-        response.setExpiresIn(3600);
+        response.setExpiresIn((int)accessTokenMaxAge);
         response.setAccessToken(createJWT(JWTClaims.builder()
                 .withIssuer(issuer)
                 .withSubject(userAndScopes.getUserId())
@@ -290,7 +294,7 @@ public class OAuth2Controller {
                 .body(JSONUtil.serialize(response));
     }
 
-    private ResponseEntity<String> createClientCredToken(TokenRestRequest request, String authorizationHeader) throws ClientNotFoundException, ClientSecretRequiredException {
+    private ResponseEntity<String> createClientCredToken(TokenRestRequest request, String authorizationHeader) throws UnauthorizedException {
         if (Strings.isNullOrEmpty(authorizationHeader) ||
             !authorizationHeader.toLowerCase().startsWith("basic ") ||
             authorizationHeader.split(" ", 2).length != 2 ||
@@ -304,14 +308,39 @@ public class OAuth2Controller {
         String clientId = authHeader.getUsername();
         String clientSecret = authHeader.getPassword();
 
-        Client client = clientService.getClient(clientId);
-        if (Strings.isNullOrEmpty(client.getClientSecret())) {
-            log.warn("Client secret was required");
-            throw new UnauthorizedException(clientId);
-        }
-        if (!client.getClientSecret().equalsIgnoreCase(clientSecret)) {
-            log.warn("Client secret was incorrect");
-            throw new UnauthorizedException(clientId);
+        JWTClaims.JWTClaimsBuilder accessToken = JWTClaims.builder();
+        JWTClaims.JWTClaimsBuilder refreshToken = JWTClaims.builder();
+        boolean createRefreshToken = true;
+        long tokenExpiresIn = accessTokenMaxAge;
+
+        try {
+            try {
+                Client client = clientService.getClient(clientId);
+                accessToken.withOClaim("access_type", "client");
+                if (Strings.isNullOrEmpty(client.getClientSecret())) {
+                    log.warn("Client secret was required");
+                    throw new UnauthorizedException(clientId);
+                }
+                if (!client.getClientSecret().equalsIgnoreCase(clientSecret)) {
+                    log.warn("Client secret was incorrect");
+                    throw new UnauthorizedException(clientId);
+                }
+            } catch (ClientNotFoundException exp) {
+                throw new UnauthorizedException(clientId);
+            }
+        } catch (UnauthorizedException exp) {
+            log.warn("Client id was not valid, trying access keys");
+            try {
+                tokenExpiresIn = 3600;
+                AccessKey accessKey = accessKeyService.authenticate(clientId, clientSecret);
+                log.debug("Found access key for client: {}", clientId);
+                accessToken.withSubject(accessKey.getUserId());
+                accessToken.withOClaim("access_type", "access_token");
+                createRefreshToken = false;
+            } catch (AccessKeyNotFound accessKeyNotFound) {
+                log.warn("Client id was not a valid access keys");
+                throw exp;
+            }
         }
 
         // TODO: Verify scope
@@ -319,21 +348,23 @@ public class OAuth2Controller {
 
         TokenRestResponse response = new TokenRestResponse();
         response.setTokenType("Bearer");
-        response.setExpiresIn(3600);
-        response.setAccessToken(createJWT(JWTClaims.builder()
+        response.setExpiresIn((int)tokenExpiresIn);
+        response.setAccessToken(createJWT(accessToken
                 .withIssuer(issuer)
                 .withIssuedAt(Instant.now())
-                .withExpires(Instant.now().plusSeconds(accessTokenMaxAge))
+                .withExpires(Instant.now().plusSeconds(tokenExpiresIn))
                 .withScope(String.join(" ", scopes))
                 .withOClaim("client_id", clientId)
                 .build().getClaims()));
-        response.setRefreshToken(createJWT(JWTClaims.builder()
-                .withIssuer(issuer)
-                .withIssuedAt(Instant.now())
-                .withExpires(Instant.now().plusSeconds(refreshTokenMaxAge))
-                .withScope(String.join(" ", scopes))
-                .withOClaim("client_id", clientId)
-                .build().getClaims()));
+        if (createRefreshToken) {
+            response.setRefreshToken(createJWT(refreshToken
+                    .withIssuer(issuer)
+                    .withIssuedAt(Instant.now())
+                    .withExpires(Instant.now().plusSeconds(refreshTokenMaxAge))
+                    .withScope(String.join(" ", scopes))
+                    .withOClaim("client_id", clientId)
+                    .build().getClaims()));
+        }
 
         return ResponseEntity.status(HttpStatus.OK)
                 .header("Content-Type", "application/json")

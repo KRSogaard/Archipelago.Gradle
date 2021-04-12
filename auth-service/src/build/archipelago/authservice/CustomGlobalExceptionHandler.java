@@ -3,6 +3,7 @@ package build.archipelago.authservice;
 import build.archipelago.authservice.models.exceptions.AccessKeyNotFound;
 import build.archipelago.authservice.client.*;
 import build.archipelago.authservice.models.exceptions.*;
+import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.rest.models.errors.*;
 import lombok.extern.slf4j.*;
 import org.springframework.http.*;
@@ -97,5 +98,11 @@ public class CustomGlobalExceptionHandler extends RFC7807ExceptionHandler {
     public ResponseEntity<ProblemDetailRestResponse> springHandleAccessKeyNotFound(HttpServletRequest req, Exception ex) {
         log.warn("Got exception AccessKeyNotFound: " + ex.getMessage());
         return this.createResponse(req, AuthExceptionHandler.from((AccessKeyNotFound) ex));
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ProblemDetailRestResponse> springHandleUnauthorizedException(HttpServletRequest req, Exception ex) {
+        log.warn("Got exception UnauthorizedException: " + ex.getMessage());
+        return this.createResponse(req, AuthExceptionHandler.from((UnauthorizedException) ex));
     }
 }

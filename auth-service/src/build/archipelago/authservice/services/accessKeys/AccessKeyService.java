@@ -7,7 +7,10 @@ import build.archipelago.common.dynamodb.AV;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.hash.Hashing;
 import org.apache.commons.lang3.RandomStringUtils;
+
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,14 +26,18 @@ public class AccessKeyService {
         this.accessKeysTableName = accessKeysTableName;
     }
 
-    public AccessKey createAccessKey(String accountId, String scope) {
+    public AccessKey createAccessKey(String accountId, String userId, String scope) {
         String key = RandomStringUtils.random(12, true, false);
         String token = RandomStringUtils.random(32, true, true);
+        String passwordSalt = RandomStringUtils.random(10, true, true);
+        String password = hash(token, passwordSalt);
 
         dynamoDB.putItem(new PutItemRequest(accessKeysTableName, ImmutableMap.<String, AttributeValue>builder()
                 .put(DynamoDBKeys.ACCOUNT_ID, AV.of(accountId))
                 .put(DynamoDBKeys.KEY, AV.of(key))
-                .put(DynamoDBKeys.TOKEN, AV.of(token))
+                .put(DynamoDBKeys.TOKEN, AV.of(password))
+                .put(DynamoDBKeys.TOKEN_SALT, AV.of(passwordSalt))
+                .put(DynamoDBKeys.USER_ID, AV.of(userId))
                 .put(DynamoDBKeys.SCOPES, AV.of(scope))
                 .put(DynamoDBKeys.CREATED, AV.of(Instant.now()))
                 .build()));
@@ -39,6 +46,7 @@ public class AccessKeyService {
                 .username(accountId + "." + key)
                 .token(token)
                 .accountId(accountId)
+                .userId(userId)
                 .created(Instant.now())
                 .lastUsed(null)
                 .scope(scope)
@@ -61,13 +69,14 @@ public class AccessKeyService {
         return result.getItems().stream().map(i -> AccessKey.builder()
                 .username(AV.getStringOrNull(i, DynamoDBKeys.ACCOUNT_ID) + "." + AV.getStringOrNull(i, DynamoDBKeys.KEY))
                 .accountId(AV.getStringOrNull(i, DynamoDBKeys.ACCOUNT_ID))
+                .userId(AV.getStringOrNull(i, DynamoDBKeys.USER_ID))
                 .created(AV.toInstantOrNull(i, DynamoDBKeys.CREATED))
                 .lastUsed(AV.toInstantOrNull(i, DynamoDBKeys.LAST_USED))
                 .scope(AV.getStringOrNull(i, DynamoDBKeys.SCOPES))
                 .build()).collect(Collectors.toList());
     }
 
-    public AccessKey getAccessKey(String username) throws AccessKeyNotFound {
+    public AccessKey authenticate(String username, String token) throws AccessKeyNotFound {
         String[] split = username.split("\\.", 2);
         if (split.length != 2) {
             throw new AccessKeyNotFound();
@@ -81,10 +90,17 @@ public class AccessKeyService {
             throw new AccessKeyNotFound();
         }
 
+        String tokenSalt = AV.getStringOrNull(item, DynamoDBKeys.TOKEN_SALT);
+        String hashedToken = hash(token, tokenSalt);
+        String storedToken = AV.getStringOrNull(item, DynamoDBKeys.TOKEN);
+        if (!hashedToken.equals(storedToken)) {
+            throw new AccessKeyNotFound();
+        }
+
         return AccessKey.builder()
                 .username(username)
-                .token(AV.getStringOrNull(item, DynamoDBKeys.KEY))
                 .accountId(AV.getStringOrNull(item, DynamoDBKeys.ACCOUNT_ID))
+                .userId(AV.getStringOrNull(item, DynamoDBKeys.USER_ID))
                 .created(AV.toInstantOrNull(item, DynamoDBKeys.CREATED))
                 .lastUsed(AV.toInstantOrNull(item, DynamoDBKeys.LAST_USED))
                 .scope(AV.getStringOrNull(item, DynamoDBKeys.SCOPES))
@@ -100,5 +116,11 @@ public class AccessKeyService {
                 .put(DynamoDBKeys.ACCOUNT_ID, AV.of(split[0]))
                 .put(DynamoDBKeys.KEY, AV.of(split[1]))
                 .build()));
+    }
+
+    private String hash(String password, String salt) {
+        return Hashing.sha256()
+                .hashString(password + salt, StandardCharsets.UTF_8)
+                .toString();
     }
 }

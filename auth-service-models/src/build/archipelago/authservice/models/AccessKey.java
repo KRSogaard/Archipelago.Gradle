@@ -11,6 +11,7 @@ public class AccessKey {
     private String username;
     private String token;
     private String accountId;
+    private String userId;
     private Instant created;
     private String scope;
     private Instant lastUsed;

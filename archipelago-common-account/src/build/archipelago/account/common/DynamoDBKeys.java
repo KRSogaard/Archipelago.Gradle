@@ -11,4 +11,5 @@ public class DynamoDBKeys {
     public static final String SCOPES = "scopes";
     public static final String CREATED = "created";
     public static final String LAST_USED = "last-used";
+    public static final String TOKEN_SALT = "token-salt";
 }

@@ -24,8 +24,9 @@ public class AccessKeysController {
 
     @PostMapping()
     public AccessKeyRestResponse createAccessKey(
-            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId) {
-        AccessKey key = authClient.createAccessKey(accountId);
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
+            @RequestAttribute(AccountIdFilter.UserIdKey) String userId) {
+        AccessKey key = authClient.createAccessKey(accountId, userId, "");
         return AccessKeyRestResponse.from(key);
     }
 
@@ -34,23 +35,6 @@ public class AccessKeysController {
             @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId) {
         List<AccessKey> keys = authClient.getAccessKeys(accountId);
         return AccessKeysRestResponse.from(keys);
-    }
-
-    @PostMapping("/{username}/{token}")
-    public AccessKeyRestResponse verifyAccessKey(
-            @PathVariable("username") String username,
-            @PathVariable("token") String token) throws AccessKeyNotFound {
-        AccessKey accessKey = authClient.verifyAccessKey(username, token);
-        if (!accessKey.getToken().equals(token)) {
-            throw new AccessKeyNotFound();
-        }
-        return AccessKeyRestResponse.from(AccessKey.builder()
-                .accountId(accessKey.getAccountId())
-                .username(accessKey.getUsername())
-                .created(accessKey.getCreated())
-                .lastUsed(accessKey.getLastUsed())
-                .scope(accessKey.getScope())
-                .build());
     }
 
     @DeleteMapping("/{username}")

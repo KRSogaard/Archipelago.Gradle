@@ -84,16 +84,15 @@ public class AccountIdFilter implements Filter {
             Instant expires = checkExpired(claims);
             String userId = claims.getBody().getSubject();
             log.debug("User claims to be: '{}'", userId);
-            if (Strings.isNullOrEmpty(userId)) {
-                // TODO: What is going on here?
-                log.debug("No user id, searching the header");
-                String clientId = (String)claims.getBody().get("client_id");
-                log.warn("Request client id: '{}'", clientId);
-                if (Strings.isNullOrEmpty(clientId)) {
+            if (Strings.isNullOrEmpty(userId) && "client".equalsIgnoreCase((String)claims.getBody().get("access_type"))) {
+                log.debug("No user id, but it is a client credentials access, searching the header");
+                userId = httpServletRequest.getHeader("user_id");
+                if (Strings.isNullOrEmpty(userId)) {
+                    log.warn("Request client id: '{}'", userId);
                     throw new UnauthorizedException();
                 }
-                userId = httpServletRequest.getHeader("user_id");
             }
+
             if (Strings.isNullOrEmpty(userId)) {
                 log.warn("Claim did not contain a user id");
                 throw new UnauthorizedException();

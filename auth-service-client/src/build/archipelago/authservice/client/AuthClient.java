@@ -15,8 +15,7 @@ public interface AuthClient {
     void device(ActivateDeviceRequest request) throws TokenNotFoundException, TokenExpiredException;
     LogInResponse createAuthToken(String userId, AuthorizeRequest request);
 
-    AccessKey createAccessKey(String accountId);
+    AccessKey createAccessKey(String accountId, String userId, String scopes);
     List<AccessKey> getAccessKeys(String accountId);
-    AccessKey verifyAccessKey(String username, String token) throws AccessKeyNotFound;
     void deleteAccessKey(String accountId, String username);
 }

@@ -207,13 +207,17 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
     }
 
     @Override
-    public AccessKey createAccessKey(String accountId) {
+    public AccessKey createAccessKey(String accountId, String userId, String scopes) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId));
 
+        CreateAccessKeyRestRequest request = CreateAccessKeyRestRequest.builder()
+                .userId(userId)
+                .scope(scopes)
+                .build();
         HttpResponse<String> restResponse;
         try {
             HttpRequest httpRequest = this.getOAuthRequest("/accessKeys/" + accountId)
-                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(request)))
                     .header("accept", "application/json")
                     .build();
             restResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -265,40 +269,6 @@ public class RestAuthClient extends OAuthRestClient implements AuthClient {
             case 403:
                 log.error("Got unauthorized response from auth service");
                 throw new UnauthorizedException();
-            default:
-                throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
-        }
-    }
-
-    @Override
-    public AccessKey verifyAccessKey(String username, String token) throws AccessKeyNotFound {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(username));
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(token));
-
-        HttpResponse<String> restResponse;
-        try {
-            HttpRequest httpRequest = this.getOAuthRequest("/accessKeys/" + username + "/" + token)
-                    .POST(HttpRequest.BodyPublishers.noBody())
-                    .header("accept", "application/json")
-                    .build();
-            restResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        } catch (UnauthorizedException exp) {
-            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
-            throw exp;
-        } catch (Exception e) {
-            log.error("Got unknown error while trying to call auth service to create an access key");
-            throw new RuntimeException(e);
-        }
-
-        switch (restResponse.statusCode()) {
-            case 200: // Ok
-                AccessKeyRestResponse response = this.parseOrThrow(restResponse.body(), AccessKeyRestResponse.class);
-                return response.toInternal();
-            case 401:
-                log.error("Got unauthorized response from auth service");
-                throw new UnauthorizedException();
-            case 403:
-                throw new AccessKeyNotFound();
             default:
                 throw this.logAndReturnExceptionForUnknownStatusCode(restResponse);
         }

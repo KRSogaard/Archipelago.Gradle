@@ -1,6 +1,7 @@
 package build.archipelago.authservice.client;
 
 import build.archipelago.authservice.models.exceptions.*;
+import build.archipelago.common.exceptions.UnauthorizedException;
 import build.archipelago.common.rest.models.errors.*;
 import com.google.common.base.*;
 
@@ -20,7 +21,7 @@ public class AuthExceptionHandler {
     public static final String TYPE_USER_EXISTS = "user/exists";
     public static final String TYPE_ACCESS_KEY_NOT_FOUND = "accessKey/notFound";
     public static final String TYPE_AUTHORIZATION_PENDING = "authorization_pending";
-
+    private static final String TYPE_UNAUTHORIZED = "Unauthorized";
 
 
     public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(UserNotFoundException exp) {
@@ -150,6 +151,14 @@ public class AuthExceptionHandler {
                 .detail(ex.getMessage());
     }
 
+    public static ProblemDetailRestResponse.ProblemDetailRestResponseBuilder from(UnauthorizedException ex) {
+        return ProblemDetailRestResponse.builder()
+                .error(TYPE_UNAUTHORIZED)
+                .title("Unauthorized")
+                .status(401)
+                .detail(ex.getMessage());
+    }
+
     public static Object createException(ProblemDetailRestResponse problem) {
         switch (problem.getError()) {
             case TYPE_USER_NOT_FOUND:
@@ -167,6 +176,8 @@ public class AuthExceptionHandler {
                 return new UserExistsException((String) problem.getData().get("email"));
             case TYPE_ACCESS_KEY_NOT_FOUND:
                 return new AccessKeyNotFound();
+            case TYPE_UNAUTHORIZED:
+                return new UnauthorizedException();
             default:
                 throw new RuntimeException(problem.getError() + " was not a known auth error");
         }
