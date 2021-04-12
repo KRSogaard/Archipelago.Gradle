@@ -118,6 +118,40 @@ public class AuthServiceImpl implements AuthService {
         return response;
     }
 
+    @Override
+    public OAuthTokenResponse getToken(String accessKey, String accessKeyToken) {
+        HashMap<String, String> parameters = new HashMap<>();
+        parameters.put("client_id", clientId);
+        parameters.put("grant_type", "client_credentials");
+
+        HttpResponse<String> httpResponse = null;
+        try {
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(new URI(authEndpoint + "/oauth2/token"))
+                    .header("content-type", "application/x-www-form-urlencoded")
+                    .header("Authorization","Basic " + Base64.getEncoder().encodeToString((accessKey + ":" + accessKeyToken).getBytes(StandardCharsets.UTF_8)))
+                    .POST(HttpRequest.BodyPublishers.ofString(mapToFormString(parameters)))
+                    .timeout(Duration.ofSeconds(1))
+                    .build();
+            httpResponse = HttpClient.newHttpClient()
+                    .send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+            switch (httpResponse.statusCode()) {
+                case 200:
+                    return objectMapper.readValue(httpResponse.body(), OAuthTokenResponse.class);
+                case 401:
+                case 403:
+                    log.error("Auth server returned unauthorized");
+                    return null;
+                default:
+                    log.error("Failed to request an authentication token, got http status code {}", httpResponse.statusCode());
+                    return null;
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private String mapToFormString(HashMap<String, String> parameters) {
         return parameters.keySet().stream()
                 .map(key -> key + "=" + URLEncoder.encode(parameters.get(key), StandardCharsets.UTF_8))

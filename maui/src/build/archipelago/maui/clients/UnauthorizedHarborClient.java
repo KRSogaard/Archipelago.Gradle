@@ -12,6 +12,11 @@ import build.archipelago.versionsetservice.exceptions.VersionSetDoseNotExistsExc
 import java.nio.file.Path;
 
 public class UnauthorizedHarborClient implements HarborClient {
+
+    public UnauthorizedHarborClient() {
+
+    }
+
     @Override
     public VersionSet getVersionSet(String versionSet) throws VersionSetDoseNotExistsException {
         throw new UnauthorizedException();
