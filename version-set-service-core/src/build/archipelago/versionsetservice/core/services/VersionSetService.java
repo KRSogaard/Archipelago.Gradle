@@ -10,7 +10,7 @@ import java.util.*;
 public interface VersionSetService {
     VersionSet get(String accountId, String versionSetName) throws VersionSetDoseNotExistsException;
 
-    void create(String accountId, String versionSetName, Optional<ArchipelagoPackage> target, final Optional<String> parent) throws VersionSetExistsException;
+    void create(String accountId, String versionSetName, ArchipelagoPackage target, String parent) throws VersionSetExistsException;
 
     String createRevision(String accountId, String versionSetName, List<ArchipelagoBuiltPackage> packages, ArchipelagoPackage target) throws VersionSetDoseNotExistsException;
 

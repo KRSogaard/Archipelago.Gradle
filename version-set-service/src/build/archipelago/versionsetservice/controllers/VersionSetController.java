@@ -4,6 +4,8 @@ import build.archipelago.common.*;
 import build.archipelago.common.versionset.*;
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.core.delegates.*;
+import build.archipelago.versionsetservice.core.delegates.createVersionSet.CreateVersionSetDelegate;
+import build.archipelago.versionsetservice.core.delegates.createVersionSet.CreateVersionSetRequest;
 import build.archipelago.versionsetservice.exceptions.*;
 import build.archipelago.versionsetservice.models.rest.*;
 import com.google.common.base.*;
@@ -63,16 +65,21 @@ public class VersionSetController {
         request.validate();
 
 
-        Optional<ArchipelagoPackage> target = Optional.empty();
+        ArchipelagoPackage target = null;
         if (request.getTarget() != null) {
-            target = Optional.of(ArchipelagoPackage.parse(request.getTarget()));
+            target = ArchipelagoPackage.parse(request.getTarget());
         }
 
-        Optional<String> parent = Optional.empty();
+        String parent = null;
         if (!Strings.isNullOrEmpty(request.getParent())) {
-            parent = Optional.of(request.getParent());
+            parent = request.getParent();
         }
-        createVersionSetDelegate.create(accountId, request.getName(), target, parent);
+        createVersionSetDelegate.create(CreateVersionSetRequest.builder()
+                .accountId(accountId)
+                .name(request.getName())
+                .target(target)
+                .parent(parent)
+                .build());
         log.debug("Version set '{}' was successfully installed", request.getName());
     }
 

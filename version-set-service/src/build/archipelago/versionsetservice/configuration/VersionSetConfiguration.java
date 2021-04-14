@@ -2,6 +2,7 @@ package build.archipelago.versionsetservice.configuration;
 
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.versionsetservice.core.delegates.*;
+import build.archipelago.versionsetservice.core.delegates.createVersionSet.CreateVersionSetDelegate;
 import build.archipelago.versionsetservice.core.services.*;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import org.springframework.beans.factory.annotation.Value;

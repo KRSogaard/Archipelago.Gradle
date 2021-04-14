@@ -1,4 +1,4 @@
-package build.archipelago.versionsetservice.core.delegates;
+package build.archipelago.versionsetservice.core.delegates.createVersionSet;
 
 import build.archipelago.common.ArchipelagoPackage;
 import build.archipelago.common.utils.O;
@@ -24,37 +24,37 @@ public class CreateVersionSetDelegate {
         this.packageServiceClient = packageServiceClient;
     }
 
-    public void create(String accountId, String name, Optional<ArchipelagoPackage> target, Optional<String> parent)
+    public void create(CreateVersionSetRequest request)
             throws VersionSetExistsException, PackageNotFoundException, VersionSetDoseNotExistsException {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "An account id is required");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name is required");
-        Preconditions.checkArgument(NameUtil.validateVersionSetName(name), "Version set name was invalid");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getAccountId()), "An account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getName()), "Name is required");
+        Preconditions.checkArgument(NameUtil.validateVersionSetName(request.getName()), "Version set name was invalid");
 
         try {
-            versionSetService.get(accountId, name);
-            throw new VersionSetExistsException(name);
+            versionSetService.get(request.getAccountId(), request.getName());
+            throw new VersionSetExistsException(request.getName());
         } catch (VersionSetDoseNotExistsException exp) {
             // This is expected we do not want the version set to exists
         }
 
-        if (O.isPresent(target)) {
+        if (request.getTarget() != null) {
             PackageVerificationResult<ArchipelagoPackage> targetsVerified = packageServiceClient.verifyPackagesExists(
-                    accountId, List.of(target.get()));
+                    request.getAccountId(), List.of(request.getTarget()));
             if (!targetsVerified.isValid()) {
                 throw new PackageNotFoundException(targetsVerified.getMissingPackages().get(0));
             }
         }
 
-        if (O.isPresent(parent)) {
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(parent.get()),
+        if (request.getParent() != null) {
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getParent()),
                     "Parent is required");
-            Preconditions.checkArgument(NameUtil.validateVersionSetName(parent.get()),
+            Preconditions.checkArgument(NameUtil.validateVersionSetName(request.getParent()),
                     "Parent name was not valid");
 
             // If the parent version set dose not exists this will throw an exception
-            versionSetService.get(accountId, parent.get());
+            versionSetService.get(request.getAccountId(), request.getParent());
         }
 
-        versionSetService.create(accountId, name, target, parent);
+        versionSetService.create(request.getAccountId(), request.getName(), request.getTarget(), request.getParent());
     }
 }
