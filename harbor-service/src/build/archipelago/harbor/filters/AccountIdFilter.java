@@ -208,8 +208,10 @@ public class AccountIdFilter implements Filter {
             HttpClient client = HttpClient
                     .newBuilder()
                     .build();
-            log.info("Fetching well knows tokens from '{}'", authEndpoint + "/.well-known/jwks.json");
-            HttpRequest httpRequest = HttpRequest.newBuilder(new URI(authEndpoint + "/.well-known/jwks.json"))
+
+            URI uri = new URI(authEndpoint + "/.well-known/jwks.json");
+            log.info("Fetching well knows tokens from '{}'", uri.toString());
+            HttpRequest httpRequest = HttpRequest.newBuilder(uri)
                     .header("content-type", "application/json")
                     .header("accept", "application/json")
                     .GET()

@@ -188,7 +188,7 @@ public class VersionSetController {
     @ResponseStatus(HttpStatus.OK)
     public VersionSetCallbacksRestResponse getGetCallbacks(
             @PathVariable("accountId") String accountId,
-            @PathVariable("versionSet") String versionSetName) {
+            @PathVariable("versionSet") String versionSetName) throws VersionSetDoseNotExistsException {
         log.info("Request to get version set callbacks for '{}'", versionSetName);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
@@ -203,7 +203,7 @@ public class VersionSetController {
     public void removeCallbacks(
             @PathVariable("accountId") String accountId,
             @PathVariable("versionSet") String versionSetName,
-            @PathVariable("id") String id) {
+            @PathVariable("id") String id) throws VersionSetDoseNotExistsException {
         log.info("Request to get version set callbacks for '{}'", versionSetName);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
