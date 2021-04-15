@@ -17,6 +17,11 @@ public class UnauthorizedAuthService implements AuthService {
     }
 
     @Override
+    public OAuthTokenResponse getToken(String accessKey, String accessKeyToken) {
+        throw new UnauthorizedException();
+    }
+
+    @Override
     public boolean isTokenExpired(String token) {
         return true;
     }
