@@ -1,5 +1,9 @@
 package build.archipelago.versionsetservice.core.services;
 
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+
+import java.util.Map;
+
 public class Keys {
     public static final String NAME_KEY = "key";
     public static final String ACCOUNT_ID = "account-id";
@@ -13,4 +17,7 @@ public class Keys {
     public static final String VERSION_SET_NAME = "version-set-name";
     public static final String UPDATED = "updated";
     public static final String TARGET = "target";
+    public static final String KEY = "key";
+    public static final String ID = "id";
+    public static final String URL = "url";
 }

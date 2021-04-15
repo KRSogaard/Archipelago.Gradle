@@ -21,7 +21,6 @@ public class VersionSetRestResponse {
     private Long latestRevisionCreated;
     private String target;
     private List<RevisionIdRestResponse> revisions;
-    private List<VersionSetCallbackRestResponse> callbacks;
 
     public static VersionSetRestResponse fromVersionSet(VersionSet vs) {
         return VersionSetRestResponse.builder()
@@ -33,7 +32,6 @@ public class VersionSetRestResponse {
                         vs.getLatestRevisionCreated() != null ? vs.getLatestRevisionCreated().toEpochMilli() : null)
                 .target(vs.getTarget() != null ? vs.getTarget().getNameVersion() : null)
                 .revisions(vs.getRevisions() != null ? vs.getRevisions().stream().map(RevisionIdRestResponse::from).collect(Collectors.toList()) : null)
-                .callbacks(vs.getCallbacks() != null ? vs.getCallbacks().stream().map(VersionSetCallbackRestResponse::form).collect(Collectors.toList()) : new ArrayList<>())
                 .build();
     }
 
@@ -46,7 +44,6 @@ public class VersionSetRestResponse {
                 .latestRevisionCreated(this.getLatestRevisionCreated() != null ? Instant.ofEpochMilli(this.getLatestRevisionCreated()) : null)
                 .target(this.getTarget() != null ? ArchipelagoPackage.parse(this.getTarget()) : null)
                 .revisions(this.getRevisions() != null ? this.getRevisions().stream().map(RevisionIdRestResponse::toInternal).collect(Collectors.toList()) : null)
-                .callbacks(this.getCallbacks() != null ? this.getCallbacks().stream().map(VersionSetCallbackRestResponse::toInternal).collect(Collectors.toList()) : null)
                 .build();
     }
 }

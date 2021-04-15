@@ -7,4 +7,5 @@ import lombok.*;
 public class DynamoDbVersionSetServiceConfig {
     private String versionSetTable;
     private String versionSetRevisionTable;
+    private String versionSetCallbacksTable;
 }

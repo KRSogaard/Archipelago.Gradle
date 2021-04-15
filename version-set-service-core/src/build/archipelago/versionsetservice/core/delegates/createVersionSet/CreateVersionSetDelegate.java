@@ -55,6 +55,6 @@ public class CreateVersionSetDelegate {
             versionSetService.get(request.getAccountId(), request.getParent());
         }
 
-        versionSetService.create(request.getAccountId(), request.getName(), request.getTarget(), request.getParent());
+        versionSetService.create(request.getAccountId(), request.getName(), request.getTarget(), request.getParent(), request.getCallbacks());
     }
 }

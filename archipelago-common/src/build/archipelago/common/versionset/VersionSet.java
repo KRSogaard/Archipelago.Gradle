@@ -17,6 +17,5 @@ public class VersionSet {
     private Instant latestRevisionCreated;
     private ArchipelagoPackage target;
     private List<Revision> revisions;
-    private List<VersionSetCallback> callbacks;
 }
 

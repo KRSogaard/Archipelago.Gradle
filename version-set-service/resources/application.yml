@@ -30,6 +30,7 @@ server:
 dynamodb:
   version-sets: "archipelago-local.version-sets"
   version-sets-revisions: "archipelago-local.version-set-revisions"
+  version-sets-callbacks: "archipelago-local.version-set-callbacks"
 
 aws:
   access:
@@ -46,6 +47,7 @@ spring:
 dynamodb:
   version-sets: "archipelago-alpha.version-sets"
   version-sets-revisions: "archipelago-alpha.version-set-revisions"
+  version-sets-callbacks: "archipelago-alpha.version-set-callbacks"
 
 aws:
   access:

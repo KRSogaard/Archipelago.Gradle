@@ -4,6 +4,7 @@ import build.archipelago.common.ArchipelagoPackage;
 import lombok.Builder;
 import lombok.Value;
 
+import java.util.List;
 import java.util.Optional;
 
 @Builder
@@ -13,4 +14,5 @@ public class CreateVersionSetRequest {
     private String name;
     private ArchipelagoPackage target;
     private String parent;
+    private List<String> callbacks;
 }
