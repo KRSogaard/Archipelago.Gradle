@@ -27,4 +27,9 @@ public interface VersionSetServiceClient {
 
     VersionSetRevision getVersionSetPackages(String accountId, String versionSetName, String revisionId)
             throws VersionSetDoseNotExistsException, UnauthorizedException;
+
+    List<VersionSetCallback> getCallbacks(String accountId, String versionSetName) throws VersionSetDoseNotExistsException;
+    void deleteCallback(String accountId, String versionSetName, String id) throws VersionSetDoseNotExistsException;
+    void addCallback(String accountId, String versionSetName, String url) throws VersionSetDoseNotExistsException;
+
 }

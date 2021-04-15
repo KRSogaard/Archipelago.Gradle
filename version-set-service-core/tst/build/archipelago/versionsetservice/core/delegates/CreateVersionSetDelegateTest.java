@@ -5,6 +5,8 @@ import build.archipelago.common.versionset.*;
 import build.archipelago.packageservice.client.PackageServiceClient;
 import build.archipelago.packageservice.client.models.PackageVerificationResult;
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
+import build.archipelago.versionsetservice.core.delegates.createVersionSet.CreateVersionSetDelegate;
+import build.archipelago.versionsetservice.core.delegates.createVersionSet.CreateVersionSetRequest;
 import build.archipelago.versionsetservice.core.services.VersionSetService;
 import build.archipelago.versionsetservice.core.utils.RevisionUtil;
 import build.archipelago.versionsetservice.exceptions.*;
@@ -49,7 +51,11 @@ public class CreateVersionSetDelegateTest {
                         ImmutableList.of(ArchipelagoPackage.parse(packageName))).build());
         when(versionSetService.get(eq(testAccountId), eq(testVSName))).thenThrow(new VersionSetDoseNotExistsException(testVSName));
 
-        delegate.create(testAccountId, testVSName, Optional.of(ArchipelagoPackage.parse(packageName)), Optional.empty());
+        delegate.create(CreateVersionSetRequest.builder()
+                .accountId(testAccountId)
+                .name(testVSName)
+                .target(ArchipelagoPackage.parse(packageName))
+                .build());
     }
 
 

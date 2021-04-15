@@ -1,6 +1,7 @@
 package build.archipelago.versionsetservice.controllers;
 
 import build.archipelago.versionsetservice.core.delegates.*;
+import build.archipelago.versionsetservice.core.delegates.createVersionSet.CreateVersionSetDelegate;
 import com.google.gson.*;
 import org.springframework.test.context.*;
 import net.dongliu.gson.GsonJava8TypeAdapterFactory;

@@ -304,6 +304,117 @@ public class RestVersionSetServiceClient extends OAuthRestClient implements Vers
         return response.toInternal();
     }
 
+    @Override
+    public List<VersionSetCallback> getCallbacks(String accountId, String versionSetName) throws VersionSetDoseNotExistsException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
+
+        HttpResponse<String> httpResponse;
+        try {
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName + "/callbacks")
+                    .GET()
+                    .build();
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call version set service to get the packages in version set {} from account '{}'", versionSetName, accountId);
+            throw new RuntimeException(e);
+        }
+
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                return this.parseOrThrow(httpResponse.body(), VersionSetCallbacksRestResponse.class).getCallbacks()
+                        .stream().map(VersionSetCallbackRestResponse::toInternal).collect(Collectors.toList());
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Version set service");
+                throw new UnauthorizedException();
+            case 404:
+                log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
+                ProblemDetailRestResponse problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
+        }
+    }
+
+    @Override
+    public void deleteCallback(String accountId, String versionSetName, String id) throws VersionSetDoseNotExistsException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id), "Callback id is required");
+
+        HttpResponse<String> httpResponse;
+        try {
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName + "/callbacks/" + id)
+                    .DELETE()
+                    .build();
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call version set service to add a callback for account '{}'", accountId);
+            throw new RuntimeException(e);
+        }
+        ProblemDetailRestResponse problem;
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                return;
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Version set service");
+                throw new UnauthorizedException();
+            case 404:
+                log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
+                problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
+        }
+    }
+
+    @Override
+    public void addCallback(String accountId, String versionSetName, String url) throws VersionSetDoseNotExistsException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName), "Version set name is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "Callback url is");
+
+        AddCallbackRestRequest request = AddCallbackRestRequest.builder()
+                .url(url)
+                .build();
+        HttpResponse<String> httpResponse;
+        try {
+            HttpRequest httpRequest = this.getOAuthRequest("/account/" + accountId + "/version-set/" + versionSetName + "/callbacks")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(request)))
+                    .build();
+            httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (UnauthorizedException exp) {
+            log.error("Was unable to auth with the auth server, did not get to call the client", exp);
+            throw exp;
+        } catch (Exception e) {
+            log.error("Got unknown error while trying to call version set service to add a callback for account '{}'", accountId);
+            throw new RuntimeException(e);
+        }
+        ProblemDetailRestResponse problem;
+        switch (httpResponse.statusCode()) {
+            case 200: // Ok
+                return;
+            case 401:
+            case 403:
+                log.error("Got unauthorized response from Version set service");
+                throw new UnauthorizedException();
+            case 404:
+                log.warn("Got Not Found (404) response from Version set service with body: " + httpResponse.body());
+                problem = ProblemDetailRestResponse.from(httpResponse.body());
+                throw (VersionSetDoseNotExistsException) VersionSetExceptionHandler.createException(problem);
+            default:
+                throw this.logAndReturnExceptionForUnknownStatusCode(httpResponse);
+        }
+    }
+
     private RuntimeException logAndReturnExceptionForUnknownStatusCode(HttpResponse<String> restResponse) {
         log.error("Unknown response from Version set service status code " + restResponse.statusCode() +
                 " body: " + restResponse.body());

@@ -4,6 +4,11 @@ import build.archipelago.common.*;
 import build.archipelago.common.versionset.*;
 import build.archipelago.packageservice.exceptions.PackageNotFoundException;
 import build.archipelago.versionsetservice.core.delegates.*;
+import build.archipelago.versionsetservice.core.delegates.addCallback.AddCallbackDelegate;
+import build.archipelago.versionsetservice.core.delegates.createVersionSet.CreateVersionSetDelegate;
+import build.archipelago.versionsetservice.core.delegates.createVersionSet.CreateVersionSetRequest;
+import build.archipelago.versionsetservice.core.delegates.deleteCallback.DeleteCallbackDelegate;
+import build.archipelago.versionsetservice.core.delegates.getCallbacks.GetCallbacksDelegate;
 import build.archipelago.versionsetservice.exceptions.*;
 import build.archipelago.versionsetservice.models.rest.*;
 import com.google.common.base.*;
@@ -26,19 +31,28 @@ public class VersionSetController {
     private GetVersionSetPackagesDelegate getVersionSetPackagesDelegate;
     private GetVersionSetsDelegate getVersionSetsDelegate;
     private UpdateVersionSetDelegate updateVersionSetDelegate;
+    private GetCallbacksDelegate getCallbacksDelegate;
+    private DeleteCallbackDelegate deleteCallbackDelegate;
+    private AddCallbackDelegate addCallbackDelegate;
 
     public VersionSetController(CreateVersionSetDelegate createVersionSetDelegate,
                                 CreateVersionSetRevisionDelegate createVersionSetRevisionDelegate,
                                 GetVersionSetDelegate getVersionSetDelegate,
                                 GetVersionSetPackagesDelegate getVersionSetPackagesDelegate,
                                 GetVersionSetsDelegate getVersionSetsDelegate,
-                                UpdateVersionSetDelegate updateVersionSetDelegate) {
+                                UpdateVersionSetDelegate updateVersionSetDelegate,
+                                GetCallbacksDelegate getCallbacksDelegate,
+                                DeleteCallbackDelegate deleteCallbackDelegate,
+                                AddCallbackDelegate addCallbackDelegate) {
         this.createVersionSetDelegate = createVersionSetDelegate;
         this.createVersionSetRevisionDelegate = createVersionSetRevisionDelegate;
         this.getVersionSetDelegate = getVersionSetDelegate;
         this.getVersionSetPackagesDelegate = getVersionSetPackagesDelegate;
         this.getVersionSetsDelegate = getVersionSetsDelegate;
         this.updateVersionSetDelegate = updateVersionSetDelegate;
+        this.getCallbacksDelegate = getCallbacksDelegate;
+        this.deleteCallbackDelegate = deleteCallbackDelegate;
+        this.addCallbackDelegate = addCallbackDelegate;
     }
 
     @GetMapping
@@ -63,16 +77,21 @@ public class VersionSetController {
         request.validate();
 
 
-        Optional<ArchipelagoPackage> target = Optional.empty();
+        ArchipelagoPackage target = null;
         if (request.getTarget() != null) {
-            target = Optional.of(ArchipelagoPackage.parse(request.getTarget()));
+            target = ArchipelagoPackage.parse(request.getTarget());
         }
 
-        Optional<String> parent = Optional.empty();
+        String parent = null;
         if (!Strings.isNullOrEmpty(request.getParent())) {
-            parent = Optional.of(request.getParent());
+            parent = request.getParent();
         }
-        createVersionSetDelegate.create(accountId, request.getName(), target, parent);
+        createVersionSetDelegate.create(CreateVersionSetRequest.builder()
+                .accountId(accountId)
+                .name(request.getName())
+                .target(target)
+                .parent(parent)
+                .build());
         log.debug("Version set '{}' was successfully installed", request.getName());
     }
 
@@ -164,5 +183,52 @@ public class VersionSetController {
                 response.getPackages().size(), versionSetName, revisionId, response);
         return response;
     }
+
+    @GetMapping("{versionSet}/callbacks")
+    @ResponseStatus(HttpStatus.OK)
+    public VersionSetCallbacksRestResponse getGetCallbacks(
+            @PathVariable("accountId") String accountId,
+            @PathVariable("versionSet") String versionSetName) throws VersionSetDoseNotExistsException {
+        log.info("Request to get version set callbacks for '{}'", versionSetName);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
+                "Version Set name is required");
+
+        List<VersionSetCallback> callbacks = getCallbacksDelegate.getCallbacks(accountId, versionSetName);
+        return VersionSetCallbacksRestResponse.from(callbacks);
+    }
+
+    @DeleteMapping("{versionSet}/callbacks/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public void removeCallbacks(
+            @PathVariable("accountId") String accountId,
+            @PathVariable("versionSet") String versionSetName,
+            @PathVariable("id") String id) throws VersionSetDoseNotExistsException {
+        log.info("Request to get version set callbacks for '{}'", versionSetName);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
+                "Version Set name is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id),
+                "Callback id is required");
+
+        deleteCallbackDelegate.deleteCallback(accountId, versionSetName, id);
+    }
+
+    @PostMapping("{versionSet}/callbacks")
+    @ResponseStatus(HttpStatus.OK)
+    public void addCallbacks(
+            @PathVariable("accountId") String accountId,
+            @PathVariable("versionSet") String versionSetName,
+            @RequestBody AddCallbackRestRequest request) throws VersionSetDoseNotExistsException {
+        log.info("Request to get version set callbacks for '{}'", versionSetName);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
+                "Version Set name is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getUrl()),
+                "Callback id is required");
+
+        addCallbackDelegate.addCallback(accountId, versionSetName, request.getUrl());
+    }
+
 
 }

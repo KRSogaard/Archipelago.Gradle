@@ -126,4 +126,50 @@ public class VersionSetController {
                 .build();
         versionSetServiceClient.updateVersionSet(accountId, versionSetName, updateRequest);
     }
+
+    @GetMapping("{versionSet}/callbacks")
+    @ResponseStatus(HttpStatus.OK)
+    public VersionSetCallbacksRestResponse getGetCallbacks(
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
+            @PathVariable("versionSet") String versionSetName) throws VersionSetDoseNotExistsException {
+        log.info("Request to get version set callbacks for '{}'", versionSetName);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
+                "Version Set name is required");
+
+        List<VersionSetCallback> callbacks = versionSetServiceClient.getCallbacks(accountId, versionSetName);
+        return VersionSetCallbacksRestResponse.from(callbacks);
+    }
+
+    @DeleteMapping("{versionSet}/callbacks/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public void removeCallbacks(
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
+            @PathVariable("versionSet") String versionSetName,
+            @PathVariable("id") String id) throws VersionSetDoseNotExistsException {
+        log.info("Request to get version set callbacks for '{}'", versionSetName);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
+                "Version Set name is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id),
+                "Callback id is required");
+
+        versionSetServiceClient.deleteCallback(accountId, versionSetName, id);
+    }
+
+    @PostMapping("{versionSet}/callbacks")
+    @ResponseStatus(HttpStatus.OK)
+    public void addCallbacks(
+            @RequestAttribute(AccountIdFilter.AccountIdKey) String accountId,
+            @PathVariable("versionSet") String versionSetName,
+            @RequestBody AddCallbackRestRequest request) throws VersionSetDoseNotExistsException {
+        log.info("Request to get version set callbacks for '{}'", versionSetName);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accountId), "Account id is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(versionSetName),
+                "Version Set name is required");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(request.getUrl()),
+                "Callback id is required");
+
+        versionSetServiceClient.addCallback(accountId, versionSetName, request.getUrl());
+    }
 }

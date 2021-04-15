@@ -51,6 +51,47 @@ public class DynamoDbVersionSetService implements VersionSetService {
     }
 
     @Override
+    public List<VersionSetCallback> getCallbacks(String accountId, String versionSetName) {
+        Preconditions.checkNotNull(accountId);
+        Preconditions.checkNotNull(versionSetName);
+
+        QueryRequest request = new QueryRequest()
+                .withTableName(config.getVersionSetCallbacksTable())
+                .withKeyConditionExpression("#key = :key")
+                .withExpressionAttributeNames(ImmutableMap.of(
+                        "#key", Keys.KEY
+                ))
+                .withExpressionAttributeValues(ImmutableMap.of(
+                        ":key", AV.of(getKey(accountId, versionSetName))));
+        QueryResult result = dynamoDB.query(request);
+        List<VersionSetCallback> callbacks = new ArrayList<>();
+        for (Map<String, AttributeValue> item : result.getItems()) {
+            callbacks.add(VersionSetCallback.builder()
+                    .id(AV.getStringOrNull(item, Keys.ID))
+                    .url(AV.getStringOrNull(item, Keys.URL))
+                    .build());
+        }
+        return callbacks;
+    }
+
+    @Override
+    public void removeCallback(String accountId, String versionSetName, String id) {
+        dynamoDB.deleteItem(new DeleteItemRequest(config.getVersionSetCallbacksTable(), ImmutableMap.<String, AttributeValue>builder()
+                .put(Keys.KEY, AV.of(this.getKey(accountId, versionSetName)))
+                .put(Keys.ID, AV.of(id))
+                .build()));
+    }
+
+    @Override
+    public void addCallback(String accountId, String versionSetName, String url) {
+        String id = UUID.randomUUID().toString();
+        dynamoDB.putItem(new PutItemRequest(config.getVersionSetCallbacksTable(),  ImmutableMap.<String, AttributeValue>builder()
+                .put(Keys.KEY, AV.of(getKey(accountId, versionSetName)))
+                .put(Keys.ID, AV.of(id))
+                .put(Keys.URL, AV.of(url)).build()));
+    }
+
+    @Override
     public void update(String accountId, String versionSetName, UpdateVersionSetRequest request) {
         Map<String, AttributeValue> attributeValues = new HashMap<>();
         Map<String, String> attributeNames = new HashMap<>();
@@ -184,13 +225,12 @@ public class DynamoDbVersionSetService implements VersionSetService {
     }
 
     @Override
-    public void create(String accountId, final String name, Optional<ArchipelagoPackage> target, final Optional<String> parent) {
+    public void create(String accountId, final String name, ArchipelagoPackage target, String parent, List<String> callbacks) {
         Preconditions.checkNotNull(accountId);
         Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(target);
-        Preconditions.checkNotNull(parent);
-        if (O.isPresent(target) && target.get() instanceof ArchipelagoBuiltPackage) {
-            throw new IllegalArgumentException(target.toString() + " can not have a build version");
+
+        if (target != null && target instanceof ArchipelagoBuiltPackage) {
+            target = target.asBase();
         }
 
         ImmutableMap.Builder<String, AttributeValue> map = ImmutableMap.<String, AttributeValue>builder()
@@ -199,14 +239,23 @@ public class DynamoDbVersionSetService implements VersionSetService {
                 .put(Keys.DISPLAY_NAME, AV.of(name))
                 .put(Keys.CREATED, AV.of(Instant.now()));
 
-        if (O.isPresent(target)) {
-            map.put(Keys.TARGET, AV.of(target.get().getNameVersion()));
+        if (target != null) {
+            map.put(Keys.TARGET, AV.of(target.getNameVersion()));
         }
-        if (O.isPresent(parent)) {
-            map.put(Keys.PARENT, AV.of(this.sanitizeName(parent.get())));
+        if (parent != null) {
+            map.put(Keys.PARENT, AV.of(this.sanitizeName(parent)));
         }
 
         dynamoDB.putItem(new PutItemRequest(config.getVersionSetTable(), map.build()));
+
+        // Todo: Do this with bash
+        for (String callback : callbacks) {
+            String id = UUID.randomUUID().toString();
+            dynamoDB.putItem(new PutItemRequest(config.getVersionSetCallbacksTable(),  ImmutableMap.<String, AttributeValue>builder()
+                    .put(Keys.KEY, AV.of(getKey(accountId, name)))
+                    .put(Keys.ID, AV.of(id))
+                    .put(Keys.URL, AV.of(callback)).build()));
+        }
     }
 
     @Override
