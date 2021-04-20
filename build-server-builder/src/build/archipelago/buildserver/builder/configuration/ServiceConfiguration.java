@@ -155,7 +155,8 @@ public class ServiceConfiguration {
         SQSConsumerConfig config = new SQSConsumerConfig(buildQueue);
         config.setPollers(1);
         config.setMessageFetchSize(1);
-        config.setSleepTimeWhenNoMessages(250);
+        config.setSleepBetweenPolls(10000L);
+        config.setSleepTimeWhenNoMessages(60000L);
         return new SQSConsumer(sqsFactory, config, sqsMessageProcessorFactory, executorServiceFactory);
     }
 
