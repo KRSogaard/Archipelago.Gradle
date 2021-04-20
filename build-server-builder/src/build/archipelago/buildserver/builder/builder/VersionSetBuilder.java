@@ -39,7 +39,14 @@ import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
 
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.nio.file.*;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -51,6 +58,7 @@ import java.util.stream.*;
 @Slf4j
 public class VersionSetBuilder {
     private final static DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.from(ZoneOffset.UTC));
+    private final HttpClient httpClient;
 
     // Only used once
     private Path buildLocation;
@@ -111,6 +119,9 @@ public class VersionSetBuilder {
         this.notificationProvider = notificationProvider;
 
         executorService = new BlockingExecutorServiceFactory().create();
+        this.httpClient = HttpClient
+                .newBuilder()
+                .build();
     }
 
     public void build() throws PermanentMessageProcessingException, TemporaryMessageProcessingException {
@@ -372,6 +383,7 @@ public class VersionSetBuilder {
                 }
             }
 
+
             if (buildFailed) {
                 log.error("A package failed to publish, can't create a new version of the version-set");
                 stageLog.addError("A package failed to publish, can't create a new version of the version-set");
@@ -396,11 +408,26 @@ public class VersionSetBuilder {
             }
             stageLog.addInfo("Create new revision with " + newRevision.size() + " packages");
 
+            String revision;
             try {
-                String revision = versionSetServiceClient.createVersionRevision(accountDetails.getId(), wsContext.getVersionSet(), newRevision, buildTarget);
+                revision = versionSetServiceClient.createVersionRevision(accountDetails.getId(), wsContext.getVersionSet(), newRevision, buildTarget);
                 stageLog.addInfo("Revision %s was created for version set %s", revision, wsContext.getVersionSet());
             } catch (Exception e) {
                 throw new RuntimeException("Was unable to create the new version-set revision", e);
+            }
+
+            try {
+                List<VersionSetCallback> callbacks = versionSetServiceClient.getCallbacks(buildRequest.getAccountId(), wsContext.getVersionSet());
+                stageLog.addInfo("Found " + callbacks.size() + " callbacks for the version set");
+                for (VersionSetCallback callback : callbacks) {
+                    String parseCallback = callback.getUrl()
+                            .replace("$VERSION_SET", wsContext.getVersionSet())
+                            .replace("$REVISION", revision)
+                            .trim();
+                    callCallback(parseCallback, stageLog);
+                }
+            } catch (VersionSetDoseNotExistsException exp) {
+                throw new RuntimeException(exp);
             }
 
             buildService.setBuildStatus(buildRequest.getAccountId(), buildRequest.getBuildId(), BuildStage.PUBLISHING, BuildStatus.FINISHED);
@@ -414,6 +441,26 @@ public class VersionSetBuilder {
             if (stageLog.hasLogs()) {
                 stageLogsService.uploadStageLog(buildRequest.getBuildId(), BuildStage.PUBLISHING, stageLog.getLogs());
             }
+        }
+    }
+
+    private void callCallback(String parseCallback, StageLog stageLog) {
+        try {
+            stageLog.addInfo("Calling callback \"" + parseCallback + "\"");
+            HttpRequest request = HttpRequest.newBuilder(new URI(parseCallback))
+                    .header("User-Agent", "Archipelago")
+                    .timeout(Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+            httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+            stageLog.addInfo("Call to the callback url \"" + parseCallback + "\" successful");
+        } catch (URISyntaxException e) {
+            stageLog.addError("The callback url \"" + parseCallback + "\" was not a valid url");
+        } catch (HttpTimeoutException e) {
+            stageLog.addError("Failed to call the callback url \"" + parseCallback + "\" request timed out");
+        } catch (Exception e) {
+            log.error("Unable to call callback \"" + parseCallback + "\"", e);
+            stageLog.addError("Failed to call the callback url \"" + parseCallback + "\" with unknown error: " + e.getMessage());
         }
     }
 

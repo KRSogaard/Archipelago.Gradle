@@ -54,7 +54,7 @@ public class CreateVersionSetRevisionDelegateTest {
         VersionSet vs = this.createVS(vsName, pA);
 
         when(versionSetService.get(eq(testAccountId), eq(vsName))).thenReturn(vs);
-        when(versionSetService.createRevision(eq(testAccountId), eq(vsName), any(), pbA)).thenReturn(revisionId);
+        when(versionSetService.createRevision(eq(testAccountId), eq(vsName), any(), eq(pbA))).thenReturn(revisionId);
         when(packageServiceClient.verifyBuildsExists(eq(testAccountId), any())).thenReturn(
                 PackageVerificationResult.<ArchipelagoBuiltPackage>builder().missingPackages(ImmutableList.of()).build());
 
