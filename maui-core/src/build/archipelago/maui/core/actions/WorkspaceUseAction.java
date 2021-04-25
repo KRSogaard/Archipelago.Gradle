@@ -75,7 +75,8 @@ public class WorkspaceUseAction extends BaseAction {
                 continue;
             }
             try {
-                if (workspaceContext.getLocalArchipelagoPackages().stream().anyMatch(lp -> lp.getName().equalsIgnoreCase(pkg))) {
+                // We used getLocalPackages here as it will nto throw a PackageNotLocalException in case the ISLAND file is missing
+                if (workspaceContext.getLocalPackages().stream().anyMatch(lp -> lp.equalsIgnoreCase(pkg))) {
                     out.error("The package name \"%s\" already checked out", pkg);
                     continue;
                 }
