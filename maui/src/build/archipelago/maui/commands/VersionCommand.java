@@ -18,7 +18,7 @@ public class VersionCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        out.write("Maui version 1.0");
+        out.write("Maui version 1.1-Alpha");
         return 0;
     }
 }

@@ -23,6 +23,7 @@ public class MauiCommand  implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        System.err.println("No commands where given, please run maui help");
         return 1;
     }
 }
