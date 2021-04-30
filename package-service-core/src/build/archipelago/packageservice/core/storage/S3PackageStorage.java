@@ -8,6 +8,7 @@ import com.amazonaws.services.s3.model.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.time.Instant;
 import java.util.Date;
@@ -50,11 +51,21 @@ public class S3PackageStorage implements PackageStorage {
     public String getDownloadUrl(String accountId, ArchipelagoBuiltPackage pkg) throws PackageNotFoundException {
         String keyName = this.getS3FileName(accountId, pkg);
         // TODO: Dose this even throw an exception?
+        S3Object s3object = null;
         try {
-            s3Client.getObject(bucketName, keyName);
+            s3object = s3Client.getObject(bucketName, keyName);
         } catch (AmazonS3Exception exp) {
             throw new PackageNotFoundException(pkg);
+        } finally {
+            if (s3object != null) {
+                try {
+                    s3object.close();
+                } catch (IOException e) {
+                    log.error("Failed to close s3Object connection for " + accountId + " " + pkg);
+                }
+            }
         }
+
         log.debug("Generating pre-signed url for build artifact from S3 '{}' with key '{}'", bucketName, keyName);
         // The user have 5 min to download the file
         Instant expiresAt = Instant.now().plusSeconds(60 * 5);
