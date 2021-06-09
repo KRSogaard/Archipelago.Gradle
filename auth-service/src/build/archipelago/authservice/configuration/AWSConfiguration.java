@@ -7,6 +7,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.*;
 
 @Configuration
+@Slf4j
 public class AWSConfiguration {
 
     @Bean
@@ -14,6 +15,7 @@ public class AWSConfiguration {
     public AWSCredentialsProvider credentialsProvider(
             @Value("${aws.access.id}") String accessId,
             @Value("${aws.access.key}") String accessKey) {
+        log.info("Using AWS id: {}", accessId)
         return new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessId, accessKey));
     }
 
@@ -22,6 +24,7 @@ public class AWSConfiguration {
     public AmazonDynamoDB dynamoDB(
             AWSCredentialsProvider credentialsProvider,
             @Value("${aws.region}") String awsRegion) {
+        log.info("Using AWS region: {}", awsRegion)
         return AmazonDynamoDBClientBuilder.standard()
                 .withRegion(awsRegion)
                 .withCredentials(credentialsProvider)

@@ -74,8 +74,8 @@ url:
 
 aws:
   access:
-    id: "AKIARDAF5R4OETTYRSYN"
-    key: "DrsZI41KOSZuSS4bWxVMyBMWD+nAVPAZI4Rl3hig"
+    id: "AKIARDAF5R4OPZCANF5C"
+    key: "GeQkTltLRCqJAEiQaK4xn0S/W2bz3+vw3KWvIyK2"
 
 ---
 spring:
