@@ -5,6 +5,7 @@ import com.amazonaws.services.dynamodbv2.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.*;
+import lombok.extern.slf4j.*;
 
 @Configuration
 @Slf4j
