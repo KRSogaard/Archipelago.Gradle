@@ -1,0 +1,4 @@
+version: 6.7
+buildSystem: Copy
+buildTools:
+- CopyBuildSystem-1.0
