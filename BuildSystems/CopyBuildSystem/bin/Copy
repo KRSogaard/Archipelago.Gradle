@@ -1,0 +1,2 @@
+#!/bin/bash
+rsync -av --progress . ./build --exclude ISLAND --exclude BuildScript.cmd --exclude BuildScript --exclude build --exclude .git

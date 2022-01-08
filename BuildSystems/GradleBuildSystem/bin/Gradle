@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+echo "Trying to find GradleBuildSystem"
+GRADLE_PATH=$(maui path [GradleBuildSystem]pkg.dir)
+echo "Using gradle at $GRADLE_PATH"
+
+
+# Collect all arguments for the java command, following the shell quoting and substitution rules
+
+if [ $# -eq 0 ]
+  then
+  echo "Executing $GRADLE_PATH/archipelagoGradleW build"
+  exec "$GRADLE_PATH/archipelagoGradleW" "build"
+else
+  echo "Executing $GRADLE_PATH/archipelagoGradleW $@"
+  exec "$GRADLE_PATH/archipelagoGradleW" $@
+fi
