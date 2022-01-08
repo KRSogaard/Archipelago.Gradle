@@ -1,0 +1,1047 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: An example CloudFormation template for Fargate.
+Parameters:
+  env:
+    Type: "String"
+    Default: "alpha"
+
+Resources:
+  ecsVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "archipelago-ecs-vpc"
+        - Key: Project
+          Value: !Sub "archipelago-ecs"
+
+  ecsInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "archipelago-ecs-InternetGateway"
+        - Key: Project
+          Value: !Sub "archipelago-ecs"
+
+  ecsVPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref ecsInternetGateway
+      VpcId: !Ref ecsVPC
+
+  ecsPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ecsVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "archipelago-ecs-RouteTable"
+        - Key: Project
+          Value: !Sub "archipelago-ecs"
+
+  ecsPublicRoute:
+    DependsOn: ecsVPCGatewayAttachment
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref ecsPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref ecsInternetGateway
+
+  ecsPublicSubnet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-west-2a
+      MapPublicIpOnLaunch: true
+      CidrBlock: 10.0.0.0/24
+      VpcId:
+        Ref: ecsVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "archipelago-ecs-PublicSubnet01"
+        - Key: Project
+          Value: !Sub "archipelago-ecs"
+
+  ecsPublicSubnet02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-west-2b
+      MapPublicIpOnLaunch: true
+      CidrBlock: 10.0.1.0/24
+      VpcId:
+        Ref: ecsVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "archipelago-ecs-PublicSubnet02"
+        - Key: Project
+          Value: !Sub "archipelago-ecs"
+
+  ecsPublicSubnet01RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ecsPublicSubnet01
+      RouteTableId: !Ref ecsPublicRouteTable
+
+  ecsPublicSubnet02RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ecsPublicSubnet02
+      RouteTableId: !Ref ecsPublicRouteTable
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "archi-${env}-cluster"
+
+  # A role needed by ECS
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "archi-${env}-execution-role"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+
+  # A role for the containers
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "archi-${env}-task-role"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: "sts:AssumeRole"
+      # ManagedPolicyArns:
+      #   -
+      # Policies:
+      #   -
+  # A role needed for auto scaling
+  AutoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "archi-${env}-auto-scaling-role"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole"
+
+  ContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "archi-${env}-container-security-group"
+      VpcId: !Ref ecsVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "archi-${env}-load-balancer-security-group"
+      VpcId: !Ref ecsVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  # Package Service
+  ServicePackageService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ListenerHTTPSPackageService
+    Properties:
+      ServiceName: !Sub "archi-${env}-package-service"
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionPackageService
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      DesiredCount: 1
+      # This may need to be adjusted if the container takes a while to start up
+      HealthCheckGracePeriodSeconds: 30
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref ecsPublicSubnet01
+            - !Ref ecsPublicSubnet02
+          SecurityGroups:
+            - !Ref ContainerSecurityGroup
+      LoadBalancers:
+        - ContainerName: "package-service"
+          ContainerPort: 8080
+          TargetGroupArn: !Ref TargetGroupPackageService
+
+  TaskDefinitionPackageService:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupPackageService
+    Properties:
+      Family: !Sub "archi-${env}-td-package-service"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 256
+      Memory: 0.5GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: "package-service"
+          Image: "075174350620.dkr.ecr.us-west-2.amazonaws.com/package-service:latest"
+          PortMappings:
+            - ContainerPort: 8080
+          # Send logs to CloudWatch Logs
+          Environment:
+            - Name: APPLICATION_STAGE
+              Value: !Sub "${env}"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: "us-west-2"
+              awslogs-group: !Ref LogGroupPackageService
+              awslogs-stream-prefix: ecs
+
+  TargetGroupPackageService:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 120
+      # will look for a 200 status code by default unless specified otherwise
+      HealthCheckPath: "/health-check"
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 3
+      HealthyThresholdCount: 2
+      Name: !Sub "archi-${env}-package-service-tg"
+      Port: 8080
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 300 # default is 300
+      TargetType: ip
+      VpcId: !Ref ecsVPC
+
+  ListenerHTTPSPackageService:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroupPackageService
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancerPackageService
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: "arn:aws:acm:us-west-2:075174350620:certificate/f8ac73f3-5be5-4e0a-a944-eef6421c0ef9"
+
+  DNSRecordPackageService:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: "archipelago.build."
+      Name: !Sub "package-service.${env}.archipelago.build."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancerPackageService.DNSName
+        HostedZoneId: !GetAtt LoadBalancerPackageService.CanonicalHostedZoneID
+
+  LoadBalancerPackageService:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        # this is the default, but is specified here in case it needs to be changed
+        - Key: idle_timeout.timeout_seconds
+          Value: 60
+      Name: !Sub "archi-${env}-package-service-lb"
+      # "internal" is also an option
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Subnets:
+        - !Ref ecsPublicSubnet01
+        - !Ref ecsPublicSubnet02
+
+  AutoScalingTargetPackageService:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 2
+      ResourceId:
+        !Join ["/", [service, !Ref Cluster, !GetAtt ServicePackageService.Name]]
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that allows Application Auto Scaling to modify your scalable target."
+      RoleARN: !GetAtt AutoScalingRole.Arn
+
+  AutoScalingPolicyPackageService:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "archi-${env}-package-service-asp"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AutoScalingTargetPackageService
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 10
+        ScaleOutCooldown: 10
+        # Keep things at or lower than 50% CPU utilization, for example
+        TargetValue: 75
+
+  LogGroupPackageService:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ["", [/ecs/, "package-service", TaskDefinition]]
+      RetentionInDays: 3
+
+  # Version Set Service
+  ServiceVersionSetService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ListenerHTTPSVersionSetService
+    Properties:
+      ServiceName: !Sub "archi-${env}-version-set-service"
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionVersionSetService
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      DesiredCount: 1
+      # This may need to be adjusted if the container takes a while to start up
+      HealthCheckGracePeriodSeconds: 30
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref ecsPublicSubnet01
+            - !Ref ecsPublicSubnet02
+          SecurityGroups:
+            - !Ref ContainerSecurityGroup
+      LoadBalancers:
+        - ContainerName: "version-set-service"
+          ContainerPort: 8080
+          TargetGroupArn: !Ref TargetGroupVersionSetService
+
+  TaskDefinitionVersionSetService:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupVersionSetService
+    Properties:
+      Family: !Sub "archi-${env}-td-version-set-service"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 256
+      Memory: 0.5GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: "version-set-service"
+          Image: "075174350620.dkr.ecr.us-west-2.amazonaws.com/version-set-service:latest"
+          PortMappings:
+            - ContainerPort: 8080
+          # Send logs to CloudWatch Logs
+          Environment:
+            - Name: APPLICATION_STAGE
+              Value: !Sub "${env}"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: "us-west-2"
+              awslogs-group: !Ref LogGroupVersionSetService
+              awslogs-stream-prefix: ecs
+
+  TargetGroupVersionSetService:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 120
+      # will look for a 200 status code by default unless specified otherwise
+      HealthCheckPath: "/health-check"
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 3
+      HealthyThresholdCount: 2
+      Name: !Sub "archi-${env}-vs-tg"
+      Port: 8080
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 300 # default is 300
+      TargetType: ip
+      VpcId: !Ref ecsVPC
+
+  ListenerHTTPSVersionSetService:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroupVersionSetService
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancerVersionSetService
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: "arn:aws:acm:us-west-2:075174350620:certificate/f8ac73f3-5be5-4e0a-a944-eef6421c0ef9"
+
+  DNSRecordVersionSetService:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: "archipelago.build."
+      Name: !Sub "version-set-service.${env}.archipelago.build."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancerVersionSetService.DNSName
+        HostedZoneId: !GetAtt LoadBalancerVersionSetService.CanonicalHostedZoneID
+
+  LoadBalancerVersionSetService:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        # this is the default, but is specified here in case it needs to be changed
+        - Key: idle_timeout.timeout_seconds
+          Value: 60
+      Name: !Sub "archi-${env}-vs-lb"
+      # "internal" is also an option
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Subnets:
+        - !Ref ecsPublicSubnet01
+        - !Ref ecsPublicSubnet02
+
+  AutoScalingTargetVersionSetService:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 2
+      ResourceId:
+        !Join [
+          "/",
+          [service, !Ref Cluster, !GetAtt ServiceVersionSetService.Name],
+        ]
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that allows Application Auto Scaling to modify your scalable target."
+      RoleARN: !GetAtt AutoScalingRole.Arn
+
+  AutoScalingPolicyVersionSetService:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "archi-${env}-version-set-service-asp"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AutoScalingTargetVersionSetService
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 10
+        ScaleOutCooldown: 10
+        # Keep things at or lower than 50% CPU utilization, for example
+        TargetValue: 75
+
+  LogGroupVersionSetService:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ["", [/ecs/, "version-set-service", TaskDefinition]]
+      RetentionInDays: 3
+
+  # Harbor Service
+  ServiceHarborService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ListenerHTTPSHarborService
+    Properties:
+      ServiceName: !Sub "archi-${env}-harbor-service"
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionHarborService
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      DesiredCount: 1
+      # This may need to be adjusted if the container takes a while to start up
+      HealthCheckGracePeriodSeconds: 30
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref ecsPublicSubnet01
+            - !Ref ecsPublicSubnet02
+          SecurityGroups:
+            - !Ref ContainerSecurityGroup
+      LoadBalancers:
+        - ContainerName: "harbor-service"
+          ContainerPort: 8080
+          TargetGroupArn: !Ref TargetGroupHarborService
+
+  TaskDefinitionHarborService:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupHarborService
+    Properties:
+      Family: !Sub "archi-${env}-td-harbor-service"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 256
+      Memory: 0.5GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: "harbor-service"
+          Image: "075174350620.dkr.ecr.us-west-2.amazonaws.com/harbor-service:latest"
+          PortMappings:
+            - ContainerPort: 8080
+          # Send logs to CloudWatch Logs
+          Environment:
+            - Name: APPLICATION_STAGE
+              Value: !Sub "${env}"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: "us-west-2"
+              awslogs-group: !Ref LogGroupHarborService
+              awslogs-stream-prefix: ecs
+
+  TargetGroupHarborService:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 120
+      # will look for a 200 status code by default unless specified otherwise
+      HealthCheckPath: "/health-check"
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 3
+      HealthyThresholdCount: 2
+      Name: !Sub "archi-${env}-hb-tg"
+      Port: 8080
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 300 # default is 300
+      TargetType: ip
+      VpcId: !Ref ecsVPC
+
+  ListenerHTTPSHarborService:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroupHarborService
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancerHarborService
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: "arn:aws:acm:us-west-2:075174350620:certificate/f8ac73f3-5be5-4e0a-a944-eef6421c0ef9"
+
+  DNSRecordHarborService:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: "archipelago.build."
+      Name: !Sub "harbor.${env}.archipelago.build."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancerHarborService.DNSName
+        HostedZoneId: !GetAtt LoadBalancerHarborService.CanonicalHostedZoneID
+
+  LoadBalancerHarborService:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        # this is the default, but is specified here in case it needs to be changed
+        - Key: idle_timeout.timeout_seconds
+          Value: 60
+      Name: !Sub "archi-${env}-hb-lb"
+      # "internal" is also an option
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Subnets:
+        - !Ref ecsPublicSubnet01
+        - !Ref ecsPublicSubnet02
+
+  AutoScalingTargetHarborService:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 2
+      ResourceId:
+        !Join ["/", [service, !Ref Cluster, !GetAtt ServiceHarborService.Name]]
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that allows Application Auto Scaling to modify your scalable target."
+      RoleARN: !GetAtt AutoScalingRole.Arn
+
+  AutoScalingPolicyHarborService:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "archi-${env}-harbor-service-asp"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AutoScalingTargetHarborService
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 10
+        ScaleOutCooldown: 10
+        # Keep things at or lower than 50% CPU utilization, for example
+        TargetValue: 75
+
+  LogGroupHarborService:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ["", [/ecs/, "harbor-service", TaskDefinition]]
+      RetentionInDays: 3
+
+  # Auth Service
+  ServiceAuthService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ListenerHTTPSAuthService
+    Properties:
+      ServiceName: !Sub "archi-${env}-auth-service"
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionAuthService
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      DesiredCount: 1
+      # This may need to be adjusted if the container takes a while to start up
+      HealthCheckGracePeriodSeconds: 30
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref ecsPublicSubnet01
+            - !Ref ecsPublicSubnet02
+          SecurityGroups:
+            - !Ref ContainerSecurityGroup
+      LoadBalancers:
+        - ContainerName: "auth-service"
+          ContainerPort: 8080
+          TargetGroupArn: !Ref TargetGroupAuthService
+
+  TaskDefinitionAuthService:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupAuthService
+    Properties:
+      Family: !Sub "archi-${env}-td-auth-service"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 256
+      Memory: 0.5GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: "auth-service"
+          Image: "075174350620.dkr.ecr.us-west-2.amazonaws.com/auth-service:latest"
+          PortMappings:
+            - ContainerPort: 8080
+          # Send logs to CloudWatch Logs
+          Environment:
+            - Name: APPLICATION_STAGE
+              Value: !Sub "${env}"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: "us-west-2"
+              awslogs-group: !Ref LogGroupAuthService
+              awslogs-stream-prefix: ecs
+
+  TargetGroupAuthService:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 120
+      # will look for a 200 status code by default unless specified otherwise
+      HealthCheckPath: "/health-check"
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 3
+      HealthyThresholdCount: 2
+      Name: !Sub "archi-${env}-auth-tg"
+      Port: 8080
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 300 # default is 300
+      TargetType: ip
+      VpcId: !Ref ecsVPC
+
+  ListenerHTTPSAuthService:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroupAuthService
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancerAuthService
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: "arn:aws:acm:us-west-2:075174350620:certificate/f8ac73f3-5be5-4e0a-a944-eef6421c0ef9"
+
+  DNSRecordAuthService:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: "archipelago.build."
+      Name: !Sub "auth.${env}.archipelago.build."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancerAuthService.DNSName
+        HostedZoneId: !GetAtt LoadBalancerAuthService.CanonicalHostedZoneID
+
+  LoadBalancerAuthService:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        # this is the default, but is specified here in case it needs to be changed
+        - Key: idle_timeout.timeout_seconds
+          Value: 60
+      Name: !Sub "archi-${env}-auth-lb"
+      # "internal" is also an option
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Subnets:
+        - !Ref ecsPublicSubnet01
+        - !Ref ecsPublicSubnet02
+
+  AutoScalingTargetAuthService:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 2
+      ResourceId:
+        !Join ["/", [service, !Ref Cluster, !GetAtt ServiceAuthService.Name]]
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that allows Application Auto Scaling to modify your scalable target."
+      RoleARN: !GetAtt AutoScalingRole.Arn
+
+  AutoScalingPolicyAuthService:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "archi-${env}-auth-service-asp"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AutoScalingTargetAuthService
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 10
+        ScaleOutCooldown: 10
+        # Keep things at or lower than 50% CPU utilization, for example
+        TargetValue: 75
+
+  LogGroupAuthService:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ["", [/ecs/, "auth-service", TaskDefinition]]
+      RetentionInDays: 3
+
+  # Build API Service
+  ServiceBuildServiceAPI:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ListenerHTTPSBuildServiceAPI
+    Properties:
+      ServiceName: !Sub "archi-${env}-build-service-api"
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionBuildServiceAPI
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      DesiredCount: 1
+      # This may need to be adjusted if the container takes a while to start up
+      HealthCheckGracePeriodSeconds: 30
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref ecsPublicSubnet01
+            - !Ref ecsPublicSubnet02
+          SecurityGroups:
+            - !Ref ContainerSecurityGroup
+      LoadBalancers:
+        - ContainerName: "build-service-api"
+          ContainerPort: 8080
+          TargetGroupArn: !Ref TargetGroupBuildServiceAPI
+
+  TaskDefinitionBuildServiceAPI:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupBuildServiceAPI
+    Properties:
+      Family: !Sub "archi-${env}-td-build-service-api"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 256
+      Memory: 0.5GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: "build-service-api"
+          Image: "075174350620.dkr.ecr.us-west-2.amazonaws.com/build-server-api:latest"
+          PortMappings:
+            - ContainerPort: 8080
+          # Send logs to CloudWatch Logs
+          Environment:
+            - Name: APPLICATION_STAGE
+              Value: !Sub "${env}"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: "us-west-2"
+              awslogs-group: !Ref LogGroupBuildServiceAPI
+              awslogs-stream-prefix: ecs
+
+  TargetGroupBuildServiceAPI:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 120
+      # will look for a 200 status code by default unless specified otherwise
+      HealthCheckPath: "/health-check"
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 3
+      HealthyThresholdCount: 2
+      Name: !Sub "archi-${env}-build-api-tg"
+      Port: 8080
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 300 # default is 300
+      TargetType: ip
+      VpcId: !Ref ecsVPC
+
+  ListenerHTTPSBuildServiceAPI:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroupBuildServiceAPI
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancerBuildServiceAPI
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: "arn:aws:acm:us-west-2:075174350620:certificate/f8ac73f3-5be5-4e0a-a944-eef6421c0ef9"
+
+  DNSRecordBuildServiceAPI:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: "archipelago.build."
+      Name: !Sub "build-service-api.${env}.archipelago.build."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancerBuildServiceAPI.DNSName
+        HostedZoneId: !GetAtt LoadBalancerBuildServiceAPI.CanonicalHostedZoneID
+
+  LoadBalancerBuildServiceAPI:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        # this is the default, but is specified here in case it needs to be changed
+        - Key: idle_timeout.timeout_seconds
+          Value: 60
+      Name: !Sub "archi-${env}-bs-api-lb"
+      # "internal" is also an option
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Subnets:
+        - !Ref ecsPublicSubnet01
+        - !Ref ecsPublicSubnet02
+
+  AutoScalingTargetBuildServiceAPI:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 2
+      ResourceId:
+        !Join [
+          "/",
+          [service, !Ref Cluster, !GetAtt ServiceBuildServiceAPI.Name],
+        ]
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that allows Application Auto Scaling to modify your scalable target."
+      RoleARN: !GetAtt AutoScalingRole.Arn
+
+  AutoScalingPolicyBuildServiceAPI:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "archi-${env}-build-service-api-asp"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AutoScalingTargetBuildServiceAPI
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 10
+        ScaleOutCooldown: 10
+        # Keep things at or lower than 50% CPU utilization, for example
+        TargetValue: 75
+
+  LogGroupBuildServiceAPI:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ["", [/ecs/, "build-service-api", TaskDefinition]]
+      RetentionInDays: 3
+
+  # Build Service Builder
+  ServiceBuildServiceBuilder:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ListenerHTTPSBuildServiceBuilder
+    Properties:
+      ServiceName: !Sub "archi-${env}-build-service-builder"
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinitionBuildServiceBuilder
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      DesiredCount: 1
+      # This may need to be adjusted if the container takes a while to start up
+      HealthCheckGracePeriodSeconds: 30
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref ecsPublicSubnet01
+            - !Ref ecsPublicSubnet02
+          SecurityGroups:
+            - !Ref ContainerSecurityGroup
+      LoadBalancers:
+        - ContainerName: "build-service-builder"
+          ContainerPort: 8080
+          TargetGroupArn: !Ref TargetGroupBuildServiceBuilder
+
+  TaskDefinitionBuildServiceBuilder:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroupBuildServiceBuilder
+    Properties:
+      Family: !Sub "archi-${env}-td-build-service-builder"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 1024
+      Memory: 2.0GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: "build-service-builder"
+          Image: "075174350620.dkr.ecr.us-west-2.amazonaws.com/build-server-api:latest"
+          PortMappings:
+            - ContainerPort: 8080
+          # Send logs to CloudWatch Logs
+          Environment:
+            - Name: APPLICATION_STAGE
+              Value: !Sub "${env}"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: "us-west-2"
+              awslogs-group: !Ref LogGroupBuildServiceBuilder
+              awslogs-stream-prefix: ecs
+
+  TargetGroupBuildServiceBuilder:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 120
+      # will look for a 200 status code by default unless specified otherwise
+      HealthCheckPath: "/health-check"
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 3
+      HealthyThresholdCount: 2
+      Name: !Sub "archi-${env}-bs-tg"
+      Port: 8080
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 300 # default is 300
+      TargetType: ip
+      VpcId: !Ref ecsVPC
+
+  ListenerHTTPSBuildServiceBuilder:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroupBuildServiceBuilder
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancerBuildServiceBuilder
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: "arn:aws:acm:us-west-2:075174350620:certificate/f8ac73f3-5be5-4e0a-a944-eef6421c0ef9"
+
+  DNSRecordBuildServiceBuilder:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: "archipelago.build."
+      Name: !Sub "build-service-builder.${env}.archipelago.build."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt LoadBalancerBuildServiceBuilder.DNSName
+        HostedZoneId: !GetAtt LoadBalancerBuildServiceBuilder.CanonicalHostedZoneID
+
+  LoadBalancerBuildServiceBuilder:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        # this is the default, but is specified here in case it needs to be changed
+        - Key: idle_timeout.timeout_seconds
+          Value: 60
+      Name: !Sub "archi-${env}-bs-builder-lb"
+      # "internal" is also an option
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Subnets:
+        - !Ref ecsPublicSubnet01
+        - !Ref ecsPublicSubnet02
+
+  AutoScalingTargetBuildServiceBuilder:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 2
+      ResourceId:
+        !Join [
+          "/",
+          [service, !Ref Cluster, !GetAtt ServiceBuildServiceBuilder.Name],
+        ]
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that allows Application Auto Scaling to modify your scalable target."
+      RoleARN: !GetAtt AutoScalingRole.Arn
+
+  AutoScalingPolicyBuildServiceBuilder:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "archi-${env}-build-service-builder-asp"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AutoScalingTargetBuildServiceBuilder
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 10
+        ScaleOutCooldown: 10
+        # Keep things at or lower than 50% CPU utilization, for example
+        TargetValue: 75
+
+  LogGroupBuildServiceBuilder:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ["", [/ecs/, "build-service-builder", TaskDefinition]]
+      RetentionInDays: 3

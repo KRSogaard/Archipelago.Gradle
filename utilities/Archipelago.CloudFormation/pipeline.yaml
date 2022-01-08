@@ -1,0 +1,1255 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    S3BucketCodepipelineArtifact:
+        Type: "AWS::S3::Bucket"
+        Properties:
+            BucketName: "archipelago-codepipeline"
+
+    CodePipelinePipelineVersionSetService:
+        Type: "AWS::CodePipeline::Pipeline"
+        Properties:
+            Name: "Archipelago-Version-Set-Service"
+            RoleArn: !GetAtt IAMRolePipeline.Arn
+            ArtifactStore: 
+                Location: !Ref S3BucketCodepipelineArtifact
+                Type: "S3"
+            Stages: 
+              - 
+                Name: "Source"
+                Actions: 
+                  - 
+                    Name: "Source"
+                    ActionTypeId: 
+                        Category: "Source"
+                        Owner: "AWS"
+                        Provider: "CodeStarSourceConnection"
+                        Version: "1"
+                    Configuration: 
+                        BranchName: "master"
+                        ConnectionArn: !Sub "arn:aws:codestar-connections:us-west-2:${AWS::AccountId}:connection/6deb3b77-0864-4fe6-8bfa-3d7285a5e4fb"
+                        FullRepositoryId: "KRSogaard/Archipelago.Gradle"
+                        OutputArtifactFormat: "CODE_ZIP"
+                    OutputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    Region: "us-west-2"
+                    Namespace: "SourceVariables"
+                    RunOrder: 1
+              - 
+                Name: "Build"
+                Actions: 
+                  - 
+                    Name: "Build"
+                    ActionTypeId: 
+                        Category: "Build"
+                        Owner: "AWS"
+                        Provider: "CodeBuild"
+                        Version: "1"
+                    Configuration: 
+                        ProjectName: !Ref CodeBuildProjectVersionSetService
+                    InputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    OutputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "BuildVariables"
+                    RunOrder: 1
+              - 
+                Name: "Deploy"
+                Actions: 
+                  - 
+                    Name: "Deploy"
+                    ActionTypeId: 
+                        Category: "Deploy"
+                        Owner: "AWS"
+                        Provider: "ECS"
+                        Version: "1"
+                    Configuration: 
+                        ClusterName: "archi-alpha-cluster"
+                        FileName: "imagedefinitions.json"
+                        ServiceName: "archi-alpha-version-set-service"
+                    InputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "DeployVariables"
+                    RunOrder: 1
+
+    CodeBuildProjectVersionSetService:
+        Type: "AWS::CodeBuild::Project"
+        Properties:
+            Name: "VersionSetService"
+            Source: 
+                BuildSpec: >
+                    version: 0.2
+                    
+                    phases:
+                      install:
+                        runtime-versions:
+                          docker: 19
+                          java: corretto11
+                      pre_build:
+                        commands:
+                          - echo Logging in to Amazon ECR...
+                          - aws --version
+                          - $(aws ecr get-login --region us-west-2 --no-include-email)
+                          - REPOSITORY_URI=075174350620.dkr.ecr.us-west-2.amazonaws.com/version-set-service
+                          - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+                          - IMAGE_TAG=${COMMIT_HASH:=latest}
+                          - ARCHIPELAGO_SERVICE=version-set-service
+                      build:
+                        commands:
+                          - echo Build started on `date`
+                          - echo Building Version Set Service
+                          - gradle :version-set-service:build
+                          - echo Building Version Set Service docker image
+                          - gradle :version-set-service:docker
+                          - echo Tagging image as $REPOSITORY_URI:$IMAGE_TAG
+                          - docker tag build.archipelago/version-set-service:latest $REPOSITORY_URI:$IMAGE_TAG
+                      post_build:
+                        commands:
+                          - echo Build completed on `date`
+                          - echo Pushing the Docker images...
+                          - docker push $REPOSITORY_URI:$IMAGE_TAG
+                          - echo Writing image definitions file...
+                          - printf '[{"name":"version-set-service","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+                    artifacts:
+                        files: imagedefinitions.json
+                InsecureSsl: false
+                Type: "CODEPIPELINE"
+            Artifacts: 
+                EncryptionDisabled: false
+                Name: "VersionSetService"
+                Packaging: "NONE"
+                Type: "CODEPIPELINE"
+            Cache: 
+                Type: "NO_CACHE"
+            Environment: 
+                ComputeType: "BUILD_GENERAL1_SMALL"
+                Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+                ImagePullCredentialsType: "CODEBUILD"
+                PrivilegedMode: true
+                Type: "LINUX_CONTAINER"
+            ServiceRole: !GetAtt IAMRoleBuildRole.Arn
+            TimeoutInMinutes: 60
+            QueuedTimeoutInMinutes: 480
+            EncryptionKey: !Sub "arn:aws:kms:us-west-2:${AWS::AccountId}:alias/aws/s3"
+            BadgeEnabled: false
+            LogsConfig: 
+                CloudWatchLogs: 
+                    Status: "ENABLED"
+                S3Logs: 
+                    Status: "DISABLED"
+                    EncryptionDisabled: false
+
+    CodePipelinePipelinePackageService:
+        Type: "AWS::CodePipeline::Pipeline"
+        Properties:
+            Name: "Archipelago-Package-Service"
+            RoleArn: !GetAtt IAMRolePipeline.Arn
+            ArtifactStore: 
+                Location: !Ref S3BucketCodepipelineArtifact
+                Type: "S3"
+            Stages: 
+              - 
+                Name: "Source"
+                Actions: 
+                  - 
+                    Name: "Source"
+                    ActionTypeId: 
+                        Category: "Source"
+                        Owner: "AWS"
+                        Provider: "CodeStarSourceConnection"
+                        Version: "1"
+                    Configuration: 
+                        BranchName: "master"
+                        ConnectionArn: !Sub "arn:aws:codestar-connections:us-west-2:${AWS::AccountId}:connection/6deb3b77-0864-4fe6-8bfa-3d7285a5e4fb"
+                        FullRepositoryId: "KRSogaard/Archipelago.Gradle"
+                        OutputArtifactFormat: "CODE_ZIP"
+                    OutputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    Region: "us-west-2"
+                    Namespace: "SourceVariables"
+                    RunOrder: 1
+              - 
+                Name: "Build"
+                Actions: 
+                  - 
+                    Name: "Build"
+                    ActionTypeId: 
+                        Category: "Build"
+                        Owner: "AWS"
+                        Provider: "CodeBuild"
+                        Version: "1"
+                    Configuration: 
+                        ProjectName: !Ref CodeBuildProjectPackageService
+                    InputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    OutputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "BuildVariables"
+                    RunOrder: 1
+              - 
+                Name: "Deploy"
+                Actions: 
+                  - 
+                    Name: "Deploy"
+                    ActionTypeId: 
+                        Category: "Deploy"
+                        Owner: "AWS"
+                        Provider: "ECS"
+                        Version: "1"
+                    Configuration: 
+                        ClusterName: "archi-alpha-cluster"
+                        FileName: "imagedefinitions.json"
+                        ServiceName: "archi-alpha-package-service"
+                    InputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "DeployVariables"
+                    RunOrder: 1
+
+    CodeBuildProjectPackageService:
+        Type: "AWS::CodeBuild::Project"
+        Properties:
+            Name: "PackageService"
+            Source: 
+                BuildSpec: >
+                    version: 0.2
+                    
+                    phases:
+                      install:
+                        runtime-versions:
+                          docker: 19
+                          java: corretto11
+                      pre_build:
+                        commands:
+                          - echo Logging in to Amazon ECR...
+                          - aws --version
+                          - $(aws ecr get-login --region us-west-2 --no-include-email)
+                          - REPOSITORY_URI=075174350620.dkr.ecr.us-west-2.amazonaws.com/package-service
+                          - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+                          - IMAGE_TAG=${COMMIT_HASH:=latest}
+                          - ARCHIPELAGO_SERVICE=package-service
+                      build:
+                        commands:
+                          - echo Build started on `date`
+                          - echo Building Package Service
+                          - gradle :package-service:build
+                          - echo Building Package Service docker image
+                          - gradle :package-service:docker
+                          - echo Tagging image as $REPOSITORY_URI:$IMAGE_TAG
+                          - docker tag build.archipelago/package-service:latest $REPOSITORY_URI:$IMAGE_TAG
+                      post_build:
+                        commands:
+                          - echo Build completed on `date`
+                          - echo Pushing the Docker images...
+                          - docker push $REPOSITORY_URI:$IMAGE_TAG
+                          - echo Writing image definitions file...
+                          - printf '[{"name":"package-service","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+                    artifacts:
+                        files: imagedefinitions.json
+                InsecureSsl: false
+                Type: "CODEPIPELINE"
+            Artifacts: 
+                EncryptionDisabled: false
+                Name: "PackageService"
+                Packaging: "NONE"
+                Type: "CODEPIPELINE"
+            Cache: 
+                Type: "NO_CACHE"
+            Environment: 
+                ComputeType: "BUILD_GENERAL1_SMALL"
+                Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+                ImagePullCredentialsType: "CODEBUILD"
+                PrivilegedMode: true
+                Type: "LINUX_CONTAINER"
+            ServiceRole: !GetAtt IAMRoleBuildRole.Arn
+            TimeoutInMinutes: 60
+            QueuedTimeoutInMinutes: 480
+            EncryptionKey: !Sub "arn:aws:kms:us-west-2:${AWS::AccountId}:alias/aws/s3"
+            BadgeEnabled: false
+            LogsConfig: 
+                CloudWatchLogs: 
+                    Status: "ENABLED"
+                S3Logs: 
+                    Status: "DISABLED"
+                    EncryptionDisabled: false
+
+
+
+    CodePipelinePipelineHarborService:
+        Type: "AWS::CodePipeline::Pipeline"
+        Properties:
+            Name: "Archipelago-Harbor-Service"
+            RoleArn: !GetAtt IAMRolePipeline.Arn
+            ArtifactStore: 
+                Location: !Ref S3BucketCodepipelineArtifact
+                Type: "S3"
+            Stages: 
+              - 
+                Name: "Source"
+                Actions: 
+                  - 
+                    Name: "Source"
+                    ActionTypeId: 
+                        Category: "Source"
+                        Owner: "AWS"
+                        Provider: "CodeStarSourceConnection"
+                        Version: "1"
+                    Configuration: 
+                        BranchName: "master"
+                        ConnectionArn: !Sub "arn:aws:codestar-connections:us-west-2:${AWS::AccountId}:connection/6deb3b77-0864-4fe6-8bfa-3d7285a5e4fb"
+                        FullRepositoryId: "KRSogaard/Archipelago.Gradle"
+                        OutputArtifactFormat: "CODE_ZIP"
+                    OutputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    Region: "us-west-2"
+                    Namespace: "SourceVariables"
+                    RunOrder: 1
+              - 
+                Name: "Build"
+                Actions: 
+                  - 
+                    Name: "Build"
+                    ActionTypeId: 
+                        Category: "Build"
+                        Owner: "AWS"
+                        Provider: "CodeBuild"
+                        Version: "1"
+                    Configuration: 
+                        ProjectName: !Ref CodeBuildProjectHarborService
+                    InputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    OutputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "BuildVariables"
+                    RunOrder: 1
+              - 
+                Name: "Deploy"
+                Actions: 
+                  - 
+                    Name: "Deploy"
+                    ActionTypeId: 
+                        Category: "Deploy"
+                        Owner: "AWS"
+                        Provider: "ECS"
+                        Version: "1"
+                    Configuration: 
+                        ClusterName: "archi-alpha-cluster"
+                        FileName: "imagedefinitions.json"
+                        ServiceName: "archi-alpha-harbor-service"
+                    InputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "DeployVariables"
+                    RunOrder: 1
+
+    CodeBuildProjectHarborService:
+        Type: "AWS::CodeBuild::Project"
+        Properties:
+            Name: "HarborService"
+            Source: 
+                BuildSpec: >
+                    version: 0.2
+                    
+                    phases:
+                      install:
+                        runtime-versions:
+                          docker: 19
+                          java: corretto11
+                      pre_build:
+                        commands:
+                          - echo Logging in to Amazon ECR...
+                          - aws --version
+                          - $(aws ecr get-login --region us-west-2 --no-include-email)
+                          - REPOSITORY_URI=075174350620.dkr.ecr.us-west-2.amazonaws.com/harbor-service
+                          - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+                          - IMAGE_TAG=${COMMIT_HASH:=latest}
+                          - ARCHIPELAGO_SERVICE=harbor-service
+                      build:
+                        commands:
+                          - echo Build started on `date`
+                          - echo Building Harbor Service
+                          - gradle :harbor-service:build
+                          - echo Building Harbor Service docker image
+                          - gradle :harbor-service:docker
+                          - echo Tagging image as $REPOSITORY_URI:$IMAGE_TAG
+                          - docker tag build.archipelago/harbor-service:latest $REPOSITORY_URI:$IMAGE_TAG
+                      post_build:
+                        commands:
+                          - echo Build completed on `date`
+                          - echo Pushing the Docker images...
+                          - docker push $REPOSITORY_URI:$IMAGE_TAG
+                          - echo Writing image definitions file...
+                          - printf '[{"name":"harbor-service","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+                    artifacts:
+                        files: imagedefinitions.json
+                InsecureSsl: false
+                Type: "CODEPIPELINE"
+            Artifacts: 
+                EncryptionDisabled: false
+                Name: "HarborService"
+                Packaging: "NONE"
+                Type: "CODEPIPELINE"
+            Cache: 
+                Type: "NO_CACHE"
+            Environment: 
+                ComputeType: "BUILD_GENERAL1_SMALL"
+                Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+                ImagePullCredentialsType: "CODEBUILD"
+                PrivilegedMode: true
+                Type: "LINUX_CONTAINER"
+            ServiceRole: !GetAtt IAMRoleBuildRole.Arn
+            TimeoutInMinutes: 60
+            QueuedTimeoutInMinutes: 480
+            EncryptionKey: !Sub "arn:aws:kms:us-west-2:${AWS::AccountId}:alias/aws/s3"
+            BadgeEnabled: false
+            LogsConfig: 
+                CloudWatchLogs: 
+                    Status: "ENABLED"
+                S3Logs: 
+                    Status: "DISABLED"
+                    EncryptionDisabled: false
+
+    CodePipelinePipelineBuildServerBuilder:
+        Type: "AWS::CodePipeline::Pipeline"
+        Properties:
+            Name: "Archipelago-Builder"
+            RoleArn: !GetAtt IAMRolePipeline.Arn
+            ArtifactStore: 
+                Location: !Ref S3BucketCodepipelineArtifact
+                Type: "S3"
+            Stages: 
+              - 
+                Name: "Source"
+                Actions: 
+                  - 
+                    Name: "Source"
+                    ActionTypeId: 
+                        Category: "Source"
+                        Owner: "AWS"
+                        Provider: "CodeStarSourceConnection"
+                        Version: "1"
+                    Configuration: 
+                        BranchName: "master"
+                        ConnectionArn: !Sub "arn:aws:codestar-connections:us-west-2:${AWS::AccountId}:connection/6deb3b77-0864-4fe6-8bfa-3d7285a5e4fb"
+                        FullRepositoryId: "KRSogaard/Archipelago.Gradle"
+                        OutputArtifactFormat: "CODE_ZIP"
+                    OutputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    Region: "us-west-2"
+                    Namespace: "SourceVariables"
+                    RunOrder: 1
+              - 
+                Name: "Build"
+                Actions: 
+                  - 
+                    Name: "Build"
+                    ActionTypeId: 
+                        Category: "Build"
+                        Owner: "AWS"
+                        Provider: "CodeBuild"
+                        Version: "1"
+                    Configuration: 
+                        ProjectName: !Ref CodeBuildProjectBuildServerBuilder
+                    InputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    OutputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "BuildVariables"
+                    RunOrder: 1
+              - 
+                Name: "Deploy"
+                Actions: 
+                  - 
+                    Name: "Deploy"
+                    ActionTypeId: 
+                        Category: "Deploy"
+                        Owner: "AWS"
+                        Provider: "ECS"
+                        Version: "1"
+                    Configuration: 
+                        ClusterName: "archi-alpha-cluster"
+                        FileName: "imagedefinitions.json"
+                        ServiceName: "archi-alpha-build-service-builder"
+                    InputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "DeployVariables"
+                    RunOrder: 1
+
+    CodeBuildProjectBuildServerBuilder:
+        Type: "AWS::CodeBuild::Project"
+        Properties:
+            Name: "BuildServerBuilder"
+            Source: 
+                BuildSpec: >
+                    version: 0.2
+                    
+                    phases:
+                      install:
+                        runtime-versions:
+                          docker: 19
+                          java: corretto11
+                      pre_build:
+                        commands:
+                          - echo Logging in to Amazon ECR...
+                          - aws --version
+                          - $(aws ecr get-login --region us-west-2 --no-include-email)
+                          - REPOSITORY_URI=075174350620.dkr.ecr.us-west-2.amazonaws.com/build-server-builder
+                          - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+                          - IMAGE_TAG=${COMMIT_HASH:=latest}
+                          - ARCHIPELAGO_SERVICE=build-server-builder
+                      build:
+                        commands:
+                          - echo Build started on `date`
+                          - echo Building build-server-builder
+                          - gradle :build-server-builder:build
+                          - echo Building build-server-builder docker image
+                          - gradle :build-server-builder:docker
+                          - echo Tagging image as $REPOSITORY_URI:$IMAGE_TAG
+                          - docker tag build.archipelago/build-server-builder:latest $REPOSITORY_URI:$IMAGE_TAG
+                      post_build:
+                        commands:
+                          - echo Build completed on `date`
+                          - echo Pushing the Docker images...
+                          - docker push $REPOSITORY_URI:$IMAGE_TAG
+                          - echo Writing image definitions file...
+                          - printf '[{"name":"build-service-builder","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+                    artifacts:
+                        files: imagedefinitions.json
+                InsecureSsl: false
+                Type: "CODEPIPELINE"
+            Artifacts: 
+                EncryptionDisabled: false
+                Name: "BuildServerBuilder"
+                Packaging: "NONE"
+                Type: "CODEPIPELINE"
+            Cache: 
+                Type: "NO_CACHE"
+            Environment: 
+                ComputeType: "BUILD_GENERAL1_SMALL"
+                Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+                ImagePullCredentialsType: "CODEBUILD"
+                PrivilegedMode: true
+                Type: "LINUX_CONTAINER"
+            ServiceRole: !GetAtt IAMRoleBuildRole.Arn
+            TimeoutInMinutes: 60
+            QueuedTimeoutInMinutes: 480
+            EncryptionKey: !Sub "arn:aws:kms:us-west-2:${AWS::AccountId}:alias/aws/s3"
+            BadgeEnabled: false
+            LogsConfig: 
+                CloudWatchLogs: 
+                    Status: "ENABLED"
+                S3Logs: 
+                    Status: "DISABLED"
+                    EncryptionDisabled: false
+
+
+
+    CodePipelinePipelineBuildServerAPI:
+        Type: "AWS::CodePipeline::Pipeline"
+        Properties:
+            Name: "Archipelago-BuilderAPI"
+            RoleArn: !GetAtt IAMRolePipeline.Arn
+            ArtifactStore: 
+                Location: !Ref S3BucketCodepipelineArtifact
+                Type: "S3"
+            Stages: 
+              - 
+                Name: "Source"
+                Actions: 
+                  - 
+                    Name: "Source"
+                    ActionTypeId: 
+                        Category: "Source"
+                        Owner: "AWS"
+                        Provider: "CodeStarSourceConnection"
+                        Version: "1"
+                    Configuration: 
+                        BranchName: "master"
+                        ConnectionArn: !Sub "arn:aws:codestar-connections:us-west-2:${AWS::AccountId}:connection/6deb3b77-0864-4fe6-8bfa-3d7285a5e4fb"
+                        FullRepositoryId: "KRSogaard/Archipelago.Gradle"
+                        OutputArtifactFormat: "CODE_ZIP"
+                    OutputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    Region: "us-west-2"
+                    Namespace: "SourceVariables"
+                    RunOrder: 1
+              - 
+                Name: "Build"
+                Actions: 
+                  - 
+                    Name: "Build"
+                    ActionTypeId: 
+                        Category: "Build"
+                        Owner: "AWS"
+                        Provider: "CodeBuild"
+                        Version: "1"
+                    Configuration: 
+                        ProjectName: !Ref CodeBuildProjectBuildServerAPI
+                    InputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    OutputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "BuildVariables"
+                    RunOrder: 1
+              - 
+                Name: "Deploy"
+                Actions: 
+                  - 
+                    Name: "Deploy"
+                    ActionTypeId: 
+                        Category: "Deploy"
+                        Owner: "AWS"
+                        Provider: "ECS"
+                        Version: "1"
+                    Configuration: 
+                        ClusterName: "archi-alpha-cluster"
+                        FileName: "imagedefinitions.json"
+                        ServiceName: "archi-alpha-build-service-api"
+                    InputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "DeployVariables"
+                    RunOrder: 1
+
+    CodeBuildProjectBuildServerAPI:
+        Type: "AWS::CodeBuild::Project"
+        Properties:
+            Name: "BuildServerAPI"
+            Source: 
+                BuildSpec: >
+                    version: 0.2
+                    
+                    phases:
+                      install:
+                        runtime-versions:
+                          docker: 19
+                          java: corretto11
+                      pre_build:
+                        commands:
+                          - echo Logging in to Amazon ECR...
+                          - aws --version
+                          - $(aws ecr get-login --region us-west-2 --no-include-email)
+                          - REPOSITORY_URI=075174350620.dkr.ecr.us-west-2.amazonaws.com/build-server-api
+                          - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+                          - IMAGE_TAG=${COMMIT_HASH:=latest}
+                          - ARCHIPELAGO_SERVICE=build-server-api
+                      build:
+                        commands:
+                          - echo Build started on `date`
+                          - echo Building build-server-api
+                          - gradle :build-server-api:build
+                          - echo Building build-server-api docker image
+                          - gradle :build-server-api:docker
+                          - echo Tagging image as $REPOSITORY_URI:$IMAGE_TAG
+                          - docker tag build.archipelago/build-server-api:latest $REPOSITORY_URI:$IMAGE_TAG
+                      post_build:
+                        commands:
+                          - echo Build completed on `date`
+                          - echo Pushing the Docker images...
+                          - docker push $REPOSITORY_URI:$IMAGE_TAG
+                          - echo Writing image definitions file...
+                          - printf '[{"name":"build-service-api","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+                    artifacts:
+                        files: imagedefinitions.json
+                InsecureSsl: false
+                Type: "CODEPIPELINE"
+            Artifacts: 
+                EncryptionDisabled: false
+                Name: "BuildServerAPI"
+                Packaging: "NONE"
+                Type: "CODEPIPELINE"
+            Cache: 
+                Type: "NO_CACHE"
+            Environment: 
+                ComputeType: "BUILD_GENERAL1_SMALL"
+                Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+                ImagePullCredentialsType: "CODEBUILD"
+                PrivilegedMode: true
+                Type: "LINUX_CONTAINER"
+            ServiceRole: !GetAtt IAMRoleBuildRole.Arn
+            TimeoutInMinutes: 60
+            QueuedTimeoutInMinutes: 480
+            EncryptionKey: !Sub "arn:aws:kms:us-west-2:${AWS::AccountId}:alias/aws/s3"
+            BadgeEnabled: false
+            LogsConfig: 
+                CloudWatchLogs: 
+                    Status: "ENABLED"
+                S3Logs: 
+                    Status: "DISABLED"
+                    EncryptionDisabled: false
+
+    CodePipelinePipelineFrontend:
+        Type: "AWS::CodePipeline::Pipeline"
+        Properties:
+            Name: "Archipelago-Frontend"
+            RoleArn: !GetAtt IAMRolePipeline.Arn
+            ArtifactStore: 
+                Location: !Ref S3BucketCodepipelineArtifact
+                Type: "S3"
+            Stages: 
+              - 
+                Name: "Source"
+                Actions: 
+                  - 
+                    Name: "Source"
+                    ActionTypeId: 
+                        Category: "Source"
+                        Owner: "AWS"
+                        Provider: "CodeStarSourceConnection"
+                        Version: "1"
+                    Configuration: 
+                        BranchName: "master"
+                        ConnectionArn: !Sub "arn:aws:codestar-connections:us-west-2:${AWS::AccountId}:connection/6deb3b77-0864-4fe6-8bfa-3d7285a5e4fb"
+                        FullRepositoryId: "KRSogaard/Archipelago.Typescript"
+                        OutputArtifactFormat: "CODE_ZIP"
+                    OutputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    Region: "us-west-2"
+                    Namespace: "SourceVariables"
+                    RunOrder: 1
+              - 
+                Name: "Build"
+                Actions: 
+                  - 
+                    Name: "Build"
+                    ActionTypeId: 
+                        Category: "Build"
+                        Owner: "AWS"
+                        Provider: "CodeBuild"
+                        Version: "1"
+                    Configuration: 
+                        ProjectName: !Ref CodeBuildProjectFrontend
+                    InputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    OutputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "BuildVariables"
+                    RunOrder: 1
+              - 
+                Name: "Deploy"
+                Actions: 
+                  - 
+                    Name: "Deploy"
+                    ActionTypeId: 
+                        Category: "Deploy"
+                        Owner: "AWS"
+                        Provider: "S3"
+                        Version: "1"
+                    Configuration: 
+                        BucketName: "alpha.archipelago.build"
+                        Extract: "true"
+                    InputArtifacts: 
+                      - Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "DeployVariables"
+                    RunOrder: 1
+
+    CodeBuildProjectFrontend:
+        Type: "AWS::CodeBuild::Project"
+        Properties:
+            Name: "Frontend"
+            Source: 
+                BuildSpec: |
+                    version: 0.2
+                    phases:
+                      install:
+                        runtime-versions:
+                          nodejs: 10
+                        commands:
+                          - echo install yarn...
+                          - npm install -g yarn
+                          - echo yarn -v
+                          - yarn -v
+                      pre_build:
+                        commands:
+                          - echo Installing source NPM dependencies...
+                          - yarn install
+                      build:
+                        commands:
+                          - echo Build started on `date`
+                          - echo Compiling the Node.js code
+                          - yarn run build
+                      post_build:
+                        commands:
+                          - echo Build completed on `date`
+                          # - zip -r frontend.zip ./build/
+                    artifacts:
+                      base-directory: ./build/
+                      files: '**/*'
+                      name: artifact
+                    cache:
+                      paths:
+                        - '/root/.yarn-cache/**/*'
+                        - 'node_modules/**/*'
+                InsecureSsl: false
+                Type: "CODEPIPELINE"
+            Artifacts: 
+                EncryptionDisabled: false
+                Name: "Frontend"
+                Packaging: "NONE"
+                Type: "CODEPIPELINE"
+            Cache: 
+                Type: "NO_CACHE"
+            Environment: 
+                ComputeType: "BUILD_GENERAL1_SMALL"
+                Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+                ImagePullCredentialsType: "CODEBUILD"
+                PrivilegedMode: true
+                Type: "LINUX_CONTAINER"
+            ServiceRole: !GetAtt IAMRoleBuildRole.Arn
+            TimeoutInMinutes: 60
+            QueuedTimeoutInMinutes: 480
+            EncryptionKey: !Sub "arn:aws:kms:us-west-2:${AWS::AccountId}:alias/aws/s3"
+            BadgeEnabled: false
+            LogsConfig: 
+                CloudWatchLogs: 
+                    Status: "ENABLED"
+                S3Logs: 
+                    Status: "DISABLED"
+                    EncryptionDisabled: false
+
+    CodePipelinePipelineAuthService:
+        Type: "AWS::CodePipeline::Pipeline"
+        Properties:
+            Name: "Archipelago-AuthService"
+            RoleArn: !GetAtt IAMRolePipeline.Arn
+            ArtifactStore: 
+                Location: !Ref S3BucketCodepipelineArtifact
+                Type: "S3"
+            Stages: 
+              - 
+                Name: "Source"
+                Actions: 
+                  - 
+                    Name: "Source"
+                    ActionTypeId: 
+                        Category: "Source"
+                        Owner: "AWS"
+                        Provider: "CodeStarSourceConnection"
+                        Version: "1"
+                    Configuration: 
+                        BranchName: "master"
+                        ConnectionArn: !Sub "arn:aws:codestar-connections:us-west-2:${AWS::AccountId}:connection/6deb3b77-0864-4fe6-8bfa-3d7285a5e4fb"
+                        FullRepositoryId: "KRSogaard/Archipelago.Gradle"
+                        OutputArtifactFormat: "CODE_ZIP"
+                    OutputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    Region: "us-west-2"
+                    Namespace: "SourceVariables"
+                    RunOrder: 1
+              - 
+                Name: "Build"
+                Actions: 
+                  - 
+                    Name: "Build"
+                    ActionTypeId: 
+                        Category: "Build"
+                        Owner: "AWS"
+                        Provider: "CodeBuild"
+                        Version: "1"
+                    Configuration: 
+                        ProjectName: !Ref CodeBuildProjectAuthService
+                    InputArtifacts: 
+                      - 
+                        Name: "SourceArtifact"
+                    OutputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "BuildVariables"
+                    RunOrder: 1
+              - 
+                Name: "Deploy"
+                Actions: 
+                  - 
+                    Name: "Deploy"
+                    ActionTypeId: 
+                        Category: "Deploy"
+                        Owner: "AWS"
+                        Provider: "ECS"
+                        Version: "1"
+                    Configuration: 
+                        ClusterName: "archi-alpha-cluster"
+                        FileName: "imagedefinitions.json"
+                        ServiceName: "archi-alpha-auth-service"
+                    InputArtifacts: 
+                      - 
+                        Name: "BuildArtifact"
+                    Region: "us-west-2"
+                    Namespace: "DeployVariables"
+                    RunOrder: 1
+
+    CodeBuildProjectAuthService:
+        Type: "AWS::CodeBuild::Project"
+        Properties:
+            Name: "AuthService"
+            Source: 
+                BuildSpec: >
+                    version: 0.2
+                    
+                    phases:
+                      install:
+                        runtime-versions:
+                          docker: 19
+                          java: corretto11
+                      pre_build:
+                        commands:
+                          - echo Logging in to Amazon ECR...
+                          - aws --version
+                          - $(aws ecr get-login --region us-west-2 --no-include-email)
+                          - REPOSITORY_URI=075174350620.dkr.ecr.us-west-2.amazonaws.com/auth-service
+                          - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+                          - IMAGE_TAG=${COMMIT_HASH:=latest}
+                          - ARCHIPELAGO_SERVICE=auth-service
+                      build:
+                        commands:
+                          - echo Build started on `date`
+                          - echo Building auth-service
+                          - gradle :auth-service:build
+                          - echo Building auth-service docker image
+                          - gradle :auth-service:docker
+                          - echo Tagging image as $REPOSITORY_URI:$IMAGE_TAG
+                          - docker tag build.archipelago/auth-service:latest $REPOSITORY_URI:$IMAGE_TAG
+                      post_build:
+                        commands:
+                          - echo Build completed on `date`
+                          - echo Pushing the Docker images...
+                          - docker push $REPOSITORY_URI:$IMAGE_TAG
+                          - echo Writing image definitions file...
+                          - printf '[{"name":"auth-service","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+                    artifacts:
+                        files: imagedefinitions.json
+                InsecureSsl: false
+                Type: "CODEPIPELINE"
+            Artifacts: 
+                EncryptionDisabled: false
+                Name: "AuthService"
+                Packaging: "NONE"
+                Type: "CODEPIPELINE"
+            Cache: 
+                Type: "NO_CACHE"
+            Environment: 
+                ComputeType: "BUILD_GENERAL1_SMALL"
+                Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+                ImagePullCredentialsType: "CODEBUILD"
+                PrivilegedMode: true
+                Type: "LINUX_CONTAINER"
+            ServiceRole: !GetAtt IAMRoleBuildRole.Arn
+            TimeoutInMinutes: 60
+            QueuedTimeoutInMinutes: 480
+            EncryptionKey: !Sub "arn:aws:kms:us-west-2:${AWS::AccountId}:alias/aws/s3"
+            BadgeEnabled: false
+            LogsConfig: 
+                CloudWatchLogs: 
+                    Status: "ENABLED"
+                S3Logs: 
+                    Status: "DISABLED"
+                    EncryptionDisabled: false
+
+    IAMRoleBuildRole:
+        Type: "AWS::IAM::Role"
+        Properties:
+            Path: "/service-role/"
+            RoleName: "codebuild-Archipelago-service-role"
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Action: ['sts:AssumeRole']
+                      Effect: Allow
+                      Principal:
+                        Service:
+                            - codebuild.amazonaws.com
+                            - codepipeline.amazonaws.com
+            ManagedPolicyArns: 
+              - "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
+              - !Ref IAMManagedPolicyBuildRole
+              - !Ref IAMManagedPolicyBuildRole2
+
+    IAMManagedPolicyBuildRole:
+        Type: "AWS::IAM::ManagedPolicy"
+        Properties:
+            ManagedPolicyName: "code-pipeline-erc-all-access"
+            Path: "/"
+            PolicyDocument: |
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": "ecr:*",
+                            "Resource": "*"
+                        }
+                    ]
+                }
+
+    IAMManagedPolicyBuildRole2:
+        Type: "AWS::IAM::ManagedPolicy"
+        Properties:
+            ManagedPolicyName: !Sub "CodeBuildBasePolicy-Archipelago-${AWS::Region}"
+            Path: "/service-role/"
+            PolicyDocument: !Sub |
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Resource": [
+                                "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+                            ],
+                            "Action": [
+                                "logs:CreateLogGroup",
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents"
+                            ]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Resource": [
+                                "arn:aws:s3:::*"
+                            ],
+                            "Action": [
+                                "s3:PutObject",
+                                "s3:GetObject",
+                                "s3:GetObjectVersion",
+                                "s3:GetBucketAcl",
+                                "s3:GetBucketLocation"
+                            ]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "codebuild:CreateReportGroup",
+                                "codebuild:CreateReport",
+                                "codebuild:UpdateReport",
+                                "codebuild:BatchPutTestCases",
+                                "codebuild:BatchPutCodeCoverages"
+                            ],
+                            "Resource": [
+                                "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*"
+                            ]
+                        }
+                    ]
+                }
+    IAMRolePipeline:
+        Type: "AWS::IAM::Role"
+        Properties:
+            Path: "/service-role/"
+            RoleName: !Sub "AWSCodePipelineServiceRole-${AWS::Region}-Archipelago"
+            AssumeRolePolicyDocument: "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"codepipeline.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}"
+            MaxSessionDuration: 3600
+            ManagedPolicyArns: 
+              - !Ref IAMManagedPolicyPipeline
+
+    IAMManagedPolicyPipeline:
+        Type: "AWS::IAM::ManagedPolicy"
+        Properties:
+            ManagedPolicyName: !Sub "AWSCodePipelineServiceRole-${AWS::Region}-Archipelago"
+            Path: "/service-role/"
+            PolicyDocument: |
+                {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "iam:PassRole"
+                            ],
+                            "Resource": "*",
+                            "Effect": "Allow",
+                            "Condition": {
+                                "StringEqualsIfExists": {
+                                    "iam:PassedToService": [
+                                        "cloudformation.amazonaws.com",
+                                        "elasticbeanstalk.amazonaws.com",
+                                        "ec2.amazonaws.com",
+                                        "ecs-tasks.amazonaws.com"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "Action": [
+                                "codecommit:CancelUploadArchive",
+                                "codecommit:GetBranch",
+                                "codecommit:GetCommit",
+                                "codecommit:GetRepository",
+                                "codecommit:GetUploadArchiveStatus",
+                                "codecommit:UploadArchive"
+                            ],
+                            "Resource": "*",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": [
+                                "codedeploy:CreateDeployment",
+                                "codedeploy:GetApplication",
+                                "codedeploy:GetApplicationRevision",
+                                "codedeploy:GetDeployment",
+                                "codedeploy:GetDeploymentConfig",
+                                "codedeploy:RegisterApplicationRevision"
+                            ],
+                            "Resource": "*",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": [
+                                "codestar-connections:UseConnection"
+                            ],
+                            "Resource": "*",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": [
+                                "elasticbeanstalk:*",
+                                "ec2:*",
+                                "elasticloadbalancing:*",
+                                "autoscaling:*",
+                                "cloudwatch:*",
+                                "s3:*",
+                                "sns:*",
+                                "cloudformation:*",
+                                "rds:*",
+                                "sqs:*",
+                                "ecs:*"
+                            ],
+                            "Resource": "*",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": [
+                                "lambda:InvokeFunction",
+                                "lambda:ListFunctions"
+                            ],
+                            "Resource": "*",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": [
+                                "opsworks:CreateDeployment",
+                                "opsworks:DescribeApps",
+                                "opsworks:DescribeCommands",
+                                "opsworks:DescribeDeployments",
+                                "opsworks:DescribeInstances",
+                                "opsworks:DescribeStacks",
+                                "opsworks:UpdateApp",
+                                "opsworks:UpdateStack"
+                            ],
+                            "Resource": "*",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": [
+                                "cloudformation:CreateStack",
+                                "cloudformation:DeleteStack",
+                                "cloudformation:DescribeStacks",
+                                "cloudformation:UpdateStack",
+                                "cloudformation:CreateChangeSet",
+                                "cloudformation:DeleteChangeSet",
+                                "cloudformation:DescribeChangeSet",
+                                "cloudformation:ExecuteChangeSet",
+                                "cloudformation:SetStackPolicy",
+                                "cloudformation:ValidateTemplate"
+                            ],
+                            "Resource": "*",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": [
+                                "codebuild:BatchGetBuilds",
+                                "codebuild:StartBuild",
+                                "codebuild:BatchGetBuildBatches",
+                                "codebuild:StartBuildBatch"
+                            ],
+                            "Resource": "*",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "devicefarm:ListProjects",
+                                "devicefarm:ListDevicePools",
+                                "devicefarm:GetRun",
+                                "devicefarm:GetUpload",
+                                "devicefarm:CreateUpload",
+                                "devicefarm:ScheduleRun"
+                            ],
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "servicecatalog:ListProvisioningArtifacts",
+                                "servicecatalog:CreateProvisioningArtifact",
+                                "servicecatalog:DescribeProvisioningArtifact",
+                                "servicecatalog:DeleteProvisioningArtifact",
+                                "servicecatalog:UpdateProduct"
+                            ],
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "cloudformation:ValidateTemplate"
+                            ],
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "ecr:DescribeImages"
+                            ],
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "states:DescribeExecution",
+                                "states:DescribeStateMachine",
+                                "states:StartExecution"
+                            ],
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "appconfig:StartDeployment",
+                                "appconfig:StopDeployment",
+                                "appconfig:GetDeployment"
+                            ],
+                            "Resource": "*"
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                }
